@@ -1,0 +1,23 @@
+{
+  "description": "Analyst-reviewed working labels for the PBMC3k reference clusters. Validation only: used by tests to measure agreement with the app's predicted cell types. Never read by the backend. Not independently validated biological ground truth.",
+  "human_readable_record": "validation/annotation_review.md",
+  "reviewer": "Aditi Vannela",
+  "review_date": "2026-10-08",
+  "mapping_confirmed": "2026-10-13",
+  "reference": {
+    "results": "validation/expected/reference_results.h5ad",
+    "summary_sha256": "eb568f94a07a071892fb3bec34ac8a30683d2246663d77cf4fddbe98f0185465",
+    "cluster_column": "leiden",
+    "note": "Cluster IDs refer to this reference run only. Comparisons map cells by barcode, never by cluster number."
+  },
+  "clusters": [
+    {"reference_cluster": "0", "working_label": "CD4-enriched T cells", "original_label": "CD4+ T cells", "change": "qualified", "accepted_predictions": ["CD4+ T cells"]},
+    {"reference_cluster": "1", "working_label": "CD14+ Monocytes", "original_label": "CD14+ Monocytes", "change": "none", "accepted_predictions": ["CD14+ Monocytes"]},
+    {"reference_cluster": "2", "working_label": "B cells", "original_label": "B cells", "change": "none", "accepted_predictions": ["B cells"]},
+    {"reference_cluster": "3", "working_label": "Cytotoxic/memory T cells (CD8-enriched)", "original_label": "CD8+ T cells", "change": "qualified", "accepted_predictions": ["CD8+ T cells"]},
+    {"reference_cluster": "4", "working_label": "FCGR3A+ Monocytes", "original_label": "FCGR3A+ Monocytes", "change": "none", "accepted_predictions": ["FCGR3A+ Monocytes"]},
+    {"reference_cluster": "5", "working_label": "NK cells", "original_label": "NK cells", "change": "none", "accepted_predictions": ["NK cells"]},
+    {"reference_cluster": "6", "working_label": "Conventional dendritic cells (cDC2-enriched)", "original_label": "Dendritic cells", "change": "qualified", "accepted_predictions": ["Dendritic cells"]},
+    {"reference_cluster": "7", "working_label": "Platelet-lineage cells", "original_label": "Megakaryocytes", "change": "renamed", "accepted_predictions": ["Megakaryocytes"]}
+  ]
+}

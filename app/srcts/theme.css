@@ -1,0 +1,53 @@
+/* Monotone + teal design (CLAUDE.md, "UI design", chosen 2026-10-15): light grey page,
+   white content sheet, black/grey text, thin grey lines. Teal is the one accent: it marks
+   whatever needs attention (differs from the reference, removed, needs re-running). */
+@import "tailwindcss";
+@import "@fontsource/manrope/latin-400.css";
+@import "@fontsource/manrope/latin-500.css";
+@import "@fontsource/manrope/latin-600.css";
+@import "@fontsource/manrope/latin-700.css";
+@import "@fontsource/manrope/latin-800.css";
+@import "@fontsource/ibm-plex-mono/latin-400.css";
+@import "@fontsource/ibm-plex-mono/latin-500.css";
+
+@theme {
+  --font-sans: "Manrope", "Avenir Next", "Helvetica Neue", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+
+  --color-ink: #111111;      /* primary text, primary buttons, step numbers */
+  --color-body: #3f3f46;     /* body text */
+  --color-muted: #52525b;    /* secondary text */
+  --color-panel: #fafafa;    /* side panels */
+  --color-chip: #f4f4f5;     /* chips, nav track */
+  --color-line: #e4e4e7;     /* borders, selected tab */
+  --color-field: #d4d4d8;    /* input borders */
+  --color-ok: #16a34a;       /* status dot: up to date */
+  --color-accent: #0d9488;   /* teal: lines, dots, borders that need attention */
+  --color-accent-text: #0f766e;  /* teal text (5.5:1 on white) */
+  --color-accent-tint: #f0fdfa;  /* teal background tint for a highlighted row */
+  --color-accent-line: #99f6e4;  /* teal border of a highlighted badge */
+  --color-off: #a1a1aa;      /* status dot: not run */
+  --color-required: #b91c1c; /* red asterisk on required fields (6.5:1 on white) */
+
+  /* The sidebar (analyst, 2026-11-05: very light grey, a shade darker than the white page; after trying
+     charcoal and mid grey). Dark text as on the page. */
+  --color-side: #f4f4f5;        /* background */
+  --color-side-raised: #e4e4e7; /* current page, hover */
+  --color-side-line: #d4d4d8;   /* dividers, dotted progress line */
+  --color-side-text: #111111;   /* step names */
+  --color-side-body: #3f3f46;   /* other text, solid progress line */
+  --color-side-muted: #52525b;  /* status lines, icons (7.0:1) */
+  --color-side-off: #a1a1aa;    /* disabled */
+  --color-side-accent: #0f766e; /* teal text: needs re-running (5.0:1) */
+}
+
+html, body {
+  margin: 0;
+  background: #f4f4f5;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+}
+
+.page-ground {
+  background: #f4f4f5;
+}

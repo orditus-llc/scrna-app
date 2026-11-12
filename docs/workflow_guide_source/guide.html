@@ -1,0 +1,904 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PBMC3k Workflow Guide</title>
+<style>
+  @page { size: Letter; margin: 18mm 17mm 20mm 17mm; }
+  :root {
+    --ink: #1c2529; --muted: #56656b; --rule: #d3dcdf; --accent: #1d6f78;
+    --bio: #2f6b3f; --bio-bg: #eef6f0; --comp: #2a5d8f; --comp-bg: #edf3fa;
+    --run: #7a5a12; --run-bg: #fbf5e6; --say: #6b3f7a; --say-bg: #f6eff8;
+    --warn: #8f2d2d; --warn-bg: #fbeeee;
+  }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-family: Charter, "Iowan Old Style", Georgia, serif; color: var(--ink);
+         font-size: 10.6pt; line-height: 1.5; margin: 0; }
+  h1, h2, h3, h4, .eyebrow, th, .setting-head, .callout b.label, .toc, .meta {
+         font-family: "Avenir Next", "Helvetica Neue", Helvetica, Arial, sans-serif; }
+  h1 { font-size: 26pt; line-height: 1.15; margin: 0 0 8pt; color: var(--ink); }
+  h2 { font-size: 17pt; color: var(--accent); border-bottom: 1.5pt solid var(--accent);
+       padding-bottom: 3pt; margin: 0 0 10pt; page-break-after: avoid; }
+  h3 { font-size: 13pt; margin: 16pt 0 6pt; color: var(--ink); page-break-after: avoid; }
+  h4 { font-size: 11pt; margin: 12pt 0 4pt; page-break-after: avoid; }
+  p { margin: 0 0 7pt; }
+  ul, ol { margin: 0 0 8pt; padding-left: 16pt; }
+  li { margin-bottom: 3pt; }
+  .part { page-break-before: always; }
+  .eyebrow { text-transform: uppercase; letter-spacing: .08em; font-size: 8.5pt; color: var(--accent); margin-bottom: 4pt; }
+  .meta { color: var(--muted); font-size: 9.5pt; }
+  .cover { height: 230mm; display: flex; flex-direction: column; justify-content: center; }
+  .cover .lede { font-size: 13pt; color: var(--muted); max-width: 140mm; }
+  .toc { font-size: 10pt; columns: 2; column-gap: 10mm; margin-top: 14pt; }
+  .toc div { margin-bottom: 3pt; break-inside: avoid; }
+  table { border-collapse: collapse; width: 100%; margin: 6pt 0 10pt; font-size: 9.2pt; }
+  tr { page-break-inside: avoid; }
+  thead, tr:first-child { page-break-after: avoid; }
+  th { text-align: left; background: #eef2f3; font-weight: 600; font-size: 8.6pt; }
+  th, td { border: 0.6pt solid var(--rule); padding: 4pt 5pt; vertical-align: top; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  code { font-family: Menlo, "SF Mono", monospace; font-size: 8.8pt; background: #f2f4f5; padding: 0 2pt; border-radius: 2pt; }
+  .setting { border: 0.8pt solid var(--rule); border-radius: 4pt; padding: 8pt 10pt 4pt; margin: 10pt 0 12pt; }
+  .setting-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10pt;
+                  border-bottom: 0.6pt solid var(--rule); padding-bottom: 4pt; margin-bottom: 6pt; }
+  .setting-head .name { font-weight: 700; font-size: 11.5pt; }
+  .setting-head .value { font-size: 9pt; color: var(--muted); white-space: nowrap; }
+  .callout { border-left: 3pt solid; padding: 5pt 8pt; margin: 6pt 0; border-radius: 0 3pt 3pt 0; page-break-inside: avoid; }
+  .callout b.label { display: block; font-size: 8.3pt; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2pt; }
+  .bio  { border-color: var(--bio);  background: var(--bio-bg); }   .bio b.label  { color: var(--bio); }
+  .comp { border-color: var(--comp); background: var(--comp-bg); } .comp b.label { color: var(--comp); }
+  .run  { border-color: var(--run);  background: var(--run-bg); }   .run b.label  { color: var(--run); }
+  .say  { border-color: var(--say);  background: var(--say-bg); }   .say b.label  { color: var(--say); }
+  .warn { border-color: var(--warn); background: var(--warn-bg); }  .warn b.label { color: var(--warn); }
+  .change { border-color: #8a979c; background: #f4f6f7; } .change b.label { color: #4b585d; }
+  figure { margin: 8pt 0 10pt; page-break-inside: avoid; text-align: center; }
+  figure img { max-width: 100%; }
+  figcaption { font-size: 8.8pt; color: var(--muted); margin-top: 3pt; text-align: left; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 6mm; }
+  .three { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 4mm; }
+  .small { font-size: 9pt; color: var(--muted); }
+  .flow { font-family: "Avenir Next", Helvetica, sans-serif; font-size: 9pt; display: flex; flex-wrap: wrap; gap: 3pt; margin: 6pt 0 10pt; }
+  .flow span { border: 0.8pt solid var(--accent); color: var(--accent); border-radius: 10pt; padding: 1pt 7pt; }
+  .flow i { color: var(--muted); font-style: normal; }
+  .qa h4 { margin-top: 10pt; }
+</style>
+</head>
+<body>
+
+<!-- ============================== COVER ============================== -->
+<section class="cover">
+  <div class="eyebrow">Orditus · single-cell RNA-seq analysis app</div>
+  <h1>The PBMC3k Workflow:<br>Every Setting, Explained</h1>
+  <p class="lede">A guide to each stage and each setting in the PBMC3k analysis app: what it does
+  computationally, what it means biologically, what it did in the validated PBMC3k run, and how
+  to explain it.</p>
+  <p class="meta" style="margin-top:14pt">Prepared for Aditi Vannela · 14 October 2026 · Analysis environment: Scanpy 1.11.5,
+  anndata 0.12.19, leidenalg 0.12.0, umap-learn 0.5.12 · Every PBMC3k number in this guide comes from
+  the validated run of the app's backend.</p>
+  <div class="toc">
+    <div><b>Part 1</b> The big picture</div>
+    <div>1.1 What scRNA-seq measures</div>
+    <div>1.2 The PBMC3k dataset</div>
+    <div>1.3 The workflow at a glance</div>
+    <div><b>Part 2</b> Data &amp; QC tab</div>
+    <div><b>Part 3</b> Preprocessing tab</div>
+    <div><b>Part 4</b> PCA &amp; UMAP tab</div>
+    <div><b>Part 5</b> Clustering tab</div>
+    <div><b>Part 6</b> Marker genes tab</div>
+    <div><b>Part 7</b> Cell types tab</div>
+    <div><b>Part 8</b> Reproducibility and validation</div>
+    <div><b>Part 9</b> Questions supervisors ask</div>
+    <div><b>Appendix A</b> Every setting at a glance</div>
+    <div><b>Appendix B</b> PBMC3k numbers at each step</div>
+    <div><b>Appendix C</b> Glossary</div>
+    <div><b>Appendix D</b> Further reading</div>
+  </div>
+</section>
+
+<!-- ============================== PART 1 ============================== -->
+<section class="part">
+  <div class="eyebrow">Part 1</div>
+  <h2>The big picture</h2>
+
+  <h3>1.1 What single-cell RNA-seq measures</h3>
+  <p>Bulk RNA-seq measures the average expression of a tissue. Single-cell RNA-seq (scRNA-seq) measures
+  expression in each cell separately, so you can see which cell types are present, in what proportions,
+  and which genes define them.</p>
+  <p>PBMC3k was made with <b>droplet-based</b> technology (10x Genomics Chromium). The key ideas:</p>
+  <ul>
+    <li><b>Droplets and barcodes.</b> Cells are split into tiny oil droplets, each with a gel bead carrying
+    millions of copies of one unique <b>cell barcode</b>. Every RNA molecule captured in that droplet is tagged
+    with that barcode, so sequencing reads can be traced back to their droplet, and so to (usually) one cell.</li>
+    <li><b>UMIs.</b> Each captured molecule also gets a random <b>unique molecular identifier</b>. PCR copies
+    of the same molecule share a UMI, so counting UMIs counts original molecules, not amplification copies.
+    The numbers in the matrix are UMI counts: whole numbers.</li>
+    <li><b>3′ capture.</b> The 10x 3′ chemistry captures the polyadenylated 3′ end of mRNAs. It identifies genes
+    well but doesn't see full transcripts or isoforms.</li>
+    <li><b>The count matrix.</b> The output is a table of cells × genes (here 2,700 × 32,738) of UMI counts.
+    It is extremely <b>sparse</b>: most entries are zero. Only a fraction of a cell's mRNA molecules is
+    captured (estimates vary widely with the chemistry, often well under half), so a gene that is truly expressed
+    at a low level is often recorded as 0 ("dropout").</li>
+    <li><b>Imperfections the workflow must handle.</b>
+      <ul>
+        <li>Empty droplets containing only free-floating ("ambient") RNA.</li>
+        <li>Damaged or dying cells.</li>
+        <li>Doublets: two cells in one droplet.</li>
+        <li>Differences in capture efficiency between cells.</li>
+        <li>Technical noise.</li>
+      </ul>
+    Most of the settings in this guide exist to deal with one of these.</li>
+  </ul>
+
+  <h3>1.2 The PBMC3k dataset</h3>
+  <p>PBMC3k is a public 10x Genomics dataset of about 2,700 <b>peripheral blood mononuclear cells</b> from a
+  healthy human donor. It is the standard teaching dataset for Scanpy and Seurat. PBMCs are the blood cells
+  with a single round nucleus, isolated by density-gradient centrifugation, which removes red cells and
+  most granulocytes (neutrophils, eosinophils). What remains, and what we expect to find:</p>
+  <table>
+    <tr><th>Population</th><th>Typical share of PBMCs</th><th>Role</th></tr>
+    <tr><td>T cells (CD4+ helper, CD8+ cytotoxic)</td><td>~45–70%</td><td>Adaptive immunity: coordinating responses (CD4) and killing infected cells (CD8)</td></tr>
+    <tr><td>B cells</td><td>~5–15%</td><td>Antibody production; antigen presentation</td></tr>
+    <tr><td>NK cells</td><td>~5–15%</td><td>Innate killing of stressed, infected or tumor cells</td></tr>
+    <tr><td>Monocytes (CD14+ classical, FCGR3A/CD16+ non-classical)</td><td>~10–30%</td><td>Phagocytosis, inflammation; precursors of macrophages and some DCs</td></tr>
+    <tr><td>Dendritic cells</td><td>~1–2%</td><td>Professional antigen presentation; link innate and adaptive immunity</td></tr>
+    <tr><td>Platelets (contaminant)</td><td>small</td><td>Anucleate cell fragments that co-purify with PBMCs; they carry megakaryocyte-derived RNA</td></tr>
+  </table>
+  <p class="small">Percentages are typical healthy-adult ranges and vary between people.</p>
+
+  <h3>1.3 The workflow at a glance</h3>
+  <div class="flow"><span>Load</span><i>→</i><span>QC metrics</span><i>→</i><span>Filter</span><i>→</i><span>Normalize + log</span><i>→</i><span>HVGs</span><i>→</i><span>Regress + scale</span><i>→</i><span>PCA</span><i>→</i><span>Neighbor graph</span><i>→</i><span>UMAP</span><i>→</i><span>Leiden clusters</span><i>→</i><span>Marker genes</span><i>→</i><span>Cell types</span></div>
+  <table>
+    <tr><th>App tab</th><th>Question it answers</th><th>Main settings</th><th>PBMC3k result</th></tr>
+    <tr><td>Data &amp; QC</td><td>Which barcodes are real, healthy single cells, and which genes are worth keeping?</td><td>min genes, min cells, max genes, max % mito</td><td>2,700 → 2,670 cells; 32,738 → 13,714 genes</td></tr>
+    <tr><td>Preprocessing</td><td>How do we make cells comparable and focus on informative genes?</td><td>target sum, HVG cut-offs, regression, scaling limit</td><td>1,846 highly variable genes</td></tr>
+    <tr><td>PCA &amp; UMAP</td><td>What are the main axes of variation, and which cells resemble which?</td><td>number of PCs, number of neighbors</td><td>40 PCs (11.5% of variance); 42,340 graph connections</td></tr>
+    <tr><td>Clustering</td><td>Which groups of cells belong together?</td><td>resolution</td><td>8 clusters</td></tr>
+    <tr><td>Marker genes</td><td>Which genes distinguish each group?</td><td>statistical test</td><td>Ranked genes for every cluster</td></tr>
+    <tr><td>Cell types</td><td>What is each group, biologically?</td><td>marker sets, ambiguity margin, top-N rank, conflict threshold</td><td>8 confident predictions</td></tr>
+  </table>
+  <p>Every default comes from your <b>validated reference analysis</b>, a clean, reproducible version of your
+  original PBMC3k notebook. Changing any setting is allowed and recorded; the app then shows "Settings differ
+  from the validated reference".</p>
+</section>
+
+<!-- ============================== PART 2: DATA & QC ============================== -->
+<section class="part">
+  <div class="eyebrow">Part 2 · Tab: Data &amp; QC</div>
+  <h2>Loading the data and quality control</h2>
+  <p>Quality control (QC) decides which barcodes represent real, intact, single cells, and which genes carry
+  enough information to keep. It is the step that most directly shapes everything downstream: a cell removed
+  here never comes back, and a damaged cell left in can form a misleading "cluster" of its own.</p>
+
+  <h3>Load data</h3>
+  <div class="setting">
+    <div class="setting-head"><span class="name">Load PBMC3k</span><span class="value">button · file: data/pbmc3k.h5ad</span></div>
+    <p>Opens the raw count matrix (cells × genes) stored as an <code>.h5ad</code> AnnData file.</p>
+    <div class="callout comp"><b class="label">Computation</b>
+      <ul>
+        <li><b>Raw-count checks:</b> the values must be non-negative whole numbers with no missing values,
+        and not all zero. Anything else means the file has already been processed (normalized, log-transformed,
+        scaled or batch-corrected), and running the workflow on it would process it twice.</li>
+        <li><b>Name checks:</b> cell barcodes must be unique. Duplicate gene symbols are made unique (e.g. a
+        second <code>TBCE</code> becomes <code>TBCE-1</code>), as in your notebook.</li>
+        <li><b>Fingerprint:</b> the file's SHA-256 checksum is recorded, which proves exactly which file
+        was analyzed.</li>
+      </ul></div>
+    <div class="callout bio"><b class="label">Biology</b> Analysis must start from <b>raw UMI counts</b>,
+      because later steps (normalization, HVG selection) assume count-like data. Gene symbols can repeat
+      because different genomic loci share a name; making them unique keeps every measurement.</div>
+    <div class="callout run"><b class="label">In your PBMC3k run</b> 2,700 cells × 32,738 genes, all values
+      whole numbers, 0 duplicate names needing a fix.</div>
+  </div>
+
+  <h3>QC metrics</h3>
+  <div class="setting">
+    <div class="setting-head"><span class="name">Run QC</span><span class="value">button · mitochondrial prefix "MT-" (fixed for human)</span></div>
+    <p>Flags mitochondrial genes and calculates three numbers for every cell.</p>
+    <table>
+      <tr><th>Metric</th><th>What it counts</th><th>What it reveals biologically</th></tr>
+      <tr><td><b>Genes per cell</b> (<code>n_genes_by_counts</code>)</td><td>Number of genes with at least one UMI in the cell</td><td>Library complexity. Very low suggests an empty droplet or a damaged cell; very high suggests a doublet.</td></tr>
+      <tr><td><b>Counts per cell</b> (<code>total_counts</code>)</td><td>Total UMIs in the cell</td><td>How much RNA was captured. It reflects cell size and activity <i>and</i> capture efficiency.</td></tr>
+      <tr><td><b>% mitochondrial</b> (<code>pct_counts_mt</code>)</td><td>Share of a cell's UMIs that come from the 13 mitochondrially encoded genes</td><td>Cell integrity. A high value usually indicates a damaged or dying cell.</td></tr>
+    </table>
+    <div class="callout bio"><b class="label">Biology: why mitochondrial reads flag damaged cells</b>
+      When a cell's outer membrane is damaged, its cytoplasmic mRNA leaks out of the droplet before capture,
+      but transcripts inside the mitochondria (enclosed in their own membranes) are retained. The
+      mitochondrial <i>share</i> of what's left therefore rises. High mitochondrial fractions are also
+      associated with apoptosis and cellular stress. Note that some healthy cell types naturally have more
+      mitochondrial RNA (for example metabolically very active cells, such as cardiomyocytes), so thresholds
+      depend on the tissue.</div>
+    <div class="callout comp"><b class="label">Computation</b> Genes whose symbol starts with <code>MT-</code>
+      are flagged (this is the human convention; mouse uses <code>mt-</code>, which is why the prefix is a
+      setting). Scanpy's <code>calculate_qc_metrics</code> then computes the metrics. <b>They are
+      calculated once, on all genes, before any filtering, and never recalculated.</b> That matches your
+      notebook and the Scanpy tutorial, and the same values are used later by the regression step. If no
+      genes match the prefix, the app warns that mitochondrial QC is <i>unavailable</i> rather than showing
+      a misleading 0%, and it refuses to apply a mitochondrial filter until you fix the prefix or switch
+      the filter off.</div>
+    <div class="callout run"><b class="label">In your PBMC3k run</b> 13 mitochondrial genes (MT-ND1 … MT-CYB).
+      Medians per cell: <b>817 genes</b>, <b>2,197 counts</b>, <b>2.03% mitochondrial</b> (range 0–22.6%),
+      identical to your original notebook's printed table.</div>
+  </div>
+  <figure><img src="violins.png" style="width:96%"><figcaption><b>QC violin plots, PBMC3k.</b> Each dot is a cell.
+    Most cells cluster tightly; the long upper tails are the candidates for removal (possible doublets in
+    genes and counts; possibly damaged cells in % mitochondrial).</figcaption></figure>
+
+  <h3>Filtering settings</h3>
+  <p>Four thresholds, applied in this order (the same order as your notebook). The live preview shows what
+  they would remove before anything changes; <b>Apply Filtering</b> makes it real and records it.</p>
+  <figure><img src="scatters.png" style="width:96%"><figcaption><b>Filtering preview, PBMC3k reference settings.</b>
+    Teal = kept, grey = removed (30 cells). Red dashed lines: the upper limits (6% mitochondrial; 2,500 genes).
+    Red dotted line: the lower limit (200 genes). The right panel shows genes and counts rising together;
+    cells far above the trend at high counts are doublet candidates.</figcaption></figure>
+
+  <div class="setting">
+    <div class="setting-head"><span class="name">Min genes per cell</span><span class="value">reference: 200 · Scanpy <code>filter_cells(min_genes)</code></span></div>
+    <p>Removes barcodes with fewer than 200 detected genes.</p>
+    <div class="callout bio"><b class="label">Biology</b> A barcode with very few genes is usually an
+      <b>empty droplet</b> holding only ambient RNA (RNA released by lysed cells into the suspension), or a
+      badly damaged cell. Real cells express hundreds to thousands of genes. But some genuine cells are small
+      or transcriptionally quiet (platelets, some resting lymphocytes, neutrophils in whole-blood data), so a
+      threshold set too high removes real biology.</div>
+    <div class="callout comp"><b class="label">Computation</b> Counts the genes with at least one UMI in each
+      barcode and keeps those with 200 or more. It runs first, before gene filtering.</div>
+    <div class="callout run"><b class="label">In your PBMC3k run</b> Removed <b>0 cells</b>. The data had
+      already been through 10x's own cell calling, so empty droplets were largely excluded beforehand
+      (the minimum was 212 genes).</div>
+    <div class="callout change"><b class="label">If you change it</b> Raising it (e.g. to 500) removes more
+      low-complexity cells. Small, RNA-poor cell types are the most at risk, so rare populations can shrink or
+      disappear. Use the live preview to see how many cells a new value would remove. Lowering it to 0 keeps
+      everything the file contains.</div>
+    <div class="callout say"><b class="label">How to explain it</b> "We require at least 200 detected genes
+      per barcode to exclude empty droplets and debris. In PBMC3k this removed nothing, because the data
+      was already cell-called."</div>
+  </div>
+
+  <div class="setting">
+    <div class="setting-head"><span class="name">Min cells per gene</span><span class="value">reference: 3 · Scanpy <code>filter_genes(min_cells)</code></span></div>
+    <p>Removes genes detected in fewer than 3 of the remaining cells.</p>
+    <div class="callout bio"><b class="label">Biology</b> Of the ~33,000 annotated genes, many aren't
+      expressed in blood at all (neuronal, muscle and liver genes, for example) or are captured too rarely
+      to measure. A gene seen in 1–2 cells carries no usable information about groups of cells, and may be noise.</div>
+    <div class="callout comp"><b class="label">Computation</b> For each gene, counts the cells (among those that
+      passed the previous step) with at least one UMI, and keeps genes found in 3 or more. Removing genes
+      makes every later step faster and less noisy. The order matters: genes are counted <i>after</i> the
+      cell filter.</div>
+    <div class="callout run"><b class="label">In your PBMC3k run</b> Removed <b>19,024 genes</b>, leaving
+      <b>13,714</b>. Most of the genome isn't detectably expressed in ~2,700 PBMCs.</div>
+    <div class="callout change"><b class="label">If you change it</b> Raising it removes rarely detected
+      genes, including markers of very rare populations: a population of 10 cells can only keep its
+      genes if the threshold is below 10. Lowering it to 0 keeps every gene.</div>
+    <div class="callout say"><b class="label">How to explain it</b> "Genes detected in fewer than 3 cells were
+      excluded as uninformative. Most were genes not expressed in blood."</div>
+  </div>
+
+  <div class="setting">
+    <div class="setting-head"><span class="name">Max genes per cell (+ "No limit")</span><span class="value">reference: 2,500 (cells must be <i>below</i> it)</span></div>
+    <p>Removes cells with 2,500 or more detected genes.</p>
+    <div class="callout bio"><b class="label">Biology</b> A droplet that captured <b>two cells (a doublet)</b>
+      contains the RNA of both, so it shows more genes and counts than a single cell. Doublets can look like
+      fake "intermediate" cell types (e.g. a cell expressing both T-cell and monocyte genes). The doublet
+      rate rises with the number of cells loaded (very roughly ~0.8% per 1,000 cells recovered on 10x). An
+      upper gene limit is a <b>simple proxy</b>: it catches doublets of large, RNA-rich cells but misses
+      doublets of small cells, and it can wrongly remove genuinely large or active single cells.</div>
+    <div class="callout comp"><b class="label">Computation</b> Uses the stored <code>n_genes_by_counts</code>
+      (calculated before gene filtering) and keeps cells strictly below the limit. Ticking <b>No limit</b>
+      switches this filter off entirely; this is recorded in the analysis history.</div>
+    <div class="callout run"><b class="label">In your PBMC3k run</b> Removed <b>5 cells</b>.</div>
+    <div class="callout change"><b class="label">If you change it</b> A lower limit removes more suspected
+      doublets but also more large single cells. Dedicated doublet-detection methods (e.g. Scrublet,
+      scDblFinder) simulate doublets and score each cell. They are more principled and are a natural future
+      addition, but they are not part of your reference analysis.</div>
+    <div class="callout say"><b class="label">How to explain it</b> "Cells with 2,500 or more genes were removed
+      as likely doublets. This is a simple heuristic; a dedicated doublet detector would be more precise."</div>
+  </div>
+
+  <div class="setting">
+    <div class="setting-head"><span class="name">Max % mitochondrial (+ "No limit")</span><span class="value">reference: 6% (cells must be <i>below</i> it)</span></div>
+    <p>Removes cells whose mitochondrial share is 6% or more.</p>
+    <div class="callout bio"><b class="label">Biology</b> High mitochondrial fraction signals damaged, leaky or
+      dying cells (see "QC metrics" above). Such cells can cluster <i>by their damage</i> rather than by their
+      identity, creating misleading clusters defined by stress genes. Sensible thresholds depend on tissue and
+      species: PBMCs are low in mitochondrial RNA, so a strict threshold like 5–6% is common for them, while
+      many human tissues need 10–20%.</div>
+    <div class="callout comp"><b class="label">Computation</b> Uses the stored <code>pct_counts_mt</code> and keeps
+      cells strictly below the limit. If mitochondrial QC is unavailable (no <code>MT-</code> genes), the app
+      refuses this filter rather than treating every cell as passing.</div>
+    <div class="callout run"><b class="label">In your PBMC3k run</b> Removed <b>25 cells</b> (the Scanpy
+      tutorial uses 5%; your analysis uses 6%). Trying 5% in the preview removes 57 cells instead.</div>
+    <div class="callout change"><b class="label">If you change it</b> Stricter thresholds remove more damaged
+      cells but can also remove healthy cells with naturally high mitochondrial content. An alternative,
+      data-driven approach flags cells several median absolute deviations (MADs) above the median.</div>
+    <div class="callout say"><b class="label">How to explain it</b> "Cells with 6% or more mitochondrial reads were
+      excluded as likely damaged. PBMCs have low mitochondrial content, so a strict cut-off is appropriate
+      here; it removed 25 cells."</div>
+  </div>
+
+  <div class="callout run"><b class="label">Filtering result</b> <b>2,670 cells × 13,714 genes</b>, matching
+    your original notebook exactly. The app keeps this filtered object (all genes, raw counts) for the whole
+    analysis, so full-gene raw counts are always available. <b>Reset to reference settings</b> restores
+    200 / 3 / 2,500 / 6.</div>
+</section>
+
+<!-- ============================== PART 3: PREPROCESSING ============================== -->
+<section class="part">
+  <div class="eyebrow">Part 3 · Tab: Preprocessing</div>
+  <h2>Normalization, highly variable genes, regression and scaling</h2>
+  <p>Preprocessing turns raw counts into numbers that can be compared fairly between cells. It also picks
+  out the genes that carry biological signal. Order: normalize → log-transform → find highly variable genes
+  → store all genes in <code>raw</code> → keep HVGs → (optionally) regress out technical effects → scale.</p>
+
+  <div class="setting">
+    <div class="setting-head"><span class="name">Target sum per cell</span><span class="value">reference: 10,000 · <code>normalize_total</code> then <code>log1p</code></span></div>
+    <p>Rescales every cell so that its counts add up to 10,000, then takes log(1 + x).</p>
+    <div class="callout bio"><b class="label">Biology</b> Two identical cells can yield very different totals,
+      because capture and sequencing efficiency vary from droplet to droplet. Without normalization, a cell's
+      "expression" of every gene would partly reflect how well it was captured. Normalization asks "what share
+      of this cell's RNA is gene X?" rather than "how many molecules of X did we happen to catch?". A caveat:
+      genuinely larger or more active cells really do contain more RNA, and total-count normalization removes
+      that difference too.</div>
+    <div class="callout comp"><b class="label">Computation</b>
+      <ul>
+        <li><b>Normalize:</b> each count is divided by the cell's total and multiplied by 10,000 ("counts per
+        10,000", CP10k).</li>
+        <li><b>Log-transform:</b> log1p = log(x + 1); the +1 keeps zeros at zero. It compresses the huge range
+        of expression values and stabilizes variance, so a few highly expressed genes don't dominate. It also
+        makes differences multiplicative: a 2-fold change looks the same at any expression level.</li>
+        <li><b>The counts are kept:</b> raw counts are saved in <code>layers["counts"]</code> before any of this.</li>
+      </ul>
+      Alternatives used in the field include median-based scaling, pooling-based size factors (scran),
+      SCTransform and analytic Pearson residuals. Your reference uses the classic CP10k + log1p.</div>
+    <div class="callout run"><b class="label">In your PBMC3k run</b> The median cell had <b>2,206 counts</b>
+      before normalization (after filtering); every cell now sums to 10,000 before the log.</div>
+    <div class="callout change"><b class="label">If you change it</b> It changes the scale of all values but
+      mostly preserves the relative pattern between cells; downstream HVG selection can shift slightly. It's
+      rarely changed except to match another analysis's convention (e.g. 1,000,000 = CPM).</div>
+    <div class="callout say"><b class="label">How to explain it</b> "Counts were normalized to 10,000 per cell
+      and log-transformed, to correct for differences in sequencing depth between cells."</div>
+  </div>
+
+  <h3>Highly variable genes (HVGs)</h3>
+  <p>Most genes behave the same in every cell type (housekeeping genes) or are too sparsely measured to be
+  informative. Cell identity is written in the genes that vary <i>more than expected</i> between cells.
+  Focusing on them sharpens the biological signal and reduces noise and computation. Three settings define
+  them (Scanpy's <code>seurat</code> method):</p>
+  <div class="callout comp"><b class="label">How the seurat method works</b>
+    <ol>
+      <li>For each gene, compute its mean expression and its <b>dispersion</b> (variance ÷ mean), on the
+      normalized scale, then take logs.</li>
+      <li>Sort genes into 20 bins by mean expression.</li>
+      <li>Within each bin, convert dispersion into a z-score: the <b>normalized dispersion</b>. This asks "is
+      this gene more variable than other genes expressed at a similar level?". That matters because in count
+      data variability naturally depends on expression level.</li>
+      <li>Keep genes inside the mean window whose normalized dispersion is above the minimum.</li>
+    </ol></div>
+
+  <div class="setting">
+    <div class="setting-head"><span class="name">HVG min mean</span><span class="value">reference: 0.0125</span></div>
+    <div class="callout bio"><b class="label">Biology</b> Excludes genes so rarely detected that their apparent
+      variability is mostly sampling noise (dropout), not biology.</div>
+    <div class="callout change"><b class="label">If you change it</b> Lower values admit more low-expressed genes.
+      This can add genuine markers of small populations, but also noise. Higher values focus on robustly
+      measured genes.</div>
+  </div>
+  <div class="setting">
+    <div class="setting-head"><span class="name">HVG max mean</span><span class="value">reference: 3</span></div>
+    <div class="callout bio"><b class="label">Biology</b> Excludes the very highest-expressed genes (often
+      housekeeping or ribosomal genes) whose variation says little about cell identity and could dominate the
+      analysis.</div>
+    <div class="callout change"><b class="label">If you change it</b> Raising it admits very abundant genes.
+      Some genuine markers are highly expressed (e.g. <i>LYZ</i> in monocytes), and they still count for
+      marker testing, which uses all genes.</div>
+  </div>
+  <div class="setting">
+    <div class="setting-head"><span class="name">HVG min dispersion</span><span class="value">reference: 0.5 (normalized dispersion)</span></div>
+    <div class="callout bio"><b class="label">Biology</b> The core criterion: keep genes that are at least
+      half a standard deviation more variable than genes of similar expression. These are the genes most
+      likely to differ between cell types or states.</div>
+    <div class="callout change"><b class="label">If you change it</b> Lower means more HVGs (more signal but
+      more noise); higher means fewer, more strongly variable genes. A common alternative is to request a
+      fixed number (e.g. top 2,000).</div>
+  </div>
+  <div class="callout run"><b class="label">In your PBMC3k run</b> <b>1,846 HVGs</b> out of 13,714 genes,
+    identical to the validated notebook.</div>
+  <figure><img src="hvg.png" style="width:92%"><figcaption><b>Highly variable genes, PBMC3k.</b> Each dot is one
+    of the 13,714 genes. Left: normalized dispersion vs mean expression. Right: raw dispersion. Black = selected
+    HVGs (inside the mean window and above the dispersion cut-off); grey = not selected.</figcaption></figure>
+
+  <div class="callout comp"><b class="label">Kept automatically: all genes in "raw"</b> Before the data is
+    reduced to the 1,846 HVGs, the log-normalized values of <b>all 13,714 genes</b> are stored in
+    <code>adata.raw</code>. Marker testing (Part 6) uses these, so a gene can be found as a marker even if it
+    wasn't an HVG, and marker results aren't distorted by regression or scaling.</div>
+
+  <div class="setting">
+    <div class="setting-head"><span class="name">Regress out total counts and % mitochondrial</span><span class="value">reference: on · <code>regress_out</code></span></div>
+    <p>For each HVG, removes the part of its expression explained by the cell's total counts and its
+    mitochondrial share.</p>
+    <div class="callout comp"><b class="label">Computation</b> For each gene separately, a linear model predicts
+      its expression from <code>total_counts</code> and <code>pct_counts_mt</code> (as calculated at QC). The
+      gene's values are replaced by the <i>residuals</i>: what's left after that prediction. It's the slowest
+      preprocessing step.</div>
+    <div class="callout bio"><b class="label">Biology, and the trade-off</b> The aim is to stop technical
+      factors (capture depth, mild damage) from driving clusters. The risk: if a real cell type naturally has
+      more RNA or more mitochondria, regressing those factors out also removes part of the biology that
+      distinguishes it. The field has moved away from routine regression (current best-practice reviews treat it
+      as optional, mainly for strong, well-understood confounders such as the cell cycle).</div>
+    <div class="callout run"><b class="label">In your PBMC3k run</b> On, because your original analysis used it.
+      It is required to reproduce your results exactly.</div>
+    <div class="callout change"><b class="label">If you change it</b> Turning it off changes every downstream result
+      (PCA, clusters, UMAP). It does not change the marker gene <i>values</i>, which come from <code>raw</code>,
+      but it can change which cells end up in which cluster. It's a legitimate analysis choice, and it's recorded.</div>
+    <div class="callout say"><b class="label">How to explain it</b> "We regressed out total counts and mitochondrial
+      percentage to reduce technical variation, as in the original analysis. This is optional, and can remove
+      biology correlated with those factors, so the app makes it a visible setting."</div>
+  </div>
+
+  <div class="setting">
+    <div class="setting-head"><span class="name">Advanced: Scaling limit</span><span class="value">reference: 10 · <code>scale(max_value=10)</code></span></div>
+    <p>Turns each gene into a z-score (mean 0, standard deviation 1 across cells) and caps values at ±10.</p>
+    <div class="callout comp"><b class="label">Computation</b> Without scaling, PCA would be dominated by the most
+      highly expressed genes, simply because their numbers are larger. Scaling gives every HVG equal weight. The
+      cap stops a handful of extreme cells (e.g. the only cells expressing a gene) from pulling a whole principal
+      component toward themselves.</div>
+    <div class="callout bio"><b class="label">Biology</b> Equal weighting means a modest but consistent difference in a
+      transcription factor counts as much as a large difference in an abundant gene. That's usually what you want
+      for finding cell types. The trade-off is that noisy genes are amplified too, which is why HVG selection
+      happens first.</div>
+    <div class="callout run"><b class="label">In your PBMC3k run</b> <b>4,540 values</b> were capped, out of ~4.9
+      million (2,670 × 1,846): under 0.1%.</div>
+    <div class="callout change"><b class="label">If you change it</b> Rarely needed. A lower cap reduces the
+      influence of rare high-expressing cells; no cap lets them dominate.</div>
+  </div>
+</section>
+
+<!-- ============================== PART 4: PCA & UMAP ============================== -->
+<section class="part">
+  <div class="eyebrow">Part 4 · Tab: PCA &amp; UMAP</div>
+  <h2>Principal components, the neighbor graph, and UMAP</h2>
+  <p>Even 1,846 genes are too many dimensions to compare cells directly: noise accumulates across genes
+  and distances become uninformative. This stage compresses the data, connects similar cells, and draws a
+  picture.</p>
+
+  <div class="setting">
+    <div class="setting-head"><span class="name">Number of PCs</span><span class="value">reference: 40 · <code>pca(n_comps=40, svd_solver="arpack", random_state=0)</code></span></div>
+    <p>Principal component analysis (PCA) finds new axes, principal components (PCs), that capture the largest
+    patterns of genes varying together.</p>
+    <div class="callout comp"><b class="label">Computation</b> PCA rotates the scaled data so that PC1 captures the
+      most variance, PC2 the next most (and is uncorrelated with PC1), and so on. Each cell gets a coordinate on
+      each PC; each gene gets a weight ("loading") on each PC. Keeping the first PCs and discarding the rest
+      removes much of the gene-level noise.</div>
+    <div class="callout bio"><b class="label">Biology</b> Early PCs typically separate the biggest biological
+      differences. In PBMCs: lymphoid vs myeloid cells, then T/NK vs B, monocyte subtypes, and so on. Later PCs
+      capture finer distinctions (e.g. dendritic cells, platelets), then mostly noise. The genes with the
+      largest loadings on a PC tell you what biology it represents.</div>
+    <div class="callout run"><b class="label">In your PBMC3k run</b> 40 PCs explain <b>11.5%</b> of the total
+      variance. That sounds low but is normal for single-cell data, where most variance is technical sampling
+      noise spread across genes. <b>Why 40:</b> your original notebook never called PCA explicitly; Scanpy
+      computed it inside the neighbors step using <code>n_pcs=40</code>, so 40 is what was actually used. The
+      app makes this step explicit and visible, with identical results.</div>
+    <div class="callout change"><b class="label">If you change it</b> Too few PCs can merge populations whose
+      distinguishing pattern lives in a later PC (rare types are most at risk). Too many add noise; results are
+      usually fairly robust above ~20–30 for PBMCs. Use the elbow plot: where the curve flattens, extra PCs add
+      little.</div>
+    <div class="callout say"><b class="label">How to explain it</b> "We reduced the 1,846 scaled HVGs to 40
+      principal components, which capture the main axes of biological variation, and used them to compare cells."</div>
+  </div>
+
+  <div class="two">
+    <figure><img src="elbow.png"><figcaption><b>Variance explained per PC (log scale).</b> Steep early decline
+      (major biological axes), then a long flat tail (finer structure and noise).</figcaption></figure>
+    <figure><img src="umap_res1.png"><figcaption><b>UMAP of PBMC3k</b>, colored by the 8 Leiden clusters at the
+      reference resolution.</figcaption></figure>
+  </div>
+
+  <div class="setting">
+    <div class="setting-head"><span class="name">Number of neighbors</span><span class="value">reference: 10 · <code>neighbors(n_neighbors=10)</code></span></div>
+    <p>For every cell, finds its 10 most similar cells and links them, building the <b>neighbor graph</b>.
+    Clustering and UMAP both work on this graph, not on the raw data.</p>
+    <div class="callout comp"><b class="label">Computation</b> Similarity is Euclidean distance in PC space. For
+      datasets under ~4,000 cells, Scanpy computes neighbors exactly (otherwise it uses a fast approximation).
+      The graph's connection strengths ("connectivities", between 0 and 1) come from the UMAP method: close
+      neighbors get strong links, farther ones weaker.</div>
+    <div class="callout bio"><b class="label">Biology</b> The graph encodes "these cells have similar
+      transcriptomes", the operational definition of being the same cell type or state. The number of
+      neighbors sets the scale: small values emphasize fine local structure (subtypes, states); large values
+      emphasize broad structure (major lineages).</div>
+    <div class="callout change"><b class="label">If you change it</b> Smaller values usually give more, smaller
+      clusters and a more fragmented UMAP. Larger values give smoother results, but small populations can be
+      absorbed. Your platelet cluster has 13 cells, so with far more than 13 neighbors each platelet would be
+      forced to link to many non-platelets.</div>
+    <div class="callout say"><b class="label">How to explain it</b> "Each cell was connected to its 10 nearest
+      neighbors in PCA space; clusters and the UMAP are derived from this graph."</div>
+  </div>
+
+  <div class="setting">
+    <div class="setting-head"><span class="name">Advanced: PCs used for the neighbor graph</span><span class="value">reference: 40 · must be ≤ number of PCs</span></div>
+    <p>How many of the computed PCs the neighbor graph uses. Separate from "Number of PCs" so you can compute
+    more PCs to inspect (say 50) but build the graph from fewer (say 30). Entering more than you computed
+    gives a clear message instead of an error.</p>
+  </div>
+
+  <div class="callout comp"><b class="label">Fixed settings (recorded, not shown on screen)</b> Random seed 0
+    for PCA, the graph and UMAP; PCA solver <code>arpack</code> (Scanpy's default for this data, written out so a
+    future Scanpy default change can't silently alter results); Euclidean distance; UMAP's standard defaults
+    (min_dist 0.5, spread 1.0, spectral initialization). Fixed seeds make runs exactly repeatable.</div>
+
+  <h3>UMAP</h3>
+  <div class="setting">
+    <div class="setting-head"><span class="name">UMAP (drawn automatically by "Run PCA &amp; UMAP")</span><span class="value"><code>umap(random_state=0)</code></span></div>
+    <p>UMAP (Uniform Manifold Approximation and Projection) lays the neighbor graph out in 2-D so that connected
+    cells sit close together.</p>
+    <div class="callout warn"><b class="label">How to read a UMAP, and how not to</b>
+      <ul>
+        <li>It is for <b>looking</b>, not measuring. Local neighborhoods are meaningful: cells in one blob are similar.</li>
+        <li><b>Distances between clusters, cluster sizes on the plot, and empty space are not reliable.</b>
+        Two far-apart blobs aren't necessarily more different than two nearby ones.</li>
+        <li>It changes with the random seed and settings.</li>
+        <li>A UMAP that "looks like" another one is not evidence that two analyses agree. That is why the app
+        compares cluster assignments and markers, never pictures.</li>
+      </ul></div>
+    <div class="callout run"><b class="label">A finding from building the app</b> Scanpy's UMAP quietly
+      <b>prunes the weakest edges of the neighbor graph</b> as a side effect. If clustering runs after UMAP, it
+      clusters a slightly different graph: in PBMC3k, ~21 cells moved between the T and NK clusters. Your notebook
+      clustered before UMAP. The app now restores the true graph after drawing UMAP, so clusters are identical
+      whichever order the steps run in. This is a good example of why the app checks results numerically rather
+      than visually.</div>
+  </div>
+</section>
+
+<!-- ============================== PART 5: CLUSTERING ============================== -->
+<section class="part">
+  <div class="eyebrow">Part 5 · Tab: Clustering</div>
+  <h2>Leiden clustering</h2>
+  <p>Clustering divides the neighbor graph into groups of cells that are more connected to each other than to
+  the rest: communities in a social network. These groups are <i>candidate</i> cell types or states;
+  naming them happens later, from marker evidence.</p>
+
+  <div class="setting">
+    <div class="setting-head"><span class="name">Resolution</span><span class="value">reference: 1.0 · <code>leiden(resolution=1.0)</code></span></div>
+    <p>Controls how finely the graph is divided. Higher resolution gives more, smaller clusters; lower gives
+    fewer, larger ones.</p>
+    <div class="callout comp"><b class="label">Computation</b> The Leiden algorithm searches for the partition of
+      the graph that maximizes a quality score: roughly, the number of connections inside clusters compared with
+      what you'd expect by chance. The resolution parameter changes how strongly that "expected by chance" term
+      counts, and so how large the clusters tend to be. Leiden improves on the older Louvain method by
+      guaranteeing that clusters are internally well connected.</div>
+    <div class="callout bio"><b class="label">Biology</b> There is no single "correct" number of clusters. Cell
+      identity is hierarchical: lymphoid → T cell → CD4 T → naive or memory CD4 T. Resolution chooses the level of
+      the hierarchy you look at. Over-clustering splits one cell type into states (activation, cell cycle) or into
+      technically driven groups; under-clustering merges distinct types (e.g. CD4 and CD8 T cells, or DCs into
+      monocytes). The right resolution is the one at which clusters are biologically interpretable and supported by
+      distinct markers.</div>
+    <div class="callout run"><b class="label">In your PBMC3k run</b> Resolution 1.0 gives <b>8 clusters</b> of
+      1,131 / 430 / 342 / 326 / 214 / 178 / 36 / 13 cells, identical to the validated notebook (every one of the
+      2,670 cells is in the same cluster). Cluster numbers are labels only: "0" is simply the largest.</div>
+    <div class="callout change"><b class="label">If you change it</b> The same data at three resolutions:</div>
+    <div class="three">
+      <figure><img src="umap_res0.5.png"><figcaption>0.5: 6 clusters. Several populations merge (e.g. the two monocyte groups).</figcaption></figure>
+      <figure><img src="umap_res1.png"><figcaption>1.0 (reference): 8 clusters, matching the known PBMC populations.</figcaption></figure>
+      <figure><img src="umap_res2.0.png"><figcaption>2.0: 21 clusters, splitting cell types into sub-states.</figcaption></figure>
+    </div>
+    <p>Note that the B-cell cluster (342 cells) and the platelet cluster (13 cells) are identical at 0.5 and 1.0. Very
+    distinct populations are stable across resolutions; that stability is itself evidence they are real.</p>
+    <div class="callout say"><b class="label">How to explain it</b> "Cells were clustered with the Leiden algorithm
+      on the neighbor graph at resolution 1.0, giving 8 clusters. Resolution controls granularity; we chose the
+      level at which clusters correspond to interpretable cell types with distinct markers."</div>
+  </div>
+  <div class="callout comp"><b class="label">Fixed settings (recorded)</b> Implementation <code>leidenalg</code>
+    (pinned: Scanpy plans to switch its default to <code>igraph</code>, a different implementation that can give
+    different clusters); iterations −1 (run until the result stops changing); graph treated as directed (the
+    leidenalg default); random seed 0. With the seed fixed, the same input always gives the same clusters.</div>
+</section>
+
+<!-- ============================== PART 6: MARKER GENES ============================== -->
+<section class="part">
+  <div class="eyebrow">Part 6 · Tab: Marker genes</div>
+  <h2>Marker genes: what distinguishes each cluster</h2>
+  <p>A cluster is just a group of cells. <b>Marker genes</b>, those much more active in one cluster than in the
+  rest, are what tell you what the group is. This step ranks every gene for every cluster.</p>
+
+  <div class="setting">
+    <div class="setting-head"><span class="name">Test</span><span class="value">reference: Wilcoxon rank-sum · <code>rank_genes_groups(method="wilcoxon", use_raw=True)</code></span></div>
+    <p>The statistical test used to compare each cluster with all other cells ("one versus rest").</p>
+    <div class="callout comp"><b class="label">Computation</b>
+      <ul>
+        <li><b>The test:</b> for each cluster and each of the 13,714 genes (from <code>raw</code>: log-normalized,
+        not regressed or scaled), the <b>Wilcoxon rank-sum test</b> asks whether the gene's values tend to rank
+        higher in the cluster than in all other cells.</li>
+        <li><b>Why Wilcoxon:</b> it uses ranks, not raw values, so it doesn't assume a bell-shaped distribution.
+        That suits sparse, zero-heavy single-cell data, and it is robust to outliers.</li>
+        <li><b>The t-test option:</b> it compares means instead. It's faster but assumes roughly normal data.</li>
+        <li><b>Correction:</b> p-values are adjusted for testing thousands of genes (Benjamini–Hochberg).</li>
+      </ul></div>
+    <div class="callout bio"><b class="label">Biology</b> Good markers combine three things: high specificity
+      (expressed in this cluster, rarely elsewhere), a large effect, and broad expression within the cluster.
+      Classic cell-type markers (e.g. <i>CD79A</i> for B cells) score highly on all three.</div>
+  </div>
+
+  <h3>Reading the results</h3>
+  <table>
+    <tr><th>Column</th><th>Meaning</th><th>How to use it</th></tr>
+    <tr><td>Rank</td><td>1 = most distinctive gene for this cluster</td><td>Read the top 10–25 for identity</td></tr>
+    <tr><td>Score</td><td>The test statistic (a z-score); higher = more consistently higher in the cluster</td><td>Determines the ranking</td></tr>
+    <tr><td>Log fold change</td><td>log<sub>2</sub> of (mean expression in cluster ÷ mean elsewhere)</td><td>Effect size: 1 = 2-fold, 3 = 8-fold higher</td></tr>
+    <tr><td>% in cluster / % in other cells</td><td>Share of cells with any expression, inside vs outside</td><td>Specificity: e.g. CD79A is 94% in B cells vs 4% elsewhere</td></tr>
+    <tr><td>Adjusted p (ranking only)</td><td>Benjamini–Hochberg-corrected p-value</td><td>See the caveat below; don't report as significance</td></tr>
+  </table>
+  <div class="callout warn"><b class="label">The statistical caveat everyone should know: "double dipping"</b> The
+    clusters were <i>defined</i> from these same cells' expression. Testing for differences between groups that were
+    built to be different is circular, so p-values come out far too small (in PBMC3k, as low as 10<sup>−200</sup>).
+    They are still useful for <b>ranking</b> candidate markers, but they are not evidence that a difference is real.
+    Formally valid inference requires different methods (e.g. held-out data, or approaches designed for
+    post-clustering testing). For comparing <i>conditions</i> (e.g. patients vs controls), the field uses
+    <b>pseudobulk</b> testing with biological replicates, a future feature.</div>
+
+  <figure><img src="dotplot.png" style="width:96%"><figcaption><b>Top 3 marker genes per cluster.</b> Dot size =
+    % of cells in the cluster expressing the gene; color = mean expression. The diagonal blocks show each cluster's
+    own markers. Examples: cluster 1 (S100A9, LYZ, S100A8: classical monocytes), cluster 2 (CD74, CD79A, HLA-DRA:
+    B cells), cluster 5 (NKG7, GZMB, PRF1: NK cells), cluster 7 (SDPR, GNG11, PF4: platelets). The app draws this
+    without a dendrogram, so clusters keep their own order and no extra clustering is run behind the scenes.</figcaption></figure>
+  <div class="callout run"><b class="label">In your PBMC3k run</b> The full ranking of all 13,714 genes in all 8
+    clusters is identical to the validated notebook (scores, fold changes and p-values to the last digit). Note cluster
+    0's top genes are ribosomal proteins and <i>LDHB</i>. That is typical of naive/resting T cells, and it's why CD4
+    identity is judged from specific markers (<i>IL7R</i>, <i>CCR7</i>) further down the list.</div>
+  <div class="callout say"><b class="label">How to explain it</b> "Marker genes were ranked for each cluster
+    against all other cells using the Wilcoxon rank-sum test on log-normalized expression of all genes. Because the
+    clusters were derived from the same data, p-values are used only to rank genes, not as significance tests."</div>
+</section>
+
+<!-- ============================== PART 7: CELL TYPES ============================== -->
+<section class="part">
+  <div class="eyebrow">Part 7 · Tab: Cell types</div>
+  <h2>Predicting cell types from marker evidence</h2>
+  <p>This step proposes a cell type for each cluster, the way an expert would ("high <i>CD79A</i> and <i>MS4A1</i>,
+  so B cells"), but written down, repeatable, and with its evidence shown. Crucially, it <b>never assigns labels by
+  cluster number</b>. Cluster numbering can change with software versions or seeds, so labels must come from the
+  data.</p>
+
+  <h3>The marker sets</h3>
+  <p>The app scores each cluster against canonical PBMC marker sets. The biology behind each:</p>
+  <table>
+    <tr><th>Cell type</th><th>Markers</th><th>What the genes are</th></tr>
+    <tr><td>CD4+ T cells</td><td>IL7R, CCR7</td><td><i>IL7R</i> = CD127, the IL-7 receptor needed for T-cell survival (high on naive and memory CD4 T). <i>CCR7</i> = a chemokine receptor that homes naive and central-memory T cells to lymph nodes.</td></tr>
+    <tr><td>CD8+ T cells</td><td>CD8A, CD8B</td><td>The two chains of the CD8 co-receptor, which binds MHC class I: the defining feature of cytotoxic T cells.</td></tr>
+    <tr><td>NK cells</td><td>GNLY, NKG7</td><td><i>GNLY</i> = granulysin, an antimicrobial and cytotoxic protein in killing granules. <i>NKG7</i> = a granule protein that controls their release. (Also present in cytotoxic CD8 T cells.)</td></tr>
+    <tr><td>B cells</td><td>MS4A1, CD79A</td><td><i>MS4A1</i> = CD20, the classic B-cell surface marker (the target of rituximab). <i>CD79A</i> = Igα, the signaling part of the B-cell receptor.</td></tr>
+    <tr><td>CD14+ Monocytes</td><td>CD14, LYZ</td><td><i>CD14</i> = co-receptor for bacterial lipopolysaccharide; defines classical monocytes. <i>LYZ</i> = lysozyme, an antibacterial enzyme abundant in myeloid cells.</td></tr>
+    <tr><td>FCGR3A+ Monocytes</td><td>FCGR3A, MS4A7</td><td><i>FCGR3A</i> = CD16, an antibody (Fc) receptor that defines non-classical monocytes. <i>MS4A7</i> = a monocyte-associated membrane protein.</td></tr>
+    <tr><td>Dendritic cells</td><td>FCER1A, CST3</td><td><i>FCER1A</i> = the high-affinity IgE receptor α chain, on conventional type-2 DCs (and basophils). <i>CST3</i> = cystatin C, high in DCs (and monocytes).</td></tr>
+    <tr><td>Megakaryocytes / platelets</td><td>PPBP</td><td>Pro-platelet basic protein (CXCL7), stored in platelet granules.</td></tr>
+  </table>
+  <p class="small"><i>CD3D</i> (part of the T-cell receptor complex, present on all T cells) is shown as context but
+  not used for scoring: it can't distinguish CD4 from CD8 T cells. The marker sets are settings, not code, so other
+  tissues or species can use other sets.</p>
+
+  <h3>How a cluster is scored</h3>
+  <ol>
+    <li>For each marker gene, take its average expression in the cluster (log-normalized, from <code>raw</code>).</li>
+    <li>Turn it into a <b>z-score across clusters</b>: how far above or below the average cluster this cluster is,
+    in standard deviations. +2 means "far higher than typical".</li>
+    <li>A cell type's <b>score</b> is the average z-score of its markers. B cells score 2.64 in cluster 2 because
+    <i>MS4A1</i> and <i>CD79A</i> are far above average there.</li>
+    <li>The best-scoring type is proposed, <b>only if</b> it passes three checks. Otherwise the cluster stays
+    <b>"Unresolved"</b>, and its best candidate is still shown.</li>
+  </ol>
+
+  <div class="setting">
+    <div class="setting-head"><span class="name">Advanced: Ambiguity margin</span><span class="value">reference: 0.5</span></div>
+    <p>The best score must beat the second-best by at least this much; otherwise the cluster is <b>ambiguous</b>.</p>
+    <div class="callout bio"><b class="label">Biology</b> Protects against confident-sounding labels for mixed or
+      intermediate clusters: doublets, transitional states, or populations sharing markers (e.g. cytotoxic CD8 T vs NK
+      cells, which share <i>NKG7</i>/<i>GNLY</i>).</div>
+    <div class="callout run"><b class="label">In your PBMC3k run</b> The smallest margin was 1.32 (dendritic cells vs
+      CD14+ monocytes, which share <i>CST3</i>/<i>LYZ</i>), well above 0.5. No cluster was ambiguous.</div>
+  </div>
+  <div class="setting">
+    <div class="setting-head"><span class="name">Advanced: Top-N marker rank</span><span class="value">reference: 50</span></div>
+    <p>At least one of the proposed cell type's markers must be among the cluster's top 50 marker genes; otherwise the
+    cluster is <b>unsupported</b>.</p>
+    <div class="callout bio"><b class="label">Biology</b> Two kinds of evidence must agree: the scoring (relative
+      expression across clusters) and the marker test (what actually distinguishes this cluster). A label that wins the
+      score but isn't backed by the cluster's own top genes deserves suspicion.</div>
+    <div class="callout run"><b class="label">In your PBMC3k run</b> Every label was supported. The weakest support was
+      CD4+ T cells (<i>IL7R</i> at rank 43), because the cluster's top genes are ribosomal.</div>
+  </div>
+  <div class="setting">
+    <div class="setting-head"><span class="name">Advanced: Conflict threshold (z)</span><span class="value">reference: 1.0 · display only</span></div>
+    <p>Lists another cell type's marker as "conflicting" when its z-score in the cluster is at least 1.0. Evidence only:
+    it never changes a label.</p>
+    <div class="callout run"><b class="label">In your PBMC3k run</b>
+      <ul>
+        <li><i>CST3</i> (a DC marker) in both monocyte clusters. Expected: monocytes express cystatin C.</li>
+        <li><i>IL7R</i> and <i>NKG7</i> in the CD8 cluster. It's a cytotoxic/memory population.</li>
+        <li><i>FCGR3A</i> in NK cells. Expected: CD56-dim NK cells express CD16.</li>
+        <li><i>LYZ</i> in dendritic cells, shared with monocytes.</li>
+      </ul>
+      These match your manual review.</div>
+    <div class="callout warn"><b class="label">Limitation</b> Conflicts are judged on cluster <i>averages</i>, so a minority
+      subpopulation is invisible. For example, ~19% of cells in the CD4 cluster express <i>CD8A/CD8B</i>; your manual
+      review caught this, the algorithm can't.</div>
+  </div>
+
+  <figure><img src="umap_types.png" style="width:70%"><figcaption><b>Predicted cell types, PBMC3k.</b> All 8 clusters
+    "confident". These are predictions from marker evidence, not analyst-reviewed labels.</figcaption></figure>
+
+  <h3>Predicted labels vs your reviewed labels</h3>
+  <p>The app keeps two kinds of label strictly separate:</p>
+  <table>
+    <tr><th></th><th>Predicted</th><th>Analyst-reviewed (your review, 8 Oct 2026)</th></tr>
+    <tr><td>Source</td><td>The algorithm, from marker evidence</td><td>Your expert judgement of the evidence</td></tr>
+    <tr><td>Used for</td><td>The app, any dataset</td><td>Validating the app on PBMC3k only</td></tr>
+    <tr><td>Status</td><td>A reproducible proposal</td><td>Working labels, not independently validated ground truth</td></tr>
+  </table>
+  <p>Your review refined four labels: <b>CD4-enriched T cells</b> (19% of cells express CD8 genes),
+  <b>Cytotoxic/memory T cells (CD8-enriched)</b> (43% lack detectable CD8A/B; cytotoxic program shared with NK),
+  <b>Conventional dendritic cells (cDC2-enriched)</b> (FCER1A/CLEC10A/CD1C; a few plasmacytoid DCs mixed in), and
+  <b>Platelet-lineage cells</b> rather than "megakaryocytes" (mature megakaryocytes rarely circulate; these 13 cells
+  are most plausibly platelets). The app's predictions agree with your review for 100% of cells.</p>
+  <div class="callout say"><b class="label">How to explain it</b> "Cell types were predicted for each cluster by
+    scoring canonical marker sets, with checks for ambiguity and marker support. Unclear clusters are left
+    unresolved. Predictions were then compared with an independent manual review, and agreed for all cells. Neither
+    is a claim of definitive biological identity."</div>
+</section>
+
+<!-- ============================== PART 8: REPRODUCIBILITY ============================== -->
+<section class="part">
+  <div class="eyebrow">Part 8</div>
+  <h2>Reproducibility and validation</h2>
+  <h3>Why a validated reference was needed</h3>
+  <ul>
+    <li><b>The original notebook had been run out of order:</b> regression and scaling ran after neighbors and
+    clustering in the saved session, so its saved results couldn't be reproduced exactly.</li>
+    <li><b>PCA was hidden</b> inside another step (it used 40 components, not the 50 often assumed).</li>
+    <li><b>Package versions weren't recorded.</b></li>
+  </ul>
+  <p>A clean, validated version (<code>scrna-seq-validated.ipynb</code>) reproduces every value the original saved, and
+  became the answer key.</p>
+  <h3>How the app is checked</h3>
+  <ul>
+    <li><b>Bit-identical to the reference:</b> the whole analysis through the app matches the validated notebook exactly:
+    QC values, the 1,846 HVGs, PCA, the neighbor graph, UMAP, all 2,670 cluster assignments, all marker rankings, and
+    every predicted label.</li>
+    <li><b>Computes, doesn't memorize:</b> the analysis code contains no PBMC3k answers. An automatic check scans for them.
+    It was also run in a folder with no answer key present and still produced identical results; and every step is tested
+    on other data and settings against direct Scanpy calls.</li>
+    <li><b>246 automated tests</b> run in about 30 seconds.</li>
+    <li><b>Every run records</b> its settings, random seeds, package versions, the input file's fingerprint, and a
+    timestamped history of each step.</li>
+  </ul>
+  <h3>Hidden behaviors found and handled</h3>
+  <ul>
+    <li><b>UMAP prunes the neighbor graph in place</b> (Part 4): the true graph is now restored.</li>
+    <li><b>Some Scanpy plots write into the data:</b> the UMAP plot stores colors; the marker dot plot runs an extra
+    hierarchical clustering. The app plots from copies and switches the extra clustering off.</li>
+    <li><b>Implicit defaults are written out</b> (PCA solver, Leiden implementation and direction, marker-test options),
+    each verified to give identical results, so a future software update can't silently change the analysis.</li>
+  </ul>
+</section>
+
+<!-- ============================== PART 9: Q&A ============================== -->
+<section class="part qa">
+  <div class="eyebrow">Part 9</div>
+  <h2>Questions supervisors ask, and good answers</h2>
+  <h4>"How did you choose the QC thresholds?"</h4>
+  <p>They come from the original analysis and follow the standard PBMC3k workflow: ≥200 genes (excludes empty droplets),
+  &lt;2,500 genes (simple doublet proxy), &lt;6% mitochondrial (damaged cells; PBMCs are low in mitochondrial RNA). Together
+  they removed 30 of 2,700 cells. The app previews any alternative before applying it.</p>
+  <h4>"Isn't regressing out total counts removing biology?"</h4>
+  <p>It can, which is why it's an explicit setting rather than hidden. It's kept on to reproduce the original analysis;
+  current best practice treats it as optional. Marker genes are computed from unregressed data either way.</p>
+  <h4>"Why 8 clusters? How do you know that's right?"</h4>
+  <p>The number follows from resolution 1.0, not from a target. At 0.5 there are 6 clusters, at 2.0 there are 21. At 1.0
+  every cluster has distinct canonical markers and maps onto a known PBMC population; the most distinct populations (B cells,
+  platelets) are stable across resolutions. "Right" means interpretable and supported by markers, not unique.</p>
+  <h4>"Two clusters are close on the UMAP. Are they similar?"</h4>
+  <p>Not necessarily. UMAP preserves local neighborhoods but not global distances. Similarity is assessed from the neighbor
+  graph, clusters and markers, not from distances on the plot.</p>
+  <h4>"Are the marker p-values significant?"</h4>
+  <p>They are used only for ranking. The clusters were defined from the same data ("double dipping"), so p-values are
+  inflated. Biological claims rest on effect size, specificity and known biology.</p>
+  <h4>"How do you know the app gives the right answer?"</h4>
+  <p>It reproduces a validated reference analysis exactly, cell by cell and gene by gene; it is tested on other data
+  against direct Scanpy calls; and it records every setting, seed and software version. Agreement with the reference shows
+  correct <i>implementation</i>; biological interpretation still rests on marker evidence and expert review.</p>
+  <h4>"Are the cell-type labels definitive?"</h4>
+  <p>No. They are predictions from marker evidence, reviewed by an analyst. Some clusters are mixtures (e.g. CD8-expressing
+  cells within the CD4 cluster). Definitive identity would need orthogonal evidence: protein markers (CITE-seq, flow
+  cytometry), a reference atlas, or finer subclustering.</p>
+  <h4>"What would you add next?"</h4>
+  <p>Doublet detection (e.g. Scrublet), reference-based annotation (e.g. CellTypist), multiple samples with pseudobulk
+  differential expression, other file formats, and an export of the analysis with its full record. All are planned after
+  the PBMC3k prototype.</p>
+</section>
+
+<!-- ============================== APPENDICES ============================== -->
+<section class="part">
+  <div class="eyebrow">Appendix A</div>
+  <h2>Every setting at a glance</h2>
+  <table>
+    <tr><th>Tab</th><th>Setting</th><th class="num">Reference</th><th>Raise it →</th><th>Lower it →</th></tr>
+    <tr><td>Data &amp; QC</td><td>Min genes per cell</td><td class="num">200</td><td>Removes more low-complexity cells (risk: small cell types)</td><td>Keeps more barcodes (risk: empty droplets)</td></tr>
+    <tr><td></td><td>Min cells per gene</td><td class="num">3</td><td>Drops rarely detected genes (risk: rare-population markers)</td><td>Keeps more genes</td></tr>
+    <tr><td></td><td>Max genes per cell</td><td class="num">2,500</td><td>Keeps more cells (risk: doublets)</td><td>Removes more suspected doublets (risk: large single cells)</td></tr>
+    <tr><td></td><td>Max % mitochondrial</td><td class="num">6</td><td>Keeps more cells (risk: damaged cells)</td><td>Removes more damaged cells (risk: healthy high-mito cells)</td></tr>
+    <tr><td>Preprocessing</td><td>Target sum per cell</td><td class="num">10,000</td><td colspan="2">Changes the scale of values; patterns mostly preserved</td></tr>
+    <tr><td></td><td>HVG min mean</td><td class="num">0.0125</td><td>Fewer, better-measured HVGs</td><td>More low-expressed HVGs (more noise)</td></tr>
+    <tr><td></td><td>HVG max mean</td><td class="num">3</td><td>Admits very abundant genes</td><td>Excludes more abundant genes</td></tr>
+    <tr><td></td><td>HVG min dispersion</td><td class="num">0.5</td><td>Fewer, more variable HVGs</td><td>More HVGs (more noise)</td></tr>
+    <tr><td></td><td>Regress out counts &amp; % mito</td><td class="num">on</td><td colspan="2">Off: keeps any biology correlated with these factors; changes all downstream results</td></tr>
+    <tr><td></td><td>Scaling limit</td><td class="num">10</td><td>Extreme cells weigh more</td><td>Extreme cells weigh less</td></tr>
+    <tr><td>PCA &amp; UMAP</td><td>Number of PCs</td><td class="num">40</td><td>More fine structure and noise</td><td>Risk of merging rare types</td></tr>
+    <tr><td></td><td>Number of neighbors</td><td class="num">10</td><td>Broader structure; small groups absorbed</td><td>Finer structure; more fragmented</td></tr>
+    <tr><td></td><td>PCs used for the graph</td><td class="num">40</td><td colspan="2">As for number of PCs; must be ≤ number of PCs</td></tr>
+    <tr><td>Clustering</td><td>Resolution</td><td class="num">1.0</td><td>More, smaller clusters (0.5 → 6, 1.0 → 8, 2.0 → 21)</td><td>Fewer, larger clusters</td></tr>
+    <tr><td>Marker genes</td><td>Test</td><td class="num">Wilcoxon</td><td colspan="2">t-test: faster, assumes roughly normal data</td></tr>
+    <tr><td>Cell types</td><td>Ambiguity margin</td><td class="num">0.5</td><td>More clusters left unresolved</td><td>More confident labels for mixed clusters</td></tr>
+    <tr><td></td><td>Top-N marker rank</td><td class="num">50</td><td>Weaker marker support accepted</td><td>Stronger support required</td></tr>
+    <tr><td></td><td>Conflict threshold (z)</td><td class="num">1.0</td><td>Fewer conflicts listed</td><td>More conflicts listed (display only)</td></tr>
+  </table>
+  <p class="small">Fixed and recorded: random seed 0 (PCA, neighbors, Leiden, UMAP); PCA solver arpack; Leiden implementation
+  leidenalg, iterations −1, directed graph; Euclidean distance; marker comparison against all other cells, Benjamini–Hochberg
+  correction, no tie correction; mitochondrial prefix "MT-".</p>
+
+  <div class="eyebrow" style="margin-top:16pt">Appendix B</div>
+  <h2>PBMC3k numbers at each step</h2>
+  <table>
+    <tr><th>Step</th><th>Result (reference settings)</th></tr>
+    <tr><td>Load</td><td>2,700 cells × 32,738 genes</td></tr>
+    <tr><td>QC metrics</td><td>13 mito genes; median 817 genes, 2,197 counts, 2.03% mito per cell</td></tr>
+    <tr><td>Filter</td><td>Removed 0 cells (min genes), 19,024 genes (min cells), 5 cells (max genes), 25 cells (max mito) → 2,670 × 13,714</td></tr>
+    <tr><td>Preprocess</td><td>Median 2,206 counts before normalizing; 1,846 HVGs; regression on; 4,540 values capped at ±10</td></tr>
+    <tr><td>PCA &amp; neighbors</td><td>40 PCs explain 11.5% of variance; 42,340 graph connections</td></tr>
+    <tr><td>Clustering</td><td>8 clusters: 1,131 / 430 / 342 / 326 / 214 / 178 / 36 / 13 cells</td></tr>
+    <tr><td>Markers</td><td>13,714 genes ranked per cluster (Wilcoxon)</td></tr>
+    <tr><td>Cell types</td><td>CD4+ T (1,131), CD14+ Mono (430), B (342), CD8+ T (326), FCGR3A+ Mono (214), NK (178), DC (36), Megakaryocytes/platelets (13): all confident</td></tr>
+  </table>
+</section>
+
+<section class="part">
+  <div class="eyebrow">Appendix C</div>
+  <h2>Glossary</h2>
+  <table>
+    <tr><th>Term</th><th>Meaning</th></tr>
+    <tr><td>AnnData / .h5ad</td><td>Scanpy's data container: the cells × genes matrix plus everything attached to it (QC metrics, clusters, coordinates, results); .h5ad is its file format.</td></tr>
+    <tr><td>Ambient RNA</td><td>Free-floating RNA from lysed cells, captured in every droplet; background contamination.</td></tr>
+    <tr><td>Barcode</td><td>DNA tag identifying the droplet (and so the cell) a read came from.</td></tr>
+    <tr><td>Doublet</td><td>A droplet containing two cells, which looks like one cell with mixed identity.</td></tr>
+    <tr><td>Dropout</td><td>A gene that is expressed but recorded as 0 because its molecules weren't captured.</td></tr>
+    <tr><td>Dispersion</td><td>Variance divided by mean; a measure of variability relative to expression level.</td></tr>
+    <tr><td>Double dipping</td><td>Testing a hypothesis on the same data used to generate it, which inflates significance.</td></tr>
+    <tr><td>HVG</td><td>Highly variable gene: more variable across cells than genes of similar expression.</td></tr>
+    <tr><td>Leiden</td><td>Graph community-detection algorithm used for clustering.</td></tr>
+    <tr><td>Log fold change</td><td>log<sub>2</sub> ratio of mean expression between two groups.</td></tr>
+    <tr><td>Neighbor graph</td><td>Network linking each cell to its most similar cells; the basis of clustering and UMAP.</td></tr>
+    <tr><td>Normalization</td><td>Rescaling counts so cells with different sequencing depth are comparable.</td></tr>
+    <tr><td>PCA / PC</td><td>Principal component analysis: new axes capturing the largest patterns of co-varying genes.</td></tr>
+    <tr><td>Pseudobulk</td><td>Summing counts per cell type per sample, then using bulk methods; the right approach for comparing conditions across replicates.</td></tr>
+    <tr><td>Regression (regress_out)</td><td>Removing the part of each gene's expression explained by technical covariates.</td></tr>
+    <tr><td>Resolution</td><td>Clustering parameter controlling how many clusters are found.</td></tr>
+    <tr><td>Seed (random_state)</td><td>Number fixing the random choices of an algorithm, making results repeatable.</td></tr>
+    <tr><td>UMAP</td><td>2-D visualization of the neighbor graph; local structure is meaningful, global distances are not.</td></tr>
+    <tr><td>UMI</td><td>Unique molecular identifier: random tag that lets each original mRNA molecule be counted once.</td></tr>
+    <tr><td>Wilcoxon rank-sum test</td><td>Non-parametric test of whether values in one group tend to rank higher than in another.</td></tr>
+    <tr><td>z-score</td><td>Number of standard deviations a value is above (positive) or below (negative) the mean.</td></tr>
+  </table>
+
+  <div class="eyebrow" style="margin-top:16pt">Appendix D</div>
+  <h2>Further reading</h2>
+  <ul>
+    <li>Luecken &amp; Theis (2019). Current best practices in single-cell RNA-seq analysis: a tutorial. <i>Molecular Systems Biology</i>.</li>
+    <li>Heumos et al. (2023). Best practices for single-cell analysis across modalities. <i>Nature Reviews Genetics</i>. Companion online book: "Single-cell best practices".</li>
+    <li>Wolf, Angerer &amp; Theis (2018). SCANPY: large-scale single-cell gene expression data analysis. <i>Genome Biology</i>.</li>
+    <li>Traag, Waltman &amp; van Eck (2019). From Louvain to Leiden: guaranteeing well-connected communities. <i>Scientific Reports</i>.</li>
+    <li>McInnes, Healy &amp; Melville (2018). UMAP: Uniform Manifold Approximation and Projection. arXiv.</li>
+    <li>Satija et al. (2015). Spatial reconstruction of single-cell gene expression data. <i>Nature Biotechnology</i> (origin of the "seurat" HVG approach).</li>
+    <li>Zhang, Kamath &amp; Tse (2019). Valid post-clustering differential analysis for single-cell RNA-seq. <i>Cell Systems</i> (the double-dipping problem).</li>
+    <li>Wolock, Lopez &amp; Klein (2019). Scrublet: computational identification of cell doublets. <i>Cell Systems</i>.</li>
+    <li>Hafemeister &amp; Satija (2019). Normalization and variance stabilization of scRNA-seq data using regularized negative binomial regression (sctransform). <i>Genome Biology</i>.</li>
+    <li>Osorio &amp; Cai (2021). Systematic determination of the mitochondrial proportion in human and mice tissues for single-cell RNA-sequencing data quality control. <i>Bioinformatics</i>.</li>
+    <li>Scanpy PBMC3k tutorial ("Preprocessing and clustering 3k PBMCs"), scanpy.readthedocs.io.</li>
+  </ul>
+</section>
+
+</body>
+</html>

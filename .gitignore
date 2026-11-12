@@ -1,0 +1,23 @@
+# Data: never committed (datasets, marker databases, CellTypist models, Census tables).
+# Recreate with the scripts in scripts/ (download_*.py, build_census_markers.py).
+data/
+
+# AnnData / 10x files anywhere, including the generated answer keys in
+# validation/expected*/ (recreate by re-running the reference notebooks).
+*.h5ad
+*.h5
+*.pkl
+
+# Node packages (recreate with `npm install` in app/)
+node_modules/
+
+# Python and test caches
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Editor and OS files
+.DS_Store
+.Rhistory
+.vscode/
+/CLAUDE.md

@@ -539,7 +539,7 @@ function ReductionPlots({ results }: { results: NonNullable<ReductionPayload["re
             <select
               value={metric}
               onChange={(e) => setMetric(e.target.value as Metric)}
-              className="rounded-[4px] border border-field bg-white px-2 py-1 text-[13px]"
+              className="rounded-none border border-field bg-white px-2 py-1 text-[13px]"
             >
               {available.map((m) => (
                 <option key={m} value={m}>

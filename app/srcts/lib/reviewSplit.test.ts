@@ -1,7 +1,7 @@
 // Unit tests for the review tabs' split (run with `npm test`). Hand-made, neutral names.
 import { describe, expect, it } from "vitest";
 
-import { byCluster, splitForReview } from "./reviewSplit";
+import { byCluster, nextToReview, splitForReview } from "./reviewSplit";
 
 const groups = [
   { key: "g1", label: "First", description: "d1" },
@@ -35,5 +35,19 @@ describe("splitForReview", () => {
   });
   it("sorts cluster names naturally", () => {
     expect(["10", "2", "1", "b", "a"].sort(byCluster)).toEqual(["1", "2", "10", "a", "b"]);
+  });
+});
+
+describe("nextToReview", () => {
+  it("goes to the next cluster in To review order and wraps around", () => {
+    expect(nextToReview(["3", "4", "7", "0"], "4")).toBe("7");
+    expect(nextToReview(["3", "4", "7", "0"], "0")).toBe("3");
+  });
+  it("starts at the first one when the open cluster is already labeled", () => {
+    expect(nextToReview(["3", "7"], "5")).toBe("3");
+  });
+  it("is null when no other cluster is left", () => {
+    expect(nextToReview(["3"], "3")).toBeNull();
+    expect(nextToReview([], "3")).toBeNull();
   });
 });

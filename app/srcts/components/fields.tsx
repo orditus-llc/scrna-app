@@ -67,7 +67,7 @@ export function RuledField(props: {
           disabled={props.off}
           onChange={(e) => props.onChange(e.target.value)}
           className={cn(
-            "w-[92px] rounded-[4px] border bg-white px-[10px] py-2 text-right font-mono text-[14px] tabular-nums disabled:bg-chip disabled:text-off",
+            "w-[92px] rounded-none border bg-white px-[10px] py-2 text-right font-mono text-[14px] tabular-nums disabled:bg-chip disabled:text-off",
             differs ? "border-2 border-accent" : "border-field",
           )}
         />
@@ -114,7 +114,7 @@ export function RuledCheck(props: {
  * box, so it reads as information rather than something to change; settings stay on white. */
 export function InfoBox({ children, label, className }: { children: ReactNode; label?: string; className?: string }) {
   return (
-    <div role={label ? "group" : undefined} aria-label={label} className={cn("rounded-[4px] border border-line bg-chip px-4 py-3", className)}>
+    <div role={label ? "group" : undefined} aria-label={label} className={cn("rounded-none border border-line bg-chip px-4 py-3", className)}>
       {children}
     </div>
   );
@@ -122,7 +122,7 @@ export function InfoBox({ children, label, className }: { children: ReactNode; l
 
 export function Note({ dot, children }: { dot: string; children: ReactNode }) {
   return (
-    <p className="m-0 flex items-start gap-[9px] rounded-[4px] bg-chip px-3 py-2 text-[14px] leading-snug text-body">
+    <p className="m-0 flex items-start gap-[9px] rounded-none bg-chip px-3 py-2 text-[14px] leading-snug text-body">
       <span aria-hidden="true" className={`mt-[6px] inline-block size-2 flex-none rounded-full ${dot}`} />
       <span>{children}</span>
     </p>
@@ -159,7 +159,7 @@ export function RuledSelect(props: {
         value={props.value}
         onChange={(e) => props.onChange(e.target.value)}
         className={cn(
-          "rounded-[4px] border bg-white px-[10px] py-2 text-[14px]",
+          "rounded-none border bg-white px-[10px] py-2 text-[14px]",
           differs ? "border-2 border-accent" : "border-field",
         )}
       >

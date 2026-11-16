@@ -93,3 +93,10 @@ def test_species_clues_agree_on_the_two_test_datasets(raw_data_path, mouse_10x_p
         adata, _ = load_dataset(path, path.name)
         clues = species_clues(adata.var_names, adata.var["gene_ids"], "MT-" if species == "human" else "mt-")
         assert len(clues) == 3 and {c["species"] for c in clues} == {species}
+
+
+def test_cell_types_by_gene_lists_every_set_that_has_the_gene():
+    from scrna_analysis.marker_db import cell_types_by_gene
+    sets = {"type A": ("G1", "G2", "G2"), "type B": ("G2", "G3"), "type C": ()}
+    assert cell_types_by_gene(sets) == {"G1": ["type A"], "G2": ["type A", "type B"], "G3": ["type B"]}
+    assert cell_types_by_gene({}) == {}

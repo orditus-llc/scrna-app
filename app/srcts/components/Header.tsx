@@ -15,12 +15,12 @@ export function Header({ datasetLine, referenceSettings }: { datasetLine: string
       </div>
 
       {referenceSettings ? (
-        <span className="inline-flex items-center gap-2 rounded-[4px] border border-line bg-white px-3 py-[6px] text-[13px] font-bold text-[#27272a]">
+        <span className="inline-flex items-center gap-2 rounded-none border border-line bg-white px-3 py-[6px] text-[13px] font-bold text-[#27272a]">
           <span aria-hidden="true" className="inline-block size-2 rounded-full bg-ok" />
           Validated PBMC3k settings
         </span>
       ) : (
-        <span className="inline-flex items-center gap-2 rounded-[4px] border border-accent-line bg-accent-tint px-3 py-[6px] text-[13px] font-bold text-accent-text">
+        <span className="inline-flex items-center gap-2 rounded-none border border-accent-line bg-accent-tint px-3 py-[6px] text-[13px] font-bold text-accent-text">
           <span aria-hidden="true" className="text-[11px]">▲</span>
           Settings differ from the validated reference
         </span>

@@ -469,7 +469,7 @@ function GenesView({ results }: { results: Results }) {
           id="cc_gene_group"
           value={results.selected ?? ""}
           onChange={(e) => setGroup(e.target.value)}
-          className="rounded-[4px] border border-field bg-white px-2 py-1 text-[14px] font-normal"
+          className="rounded-none border border-field bg-white px-2 py-1 text-[14px] font-normal"
         >
           {tested.map((g) => (
             <option key={g.group} value={g.group}>

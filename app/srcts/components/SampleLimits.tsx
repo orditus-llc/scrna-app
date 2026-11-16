@@ -42,7 +42,7 @@ export function SampleLimitsTable({
 }) {
   const bySample = Object.fromEntries((suggested ?? []).map((s) => [s.sample, s]));
   const set = (i: number, patch: Partial<SampleLimitBoxes>) => onChange(rows.map((r, j) => (j === i ? { ...r, ...patch } : r)));
-  const cell = "rounded-[4px] border bg-white px-2 py-[5px] text-right font-mono text-[13px] w-full min-w-[64px]";
+  const cell = "rounded-none border bg-white px-2 py-[5px] text-right font-mono text-[13px] w-full min-w-[64px]";
   const changed = (value: string, ref: number | null | undefined) =>
     ref !== undefined && (value.trim() === "" ? ref !== null : Number(value) !== ref);
   return (

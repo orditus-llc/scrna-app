@@ -48,7 +48,7 @@ export function ExplorePage({
       <h1 className="sr-only">Explore Results</h1>
       {exportInfo && <ExportButtons info={exportInfo} />}
       {!data.available || !data.results ? (
-        <div className="flex flex-wrap items-center gap-3 rounded-[4px] border border-line bg-panel px-4 py-3 text-[14px]">
+        <div className="flex flex-wrap items-center gap-3 rounded-none border border-line bg-panel px-4 py-3 text-[14px]">
           <span>{data.reason}</span>
           <Button variant="secondary" size="small" onClick={() => goTo(onNavigate, "clustering")}>
             Open Clustering <ArrowRight aria-hidden="true" size={14} />
@@ -95,7 +95,7 @@ function Explorer({ results, gene, onNavigate }: { results: Results; gene: GeneP
       disabled={!enabled}
       onClick={() => setMode(key)}
       className={cn(
-        "flex w-full flex-col rounded-[4px] px-3 py-2 text-left text-[14px] disabled:cursor-not-allowed",
+        "flex w-full flex-col rounded-none px-3 py-2 text-left text-[14px] disabled:cursor-not-allowed",
         mode === key ? "bg-ink font-bold text-white" : "text-ink enabled:hover:bg-chip disabled:text-off",
       )}
     >
@@ -162,7 +162,7 @@ function Explorer({ results, gene, onNavigate }: { results: Results; gene: GeneP
                 value={query}
                 placeholder="e.g. MS4A1"
                 onChange={(e) => setQuery(e.target.value)}
-                className="min-w-0 flex-auto rounded-[4px] border border-field bg-white px-[10px] py-2 font-mono text-[14px]"
+                className="min-w-0 flex-auto rounded-none border border-field bg-white px-[10px] py-2 font-mono text-[14px]"
               />
               <Button type="submit" size="small" aria-label="Show gene">
                 <Search aria-hidden="true" size={15} />
@@ -173,7 +173,7 @@ function Explorer({ results, gene, onNavigate }: { results: Results; gene: GeneP
             <ul aria-label="Matching genes" className="m-0 flex list-none flex-wrap gap-1 p-0">
               {suggestions.map((g) => (
                 <li key={g}>
-                  <button type="button" onClick={() => pickGene(g)} className="rounded-[3px] bg-chip px-2 py-[2px] font-mono text-[13px] hover:bg-line">
+                  <button type="button" onClick={() => pickGene(g)} className="rounded-none bg-chip px-2 py-[2px] font-mono text-[13px] hover:bg-line">
                     {g}
                   </button>
                 </li>
@@ -499,7 +499,7 @@ function MarkerButtons({ genes, onGene }: { genes: string[]; onGene: (gene: stri
           type="button"
           title={`Color the UMAP by ${g}`}
           onClick={() => onGene(g)}
-          className="rounded-[3px] bg-chip px-[6px] py-[1px] font-mono text-[13px] text-ink hover:bg-line"
+          className="rounded-none bg-chip px-[6px] py-[1px] font-mono text-[13px] text-ink hover:bg-line"
         >
           {g}
         </button>
@@ -509,7 +509,7 @@ function MarkerButtons({ genes, onGene }: { genes: string[]; onGene: (gene: stri
 }
 
 function DetailsBox({ children }: { children: ReactNode }) {
-  return <div className="flex flex-col gap-2 rounded-[4px] border border-line bg-panel p-3 text-[13px] text-muted">{children}</div>;
+  return <div className="flex flex-col gap-2 rounded-none border border-line bg-panel p-3 text-[13px] text-muted">{children}</div>;
 }
 
 /** Your labels on the UMAP: your label for each reviewed cluster, the suggested cell type for the
@@ -640,7 +640,7 @@ function CompositionView({ results, samples, cColors }: { results: Results; samp
     return { data, layout, order };
   }, [rows, groupBy, value, samples, results, cColors, p]);
 
-  const select = "rounded-[4px] border border-field bg-white px-2 py-1 text-[13px]";
+  const select = "rounded-none border border-field bg-white px-2 py-1 text-[13px]";
   return (
     <section aria-label="Composition by sample" className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-3">

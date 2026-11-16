@@ -45,7 +45,7 @@ export function DownloadMenu({ what, choices }: { what: string; choices: Downloa
   };
 
   const button =
-    "inline-flex items-center gap-[6px] rounded-[4px] border border-field bg-white px-[9px] py-[5px] text-[13px] font-bold text-ink enabled:hover:bg-chip disabled:text-muted";
+    "inline-flex items-center gap-[6px] rounded-none border border-field bg-white px-[9px] py-[5px] text-[13px] font-bold text-ink enabled:hover:bg-chip disabled:text-muted";
   if (choices.length === 1) {
     return (
       <button type="button" className={button} disabled={busy} onClick={() => run(choices[0])} aria-label={`Download ${what} (${choices[0].label})`}>
@@ -73,7 +73,7 @@ export function DownloadMenu({ what, choices }: { what: string; choices: Downloa
         <ul
           id={id}
           role="menu"
-          className="absolute right-0 z-30 m-0 mt-1 flex min-w-[220px] list-none flex-col rounded-[4px] border border-line bg-white p-1 shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
+          className="absolute right-0 z-30 m-0 mt-1 flex min-w-[220px] list-none flex-col rounded-none border border-line bg-white p-1 shadow-[0_2px_8px_rgba(0,0,0,0.12)]"
         >
           {choices.map((c) => (
             <li key={c.label} role="none">
@@ -81,7 +81,7 @@ export function DownloadMenu({ what, choices }: { what: string; choices: Downloa
                 type="button"
                 role="menuitem"
                 onClick={() => run(c)}
-                className={cn("w-full rounded-[3px] px-3 py-2 text-left text-[13px] hover:bg-chip focus-visible:bg-chip")}
+                className={cn("w-full rounded-none px-3 py-2 text-left text-[13px] hover:bg-chip focus-visible:bg-chip")}
               >
                 {c.label}
               </button>

@@ -10,7 +10,7 @@ const LOOK: Record<StepStatus, { dot: string; text: string }> = {
 export function StatusChip({ status }: { status: StepStatus }) {
   const look = LOOK[status];
   return (
-    <span className="inline-flex items-center gap-[7px] rounded-[4px] bg-chip px-[11px] py-1 text-[13px] font-bold text-[#27272a]">
+    <span className="inline-flex items-center gap-[7px] rounded-none bg-chip px-[11px] py-1 text-[13px] font-bold text-[#27272a]">
       {status === "needs_rerun" ? (
         <span aria-hidden="true" className="text-[10px] leading-none text-accent">▲</span>
       ) : (

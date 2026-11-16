@@ -1,6 +1,7 @@
 import { useShinyOutputValue } from "@posit-dev/shinyreact";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
+import { BusyContext, BusyOverlay } from "./components/BusyOverlay";
 import { DownloadContext } from "./components/DownloadMenu";
 import { ExportButtons } from "./components/ExportButtons";
 import { ConnectionLost } from "./components/ConnectionLost";
@@ -59,6 +60,17 @@ export function App() {
   }
 
   const runRemaining = useRunRemaining(data, page);
+  // What is running right now, reported by the pages (components/BusyOverlay.tsx): the screen greys out.
+  const [busyLabels, setBusyLabels] = useState<Record<string, string>>({});
+  const setBusyLabel = useCallback((key: string, label: string | null) => {
+    setBusyLabels((old) => {
+      if ((old[key] ?? null) === label) return old;
+      const next = { ...old };
+      if (label === null) delete next[key];
+      else next[key] = label;
+      return next;
+    });
+  }, []);
 
   // Results live in the server's memory for this browser tab; reloading or closing it starts
   // over. Once anything has been run, the browser asks before leaving ("Leave site?").
@@ -112,6 +124,7 @@ export function App() {
   }
 
   return (
+    <BusyContext.Provider value={setBusyLabel}>
     <RunRemainingContext.Provider value={runRemaining}>
       <DownloadContext.Provider value={{ file: data?.dataset.file ?? null, label: data?.dataset.label ?? null }}>
       <div className="page-ground min-h-screen font-sans text-ink">
@@ -123,7 +136,7 @@ export function App() {
           <div className="flex flex-wrap items-stretch md:min-h-screen">
             <aside className="relative z-[45] min-w-0 flex-[0_0_264px] p-3 max-md:flex-[1_1_100%]">
               {/* A panel like VS Code's Explorer: light grey, thin border, rounded, set in from the edges. */}
-              <div className="rounded-[6px] border border-field bg-side md:sticky md:top-3 md:min-h-[calc(100vh-24px)]">
+              <div className="rounded-none border border-field bg-side md:sticky md:top-3 md:min-h-[calc(100vh-24px)]">
               {data && (
                 <Sidebar
                   steps={data.steps}
@@ -156,8 +169,10 @@ export function App() {
         {/* A finished "Run the remaining steps" says how it went in the page's bottom bar instead. */}
         <Toast notice={data?.notice ?? null} shownElsewhere={runRemaining.outcome?.noticeId ?? null} />
         <ConnectionLost />
+        <BusyOverlay label={runRemaining.running ? runRemaining.progress : (Object.values(busyLabels)[0] ?? null)} />
       </div>
       </DownloadContext.Provider>
     </RunRemainingContext.Provider>
+    </BusyContext.Provider>
   );
 }

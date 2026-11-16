@@ -60,7 +60,7 @@ export function InfoTip({
           id={id}
           role="tooltip"
           className={cn(
-            "absolute top-[calc(100%+6px)] z-50 w-[260px] max-w-[70vw] rounded-[4px] border border-line bg-white px-3 py-2 text-left text-[13px] leading-snug font-normal text-body shadow-[0_2px_10px_rgba(0,0,0,0.12)]",
+            "absolute top-[calc(100%+6px)] z-50 w-[260px] max-w-[70vw] rounded-none border border-line bg-white px-3 py-2 text-left text-[13px] leading-snug font-normal text-body shadow-[0_2px_10px_rgba(0,0,0,0.12)]",
             align === "left" ? "left-0" : "right-0",
           )}
         >

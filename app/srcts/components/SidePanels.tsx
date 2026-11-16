@@ -10,7 +10,7 @@ export function SettingsRecord({ items, versions }: { items: SettingItem[]; vers
     .map(([name, version]) => `${name} ${version}`)
     .join(", ");
   return (
-    <section className="flex flex-col gap-3 rounded-[4px] border border-line bg-panel p-5">
+    <section className="flex flex-col gap-3 rounded-none border border-line bg-panel p-5">
       <h2 className="m-0 text-[16px] font-bold">Settings record</h2>
       <dl className="m-0 grid grid-cols-[max-content_minmax(0,1fr)] gap-x-4 gap-y-2 text-[14px]">
         {items.map((item) => (
@@ -32,7 +32,7 @@ export function SettingsRecord({ items, versions }: { items: SettingItem[]; vers
 export function RunLog({ entries }: { entries: LogEntry[] }) {
   const [open, setOpen] = useState(false);
   return (
-    <section className="flex flex-col gap-[10px] rounded-[4px] border border-line bg-panel p-5">
+    <section className="flex flex-col gap-[10px] rounded-none border border-line bg-panel p-5">
       <button
         type="button"
         aria-expanded={open}

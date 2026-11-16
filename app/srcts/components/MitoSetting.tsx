@@ -35,7 +35,7 @@ export function MitoSetting({
         id="mito_pattern"
         value={known ? value : OTHER}
         onChange={(e) => onChange(e.target.value === OTHER ? "" : e.target.value)}
-        className="rounded-[4px] border border-field bg-white px-[10px] py-2 text-[14px]"
+        className="rounded-none border border-field bg-white px-[10px] py-2 text-[14px]"
       >
         {settings.patterns.map((p) => (
           <option key={p.prefix} value={p.prefix}>
@@ -51,7 +51,7 @@ export function MitoSetting({
           placeholder="e.g. MT-"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="rounded-[4px] border border-field bg-white px-[10px] py-2 font-mono text-[14px]"
+          className="rounded-none border border-field bg-white px-[10px] py-2 font-mono text-[14px]"
         />
       )}
       {counted && (

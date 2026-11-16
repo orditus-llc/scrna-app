@@ -23,7 +23,7 @@ export interface SummaryItem {
 /** Headline numbers in a grey bordered box (read-only results; used by Quality Control). */
 export function SummaryStrip({ items }: { items: SummaryItem[] }) {
   return (
-    <section aria-label="Summary" className="grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] rounded-[4px] border border-line bg-chip px-5">
+    <section aria-label="Summary" className="grid grid-cols-[repeat(auto-fit,minmax(190px,1fr))] rounded-none border border-line bg-chip px-5">
       {items.map((item, i) => (
         <div key={item.label} className={cn("flex flex-col gap-2 py-[18px] pr-5 pb-5", i > 0 && "border-l border-field pl-5")}>
           <span className="text-[12px] font-bold tracking-[0.04em] text-muted uppercase">{item.label}</span>
@@ -52,7 +52,7 @@ export function SettingsAndResults({ settings, results }: { settings: ReactNode;
 /** Shown on a step whose earlier step isn't done yet. */
 export function Prerequisite({ title, text, onOpen }: { title: string; text?: string | null; onOpen: () => void }) {
   return (
-    <div className="flex flex-wrap items-center gap-3 rounded-[4px] border border-line bg-panel px-4 py-3 text-[14px]">
+    <div className="flex flex-wrap items-center gap-3 rounded-none border border-line bg-panel px-4 py-3 text-[14px]">
       <span>
         <b>{text ?? `Run ${title} first.`}</b> This step uses its results. You can still look at the settings here.
       </span>

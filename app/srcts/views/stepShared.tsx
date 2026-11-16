@@ -1,6 +1,7 @@
 // Pieces shared by the step pages: the run button with "& Continue", section titles,
 // empty/loading states and small helpers.
-import { useShinyInput } from "@posit-dev/shinyreact";
+import { STEP_NAMES, useBusyOverlay } from "../components/BusyOverlay";
+import { useShinyBusy, useShinyInput } from "@posit-dev/shinyreact";
 import { ArrowRight, FastForward, RotateCcw } from "lucide-react";
 import { useContext, useEffect, useRef, useState, type ReactNode } from "react";
 
@@ -26,6 +27,36 @@ export function prerequisiteKey(workflow: WorkflowPayload, step: Step): Page {
   return (workflow.steps.find((s) => s.title === step.prerequisite)?.key ?? "data_overview") as Page;
 }
 
+/** True from a click until the server has dealt with it: the server became busy and then idle again,
+ * or a message arrived. A payload update alone isn't the end (one can arrive before the step has
+ * run). If the server never starts (e.g. the click was lost), it gives up after a few seconds, so the
+ * grey busy cover can't get stuck. */
+export function useServerWait(notice: Notice | null) {
+  const [waiting, setWaiting] = useState(false);
+  const shinyBusy = useShinyBusy();
+  const sawBusy = useRef(false);
+  useEffect(() => {
+    if (!waiting) return;
+    if (shinyBusy) sawBusy.current = true;
+    else if (sawBusy.current) setWaiting(false);
+  }, [shinyBusy, waiting]);
+  useEffect(() => {
+    if (!waiting) return;
+    const timer = window.setTimeout(() => {
+      if (!sawBusy.current) setWaiting(false);
+    }, 5000);
+    return () => window.clearTimeout(timer);
+  }, [waiting]);
+  useEffect(() => setWaiting(false), [notice?.id]);
+  return {
+    waiting,
+    start() {
+      sawBusy.current = false;
+      setWaiting(true);
+    },
+  };
+}
+
 /** A run button that sends the boxes with the click, shows "Running…" until the server
  * answers, and keeps the error that answered this click (if any). The page stays open, so
  * the new results can be looked at; "Continue" is a separate button. */
@@ -36,13 +67,15 @@ export function useRunButton<B>(
   notice: Notice | null,
 ) {
   const [click, setClick] = useShinyInput<Click<B>>(inputId, 0);
-  const [busy, setBusy] = useState(false);
+  const wait = useServerWait(notice);
+  const busy = wait.waiting;
   const noticeAtClick = useRef<number | null>(null);
   const clickedOnce = useRef(false);
+  // The end of the run is the server going busy and then idle again (useServerWait): this page's
+  // payload can be re-sent before the step has run, so its arrival isn't the end.
+  void answer;
 
-  // The server answers with a new payload for this page (even a re-run whose status stays
-  // "done") or, if something went wrong, with a new notice.
-  useEffect(() => setBusy(false), [answer, notice?.id]);
+  useBusyOverlay(busy ? `Running ${STEP_NAMES[step] ?? step}…` : null);
 
   const error =
     clickedOnce.current && notice?.step === step && notice.id !== noticeAtClick.current ? notice.text : null;
@@ -53,7 +86,7 @@ export function useRunButton<B>(
     click(boxes: B) {
       noticeAtClick.current = notice?.id ?? null;
       clickedOnce.current = true;
-      setBusy(true);
+      wait.start();
       setClick({ n: clickCount(click) + 1, settings: boxes });
     },
   };
@@ -204,7 +237,7 @@ export function SubTitle({ children }: { children: ReactNode }) {
 }
 
 export function Empty({ children }: { children: ReactNode }) {
-  return <p className="m-0 rounded-[4px] bg-panel px-4 py-10 text-center text-[14px] text-muted">{children}</p>;
+  return <p className="m-0 rounded-none bg-panel px-4 py-10 text-center text-[14px] text-muted">{children}</p>;
 }
 
 export function Loading() {

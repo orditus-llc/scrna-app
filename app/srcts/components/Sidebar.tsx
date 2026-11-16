@@ -60,7 +60,7 @@ export function Sidebar({
                   title={step.locked ? (step.prerequisite_text ?? "Load your data on Data Overview first.") : undefined}
                   onClick={() => onNavigate(step.key as Page)}
                   className={cn(
-                    "relative flex w-full items-start gap-3 rounded-[4px] py-[6px] pr-7 pl-3 text-left disabled:cursor-not-allowed",
+                    "relative flex w-full items-start gap-3 rounded-none py-[6px] pr-7 pl-3 text-left disabled:cursor-not-allowed",
                     step.locked && "opacity-45",
                     current ? "bg-side-raised" : "enabled:hover:bg-side-raised",
                   )}
@@ -68,7 +68,7 @@ export function Sidebar({
                   <span
                     aria-hidden="true"
                     className={cn(
-                      "mt-[2px] flex size-7 flex-none items-center justify-center rounded-[4px] text-[13px] font-extrabold",
+                      "mt-[2px] flex size-7 flex-none items-center justify-center rounded-none text-[13px] font-extrabold",
                       step.status === "done" && "bg-ink text-white",
                       step.status === "needs_rerun" && "bg-accent text-white",
                       step.status === "not_run" && (isNext ? "bg-ink text-white" : "border-2 border-field bg-white text-muted"),
@@ -119,7 +119,7 @@ export function Sidebar({
           disabled={!exploreAvailable}
           onClick={() => onNavigate("explorer")}
           className={cn(
-            "flex w-full flex-col gap-[2px] rounded-[4px] px-3 py-2 text-left disabled:cursor-not-allowed",
+            "flex w-full flex-col gap-[2px] rounded-none px-3 py-2 text-left disabled:cursor-not-allowed",
             page === "explorer" ? "bg-side-raised" : "enabled:hover:bg-side-raised",
           )}
         >
@@ -141,7 +141,7 @@ export function Sidebar({
               disabled={!conditions.enabled}
               onClick={() => onNavigate("compare_conditions")}
               className={cn(
-                "flex w-full flex-col gap-[2px] rounded-[4px] py-2 pr-7 pl-3 text-left disabled:cursor-not-allowed",
+                "flex w-full flex-col gap-[2px] rounded-none py-2 pr-7 pl-3 text-left disabled:cursor-not-allowed",
                 page === "compare_conditions" ? "bg-side-raised" : "enabled:hover:bg-side-raised",
               )}
             >
@@ -165,7 +165,7 @@ export function Sidebar({
         <button
           type="button"
           onClick={onOpenRecord}
-          className="flex w-full items-start gap-2 rounded-[4px] px-3 py-2 text-left hover:bg-side-raised"
+          className="flex w-full items-start gap-2 rounded-none px-3 py-2 text-left hover:bg-side-raised"
         >
           <ClipboardList aria-hidden="true" size={16} className="mt-[2px] flex-none text-side-muted" />
           <span className="flex flex-col gap-[2px]">

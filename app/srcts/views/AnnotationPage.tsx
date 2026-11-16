@@ -20,7 +20,7 @@ import { Button } from "../components/ui/button";
 import { Prerequisite, SettingsAndResults, StepHeader } from "../components/StepPage";
 import { clusterColors } from "../lib/clusterColors";
 import { reviewedGroups } from "../lib/reviewedGroups";
-import { splitForReview } from "../lib/reviewSplit";
+import { nextToReview, splitForReview } from "../lib/reviewSplit";
 import { cn } from "../lib/utils";
 import { goTo } from "../navigation";
 import {
@@ -369,18 +369,25 @@ function AnnotationResults({ results }: { results: Results }) {
   return (
     <>
       <InfoBox label="About these results" className="flex flex-col gap-1">
-        <p className="m-0 text-[14px] text-body">
-          <b className="text-ink">Predicted from two checks</b> (Census marker genes and CellTypist): suggestions, not
-          confirmed identities. You confirm or rename every cluster.
+        <p className="m-0 flex flex-wrap items-center gap-2 text-[14px] text-body">
+          <span>
+            <b className="text-ink">Suggestions from two checks.</b> You confirm or rename every cluster.
+          </span>
+          <InfoTip label="About the suggestions">
+            Each cluster is checked twice: its top genes against {results.database ? `${fmt(results.n_cell_types_tested)} cell types' markers in ${results.database.name} (${results.database.version})` : "a marker reference"}, and with
+            CellTypist. They are suggestions, not confirmed identities. Each cluster is tested as a whole, so a small group of
+            different cells inside it can be missed.
+          </InfoTip>
         </p>
-        <p className="m-0 text-[13px] text-muted">
-          {results.database
-            ? `${fmt(results.n_cell_types_tested)} cell types tested, from ${results.database.name} (${results.database.version}).`
-            : `No CELLxGENE Census reference for ${(results.settings.census_tissue ?? "this tissue").toLowerCase()} yet, so the marker check didn't run.${celltypistByCluster(results) ? " CellTypist's answer is shown for each cluster." : ""}`}
-        </p>
+        {!results.database && (
+          <p className="m-0 text-[13px] text-muted">
+            No CELLxGENE Census reference for {(results.settings.census_tissue ?? "this tissue").toLowerCase()} yet, so the marker check didn't run.
+            {celltypistByCluster(results) ? " CellTypist's answer is shown for each cluster." : ""}
+          </p>
+        )}
       </InfoBox>
       {results.nothing_matched && (
-        <div role="status" className="flex items-start gap-[9px] rounded-[4px] border border-accent bg-accent-tint px-3 py-[10px] text-[14px] leading-snug text-ink">
+        <div role="status" className="flex items-start gap-[9px] rounded-none border border-accent bg-accent-tint px-3 py-[10px] text-[14px] leading-snug text-ink">
           <span aria-hidden="true" className="mt-[1px] text-[11px] text-accent-text">▲</span>
           <span>
             <b>No cell type matched.</b> {results.nothing_matched}
@@ -424,7 +431,7 @@ function AnnotationResults({ results }: { results: Results }) {
                 id="an_show"
                 value={show}
                 onChange={(e) => setShow(e.target.value as "current" | "predicted" | "reviewed")}
-                className="rounded-[4px] border border-field bg-white px-2 py-1 text-[13px]"
+                className="rounded-none border border-field bg-white px-2 py-1 text-[13px]"
               >
                 <option value="current">Your labels, then suggestions</option>
                 <option value="predicted">Suggested cell types only</option>
@@ -497,13 +504,6 @@ function AnnotationResults({ results }: { results: Results }) {
         )}
         {view === "review" && (
           <div className="flex flex-col gap-5">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="m-0 text-[13px] text-body">
-                The app suggests a cell type; you decide. Click <b>Review</b> to see a cluster's evidence, then confirm or
-                rename it. Labeled clusters move to Labeled clusters.
-              </p>
-              {csv}
-            </div>
             {split.toReview.length === 0 ? (
               <Note dot="bg-ok">
                 Every cluster is labeled.{" "}
@@ -514,30 +514,21 @@ function AnnotationResults({ results }: { results: Results }) {
             ) : (
               split.toReview.map((g) => (
                 <section key={g.key} aria-label={g.label} className="flex flex-col gap-2">
-                  <div className="flex flex-col gap-[2px]">
-                    <h3 className="m-0 text-[14px] font-bold text-ink">
+                  <h3 className="m-0 flex items-center gap-2 text-[14px] font-bold text-ink">
+                    <span>
                       {g.label} <span className="font-normal text-muted">· {g.clusters.length} {g.clusters.length === 1 ? "cluster" : "clusters"}</span>
-                    </h3>
-                    {g.description && <p className="m-0 text-[13px] text-muted">{g.description}</p>}
-                  </div>
+                    </span>
+                    {g.description && <InfoTip label={`About ${g.label}`}>{g.description}</InfoTip>}
+                  </h3>
                   <ClusterTable mode="review" rows={g.clusters} {...tableProps} />
                 </section>
               ))
             )}
-            <p className="m-0 text-[13px] text-muted">
-              Limitation: each cluster is tested as a whole, so a small group of different cells inside it can be missed.
-            </p>
           </div>
         )}
         {view === "labeled" && (
           <div className="flex flex-col gap-3">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="m-0 text-[13px] text-body">
-                Your labels, in cluster order. Click <b>Review</b> to change a label, or clear it to send the cluster back to
-                To review.
-              </p>
-              {csv}
-            </div>
+            <div className="flex flex-wrap items-center justify-end gap-3">{csv}</div>
             {nLabeled === 0 ? (
               <Note dot="bg-accent">No cluster is labeled yet. Confirm or rename clusters in To review.</Note>
             ) : (
@@ -549,7 +540,17 @@ function AnnotationResults({ results }: { results: Results }) {
       </Tabs>
       {panel !== null && (
         <SidePanel title={`Cluster ${panel}: review`} onClose={() => setPanel(null)}>
-          <Evidence key={panel} results={results} final={finalOf[panel]} cluster={panel} color={cColors[panel]} review={reviews[panel]} onReview={sendReview} />
+          <Evidence
+            key={panel}
+            results={results}
+            final={finalOf[panel]}
+            cluster={panel}
+            color={cColors[panel]}
+            review={reviews[panel]}
+            onReview={sendReview}
+            next={nextToReview(split.toReview.flatMap((g) => g.clusters.map((c) => c.cluster)), panel)}
+            onOpen={setPanel}
+          />
         </SidePanel>
       )}
     </>
@@ -594,31 +595,37 @@ function ReviewCell({ review, canConfirm, onConfirm }: { review: ClusterReview |
   );
 }
 
-/** The analyst's decision for one cluster, at the top of its evidence: confirm the prediction,
- * or rename it (free text, with the candidate cell types as suggestions), with an optional note.
- * Saved on the server and recorded with the date; never changes the prediction itself. */
+/** The analyst's decision for one cluster: confirm the suggestion, or give your own label (free text,
+ * with the checks' answers and the candidate cell types as suggestions), with an optional note. Saved on
+ * the server and recorded with the date; never changes the suggestion itself. "Next cluster" moves on in
+ * To review order. */
 function ReviewBox({
   row,
   finalLabel,
   review,
   candidates,
   onReview,
+  extraSuggestions,
+  next,
+  onOpen,
 }: {
   row: ClusterPrediction;
   finalLabel: string;
   review: ClusterReview | undefined;
   candidates: Candidate[];
   onReview: (send: ReviewSend) => void;
+  extraSuggestions: string[]; // e.g. CellTypist's answer
+  next: string | null;
+  onOpen: (cluster: string) => void;
 }) {
   const [label, setLabel] = useState(review?.decision === "renamed" ? review.label : "");
   const [note, setNote] = useState(review?.note ?? "");
   const listId = `review_suggestions_${row.cluster}`;
-  const suggestions = [...new Set([finalLabel, row.best_candidate, ...candidates.map((c) => c.cell_type)].filter((x): x is string => !!x && x !== "Unknown"))];
+  const suggestions = [...new Set([finalLabel, row.best_candidate, ...extraSuggestions, ...candidates.map((c) => c.cell_type)].filter((x): x is string => !!x && x !== "Unknown"))];
   const confirmedNow = review?.decision === "confirmed" && !review.prediction_changed;
   return (
-    <section aria-label="Your review" className="flex flex-col gap-3 rounded-[4px] border border-line bg-panel p-4">
+    <section aria-label="Your review" className="flex flex-col gap-3 rounded-none border border-line bg-panel p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h4 className="m-0 text-[13px] font-bold tracking-[0.04em] text-muted uppercase">Your review</h4>
         <span className="text-[13px]">
           {review ? (
             <>
@@ -660,7 +667,7 @@ function ReviewBox({
             onKeyDown={(e) => {
               if (e.key === "Enter" && label.trim()) onReview({ cluster: row.cluster, decision: "rename", label, note });
             }}
-            className="rounded-[4px] border border-field bg-white px-[10px] py-2 text-[14px] font-normal"
+            className="rounded-none border border-field bg-white px-[10px] py-2 text-[14px] font-normal"
           />
           <datalist id={listId}>
             {suggestions.map((s) => (
@@ -683,14 +690,21 @@ function ReviewBox({
           rows={2}
           placeholder="Why, e.g. LYZ and S100A8/9 high"
           onChange={(e) => setNote(e.target.value)}
-          className="rounded-[4px] border border-field bg-white px-[10px] py-2 text-[14px] font-normal"
+          className="rounded-none border border-field bg-white px-[10px] py-2 text-[14px] font-normal"
         />
       </label>
-      {review && (
-        <div>
-          <Button variant="secondary" size="small" onClick={() => onReview({ cluster: row.cluster, decision: "clear" })}>
-            Clear review
-          </Button>
+      {(review || next) && (
+        <div className="flex flex-wrap items-center gap-2">
+          {review && (
+            <Button variant="secondary" size="small" onClick={() => onReview({ cluster: row.cluster, decision: "clear" })}>
+              Clear review
+            </Button>
+          )}
+          {next && (
+            <Button variant="secondary" size="small" className="ml-auto" onClick={() => onOpen(next)}>
+              Next cluster →
+            </Button>
+          )}
         </div>
       )}
     </section>
@@ -741,11 +755,11 @@ function ReviewProgress({ labeled, total, onOpen }: { labeled: number; total: nu
         <b>
           Labeled {fmt(labeled)} of {fmt(total)} clusters
         </b>
-        <span className="text-muted">{done ? " · review complete" : " · you confirm or rename every cluster"}</span>
+        {done && <span className="text-muted"> · review complete</span>}
       </span>
       <span
         aria-hidden="true"
-        className="h-[6px] min-w-[120px] flex-[1_1_160px] overflow-hidden rounded-[3px] bg-chip"
+        className="h-[6px] min-w-[120px] flex-[1_1_160px] overflow-hidden rounded-none bg-chip"
       >
         <span className={cn("block h-full", done ? "bg-ok" : "bg-ink")} style={{ width: `${total ? (100 * labeled) / total : 0}%` }} />
       </span>
@@ -864,7 +878,7 @@ function ClusterTable({
                     {celltypist[f.cluster] ? (
                       <>
                         {celltypist[f.cluster].label}
-                        <span className="block font-mono text-[13px] text-muted">{Math.round(100 * celltypist[f.cluster].share)}% of cells</span>
+                        <span className="block text-[13px] whitespace-nowrap text-muted">{Math.round(100 * celltypist[f.cluster].share)}% of cells</span>
                       </>
                     ) : (
                       "–"
@@ -916,70 +930,151 @@ function referenceName(results: Results, withVersion = true): string {
   return withVersion ? `${db.name} (${db.version})` : db.name;
 }
 
-/** "How was this identified?": the marker check's answer (CELLxGENE Census) and CellTypist's
- * second opinion for this cluster. CellTypist never changes the marker check's label. */
-function HowIdentified({ results, row, final }: { results: Results; row: ClusterPrediction; final: FinalCluster | undefined }) {
+/** Why CellTypist's answer can't be used for a cluster, in words (consensus.py's issue codes). */
+const CELLTYPIST_ISSUE: Record<string, string> = {
+  not_run: "no model for this species and tissue",
+  error: "it couldn't run on this data",
+  no_table: "this model's labels can't be compared with the marker check yet",
+  low_gene_match: "too few of the model's genes are in the data",
+  low_share: "fewer than half of the cluster's cells agree",
+  no_broad_type: "the label is too vague to compare",
+};
+
+/** "How was this identified?": the two checks side by side, each in a few words. */
+function ChecksSideBySide({ results, row, final }: { results: Results; row: ClusterPrediction; final: FinalCluster | undefined }) {
   const ct = celltypistByCluster(results)?.[row.cluster];
   const model = results.celltypist && !("error" in results.celltypist) ? results.celltypist.model : null;
+  const card = "flex flex-col gap-1 rounded-none border border-line bg-white p-3";
+  const title = "text-[12px] font-bold tracking-[0.04em] text-muted uppercase";
   return (
-    <section aria-label="How was this identified?" className="flex flex-col gap-2 rounded-[4px] border border-line bg-chip p-4">
-      <h4 className="m-0 text-[13px] font-bold tracking-[0.04em] text-muted uppercase">How was this identified?</h4>
-      {final && (
-        <div className="flex flex-col gap-1 border-b border-line pb-2">
-          <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[14px]">
-            <b>{final.final_label}</b>
-            <AgreementMark final={final} />
-          </span>
-          <span className="text-[13px] text-body">{final.reason}</span>
+    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div className={card}>
+          <span className={title}>Marker check</span>
+          {row.status === "confident" ? (
+            <>
+              <b className="text-[14px]">{row.predicted_label}</b>
+              <span className="text-[13px] text-muted">
+                {row.overlap} of {row.n_markers} markers match
+              </span>
+            </>
+          ) : row.status === "no_reference" ? (
+            <span className="text-[14px] text-muted">Not run: no reference for this tissue yet</span>
+          ) : (
+            <>
+              <b className="text-[14px]">Unresolved</b>
+              <span className="text-[13px] text-muted">
+                {STATUS_TEXT[row.status]}
+                {row.overlap > 0 && `; closest: ${row.best_candidate}`}
+              </span>
+            </>
+          )}
         </div>
-      )}
-      <ul className="m-0 flex list-none flex-col gap-[6px] p-0 text-[14px]">
-        <li className="flex flex-col gap-[2px]">
-          <span>
-            <b>Marker check</b>{" "}
-            <span className="text-muted">
-              ({results.database ? `${results.database.name}, ${results.database.tissue?.toLowerCase()}` : "no reference"})
-            </span>
-            :{" "}
-            {row.status === "confident" ? (
-              <b>{row.predicted_label}</b>
-            ) : row.status === "no_reference" ? (
-              <>not run: no Census reference for this tissue yet</>
-            ) : (
-              <>
-                Unresolved ({STATUS_TEXT[row.status].toLowerCase()})
-                {row.overlap > 0 && <span className="text-muted">; closest: {row.best_candidate}</span>}
-              </>
-            )}
-          </span>
-          {row.status === "confident" && (
-            <span className="text-[13px] text-muted">
-              {row.overlap} of {row.n_markers} markers match, adjusted p-value <PValue p={row.adj_p} />
+        <div className={card}>
+          <span className={title}>CellTypist</span>
+          {ct && model ? (
+            <>
+              <b className="text-[14px]">{ct.label}</b>
+              <span className="text-[13px] text-muted">
+                {Math.round(100 * ct.share)}% of cells vote for it
+                {final && !final.celltypist_confident && final.celltypist_issue && ` · not used: ${CELLTYPIST_ISSUE[final.celltypist_issue] ?? final.celltypist_issue}`}
+              </span>
+            </>
+          ) : (
+            <span className="text-[14px] text-muted">
+              Not run{final?.celltypist_issue ? `: ${CELLTYPIST_ISSUE[final.celltypist_issue] ?? final.celltypist_issue}` : ""}
             </span>
           )}
-        </li>
-        {ct && model && (
-          <li className="flex flex-col gap-[2px] border-t border-line pt-[6px]">
-            <span>
-              <b>CellTypist</b> <span className="text-muted">({model.replace(/\.pkl$/, "").replaceAll("_", " ")})</span>:{" "}
-              <b>{ct.label}</b>
-            </span>
-            <span className="text-[13px] text-muted">
-              {Math.round(100 * ct.share)}% of the cluster's cells vote for it (mean probability {ct.mean_probability.toFixed(2)})
-              {ct.runner_up ? `; next: ${ct.runner_up} (${Math.round(100 * (ct.runner_up_share ?? 0))}%)` : ""}
-            </span>
-          </li>
-        )}
-      </ul>
-      <p className="m-0 text-[13px] text-muted">
-        Both answers are compared as broad cell types (for example T cell, monocyte, neuron). A cluster is named when
-        they agree, or when one is confident and the other gives no confident answer.
-      </p>
+        </div>
+      </div>
+  );
+}
+
+/** The cluster's top marker genes, each with the reference cell types it is a known marker of. The
+ * cell types this cluster's checks point to are listed first. */
+function TopGenes({ results, cluster, final, candidates }: { results: Results; cluster: string; final: FinalCluster | undefined; candidates: Candidate[] }) {
+  const genes = results.top_genes[cluster] ?? [];
+  if (genes.length === 0) return null;
+  const first = new Set([final?.marker_label, ...candidates.map((c) => c.cell_type)].filter(Boolean) as string[]);
+  const head = "py-2 text-[12px] font-bold tracking-[0.04em] text-muted uppercase";
+  const pct = (x: number | null) => (x === null ? "–" : `${Math.round(100 * x)}%`);
+  const hasReference = !!results.database && !results.no_reference;
+  return (
+    <PanelSection
+      title="Top genes in this cluster"
+      info={
+        <>
+          The genes most specific to this cluster (from Marker Genes). “Known marker of” lists the cell types in{" "}
+          {hasReference ? referenceName(results) : "the marker reference"} that have the gene among their markers.
+        </>
+      }
+    >
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[460px] border-collapse text-[14px]">
+          <thead>
+            <tr className="border-b border-ink text-left">
+              <th scope="col" className={cn(head, "pr-3")}>Gene</th>
+              <th scope="col" className={cn(head, "px-3 text-right")}>Log fold change</th>
+              <th scope="col" className={cn(head, "px-3 text-right")}>% in cluster vs rest</th>
+              <th scope="col" className={cn(head, "pl-3")}>Known marker of</th>
+            </tr>
+          </thead>
+          <tbody>
+            {genes.map((g) => {
+              const types = [...g.marker_of.filter((t) => first.has(t)), ...g.marker_of.filter((t) => !first.has(t))];
+              const shown = types.slice(0, 2);
+              return (
+                <tr key={g.gene} className="border-b border-line">
+                  <td className="py-[7px] pr-3 font-mono text-[13px] font-bold">{g.gene}</td>
+                  <td className="px-3 py-[7px] text-right font-mono text-[13px] whitespace-nowrap">
+                    {g.log_fold_change === null ? "–" : g.log_fold_change.toFixed(1)}
+                  </td>
+                  <td className="px-3 py-[7px] text-right font-mono text-[13px] whitespace-nowrap">
+                    {pct(g.frac_in_cluster)} <span className="text-muted">vs {pct(g.frac_in_rest)}</span>
+                  </td>
+                  <td className="py-[7px] pl-3 text-[13px]" title={types.length > 2 ? types.join("\n") : undefined}>
+                    {shown.length === 0 ? (
+                      <span className="text-muted">{hasReference ? "–" : "no reference"}</span>
+                    ) : (
+                      <>
+                        {shown.map((t, i) => (
+                          <span key={t} className={first.has(t) ? "font-bold text-ink" : "text-body"}>
+                            {i > 0 && ", "}
+                            {t}
+                          </span>
+                        ))}
+                        {types.length > 2 && <span className="text-muted"> +{types.length - 2} more</span>}
+                      </>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </PanelSection>
+  );
+}
+
+/** One section of the review panel: a bold heading over a line, so the parts stand apart. */
+function PanelSection({ title, info, aside, children }: { title: string; info?: ReactNode; aside?: ReactNode; children: ReactNode }) {
+  return (
+    <section aria-label={title} className="flex flex-col gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-ink pb-[6px]">
+        <h4 className="m-0 flex items-center gap-2 text-[16px] font-bold text-ink">
+          {title}
+          {info && <InfoTip label={`About ${title.toLowerCase()}`}>{info}</InfoTip>}
+        </h4>
+        {aside}
+      </div>
+      {children}
     </section>
   );
 }
 
-/** Why one cluster got its prediction: its best candidate cell types and their matching markers. */
+/** One cluster's review panel, in sections with bold headings: the suggestion, your review, the two
+ * checks side by side, the likely cell types (bar chart) and the top genes; the remaining statistics
+ * are folded under "More details". */
 function Evidence({
   results,
   final,
@@ -987,6 +1082,8 @@ function Evidence({
   color,
   review,
   onReview,
+  next,
+  onOpen,
 }: {
   results: Results;
   final: FinalCluster | undefined;
@@ -994,11 +1091,14 @@ function Evidence({
   color: string;
   review: ClusterReview | undefined;
   onReview: (send: ReviewSend) => void;
+  next: string | null;
+  onOpen: (cluster: string) => void;
 }) {
   const row = results.clusters.find((c) => c.cluster === cluster);
   const candidates = results.candidates[cluster] ?? [];
   const nTested = results.n_cell_types_tested;
   const settings = results.settings;
+  const ct = celltypistByCluster(results)?.[cluster];
   const chart = useMemo(() => {
     const data: Data[] = [
       {
@@ -1033,118 +1133,180 @@ function Evidence({
   const head = "py-2 text-[12px] font-bold tracking-[0.04em] text-muted uppercase";
 
   return (
-    <section aria-label={`Evidence for cluster ${cluster}`} className="flex flex-col gap-3">
+    <section aria-label={`Evidence for cluster ${cluster}`} className="flex flex-col gap-6">
       <div className="flex flex-wrap items-center gap-3">
         <span aria-hidden="true" className="size-3 rounded-full ring-1 ring-black/25" style={{ background: color }} />
-        <h3 className="m-0 text-[16px] font-bold">
-          Cluster {cluster}: {final?.final_label ?? row.predicted_label}
-        </h3>
-        {final && <AgreementMark final={final} />}
+        <h3 className="m-0 text-[16px] font-bold">Cluster {cluster}</h3>
         <span className="font-mono text-[13px] text-muted">{fmt(row.n_cells)} cells</span>
+        {final && (
+          <span className="ml-auto">
+            <ConfidenceMark final={final} /> <span className="text-[13px] text-muted">confidence</span>
+          </span>
+        )}
       </div>
-      <ReviewBox row={row} finalLabel={final?.final_label ?? row.predicted_label} review={review} candidates={candidates} onReview={onReview} />
-      <HowIdentified results={results} row={row} final={final} />
-      <dl className="m-0 grid grid-cols-[max-content_minmax(0,1fr)] gap-x-6 gap-y-[6px] text-[14px]">
-        <dt className="text-muted">Best candidate</dt>
-        <dd className="m-0 font-bold">
-          {row.status === "no_reference"
-            ? "none: no reference for this tissue yet"
-            : row.overlap === 0
-              ? "none: no cell type has a matching marker"
-              : row.best_candidate}
-        </dd>
-        <dt className="text-muted">Matching markers</dt>
-        <dd className="m-0">
-          {row.overlap} of its {row.n_markers} markers are among the cluster's top {fmt(settings.top_n_genes)} genes
-          {markers.length > 0 && (
-            <span className="mt-1 flex flex-wrap gap-1">
-              {markers.map((g) => (
-                <span key={g} className="rounded-[3px] bg-chip px-[6px] py-[1px] font-mono text-[13px]">
-                  {g}
-                </span>
-              ))}
-            </span>
-          )}
-        </dd>
-        <dt className="text-muted">Runner-up</dt>
-        <dd className="m-0">
-          {row.second_candidate === null ? (
-            "none"
-          ) : (
+
+      <PanelSection title="Suggested cell type">
+        <div className="flex flex-col gap-1">
+          <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <b className="text-[16px]">{final ? (final.final_label === "Unknown" ? "No suggestion" : final.final_label) : row.predicted_label}</b>
+            {final && <AgreementMark final={final} />}
+          </span>
+          {final && <span className="text-[13px] text-body">{final.reason}</span>}
+        </div>
+      </PanelSection>
+
+      <PanelSection title="Your review">
+        <ReviewBox
+          key={`${cluster}-${review?.reviewed_at ?? ""}`}
+          row={row}
+          finalLabel={final?.final_label ?? row.predicted_label}
+          review={review}
+          candidates={candidates}
+          onReview={onReview}
+          extraSuggestions={[final?.marker_label, final?.celltypist_label].filter((x): x is string => !!x)}
+          next={next}
+          onOpen={onOpen}
+        />
+      </PanelSection>
+
+      <PanelSection title="How was this identified?">
+        <ChecksSideBySide results={results} row={row} final={final} />
+      </PanelSection>
+
+      {candidates.length > 0 && (
+        <PanelSection
+          title="Likely cell types"
+          info={
             <>
-              {row.second_candidate} ({row.second_overlap} matching, adjusted p-value <PValue p={row.second_adj_p!} />)
+              The marker check's best {candidates.length} of {fmt(nTested)} cell types in {referenceName(results)}: how strongly
+              the cluster's top genes match each one's markers. Bars past the dashed line pass the significance check.
+            </>
+          }
+        >
+          <PlotlyChart
+            data={chart.data}
+            layout={chart.layout}
+            height={Math.max(180, 34 * candidates.length + 80)}
+            label={`Best candidate cell types for cluster ${cluster}`}
+            download={{
+              name: `Cell Type Annotation cluster ${cluster} candidates`,
+              title: `Cluster ${cluster}: best candidate cell types in ${referenceName(results)} (−log₁₀ adjusted p-value; dashed line = significance level)`,
+            }}
+          />
+        </PanelSection>
+      )}
+
+      <TopGenes results={results} cluster={cluster} final={final} candidates={candidates} />
+
+      <MoreSection title="More details">
+        <div className="flex flex-col gap-3">
+          <dl className="m-0 grid grid-cols-[max-content_minmax(0,1fr)] gap-x-6 gap-y-[6px] text-[14px]">
+            <dt className="text-muted">Marker check, best candidate</dt>
+            <dd className="m-0 font-bold">
+              {row.status === "no_reference"
+                ? "none: no reference for this tissue yet"
+                : row.overlap === 0
+                  ? "none: no cell type has a matching marker"
+                  : row.best_candidate}
+            </dd>
+            <dt className="text-muted">Matching markers</dt>
+            <dd className="m-0">
+              {row.overlap} of its {row.n_markers} markers are among the cluster's top {fmt(settings.top_n_genes)} genes
+              {row.adj_p !== null && (
+                <>
+                  {" "}
+                  (adjusted p-value <PValue p={row.adj_p} />)
+                </>
+              )}
+              {markers.length > 0 && (
+                <span className="mt-1 flex flex-wrap gap-1">
+                  {markers.map((g) => (
+                    <span key={g} className="rounded-none bg-chip px-[6px] py-[1px] font-mono text-[13px]">
+                      {g}
+                    </span>
+                  ))}
+                </span>
+              )}
+            </dd>
+            <dt className="text-muted">Runner-up</dt>
+            <dd className="m-0">
+              {row.second_candidate === null ? (
+                "none"
+              ) : (
+                <>
+                  {row.second_candidate} ({row.second_overlap} matching, adjusted p-value <PValue p={row.second_adj_p!} />)
+                </>
+              )}
+            </dd>
+            {row.reasons && (
+              <>
+                <dt className="text-muted">Why the marker check is Unresolved</dt>
+                <dd className="m-0 flex flex-col gap-1">
+                  <span className="font-bold text-accent-text">{reasonsText(row.reasons)}</span>
+                  {results.guidance[cluster] && <span className="text-[13px] text-body">{results.guidance[cluster]}</span>}
+                </dd>
+              </>
+            )}
+            {ct && (
+              <>
+                <dt className="text-muted">CellTypist</dt>
+                <dd className="m-0">
+                  {ct.label}: {Math.round(100 * ct.share)}% of cells, mean probability {ct.mean_probability.toFixed(2)}
+                  {ct.runner_up ? `; next: ${ct.runner_up} (${Math.round(100 * (ct.runner_up_share ?? 0))}%)` : ""}
+                </dd>
+              </>
+            )}
+          </dl>
+          <p className="m-0 text-[13px] text-muted">
+            Both answers are compared as broad cell types (for example T cell, monocyte, neuron). The suggestion is a cell
+            type when they agree, or when one is confident and the other gives no confident answer.
+          </p>
+          {candidates.length > 0 && (
+            <>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <span className="text-[13px] font-bold">Likely cell types as a table</span>
+                <CsvDownload
+                  name={`Cell Type Annotation cluster ${cluster} candidates`}
+                  columns={[
+                    { key: "cell_type", header: "Cell type" },
+                    { key: "overlap", header: "Matching markers" },
+                    { key: "n_markers", header: "Markers tested" },
+                    { key: "adj_p", header: "Adjusted p-value" },
+                    { key: "matching_markers", header: "Matching marker genes" },
+                  ]}
+                  rows={() => candidates.map((c) => ({ ...c }))}
+                />
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[560px] border-collapse text-[14px]">
+                  <thead>
+                    <tr className="border-b border-ink text-left">
+                      <th scope="col" className={cn(head, "pr-3")}>Cell type</th>
+                      <th scope="col" className={cn(head, "px-3 text-right")}>Matching</th>
+                      <th scope="col" className={cn(head, "px-3 text-right")}>Adjusted p-value</th>
+                      <th scope="col" className={cn(head, "pl-3")}>Matching markers</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {candidates.map((c, i) => (
+                      <tr key={c.cell_type} className={cn("border-b border-line", i === 0 && "font-bold")}>
+                        <td className="py-[8px] pr-3">{c.cell_type}</td>
+                        <td className="px-3 py-[8px] text-right font-mono whitespace-nowrap">
+                          {c.overlap} of {c.n_markers}
+                        </td>
+                        <td className="px-3 py-[8px] text-right font-mono whitespace-nowrap">
+                          <PValue p={c.adj_p} />
+                        </td>
+                        <td className="py-[8px] pl-3 font-mono text-[13px] font-normal text-body">{c.matching_markers || "–"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </>
           )}
-        </dd>
-        {row.reasons && (
-          <>
-            <dt className="text-muted">Why the marker check is Unresolved</dt>
-            <dd className="m-0 flex flex-col gap-1">
-              <span className="font-bold text-accent-text">{reasonsText(row.reasons)}</span>
-              {results.guidance[cluster] && <span className="text-[13px] text-body">{results.guidance[cluster]}</span>}
-            </dd>
-          </>
-        )}
-      </dl>
-      {candidates.length > 0 && (
-      <>
-      <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
-        <h4 className="m-0 text-[13px] font-bold tracking-[0.04em] text-muted uppercase">
-          Best {candidates.length} of {fmt(nTested)} cell types in {referenceName(results, false)}
-        </h4>
-      </div>
-      <PlotlyChart
-        data={chart.data}
-        layout={chart.layout}
-        height={Math.max(180, 34 * candidates.length + 80)}
-        label={`Best candidate cell types for cluster ${cluster}`}
-        download={{
-          name: `Cell Type Annotation cluster ${cluster} candidates`,
-          title: `Cluster ${cluster}: best candidate cell types in ${referenceName(results)} (−log₁₀ adjusted p-value; dashed line = significance level)`,
-        }}
-      />
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <span className="text-[13px] text-muted">Bars past the dashed line pass the significance check.</span>
-        <CsvDownload
-          name={`Cell Type Annotation cluster ${cluster} candidates`}
-          columns={[
-            { key: "cell_type", header: "Cell type" },
-            { key: "overlap", header: "Matching markers" },
-            { key: "n_markers", header: "Markers tested" },
-            { key: "adj_p", header: "Adjusted p-value" },
-            { key: "matching_markers", header: "Matching marker genes" },
-          ]}
-          rows={() => candidates.map((c) => ({ ...c }))}
-        />
-      </div>
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[560px] border-collapse text-[14px]">
-          <thead>
-            <tr className="border-b border-ink text-left">
-              <th scope="col" className={cn(head, "pr-3")}>Cell type</th>
-              <th scope="col" className={cn(head, "px-3 text-right")}>Matching</th>
-              <th scope="col" className={cn(head, "px-3 text-right")}>Adjusted p-value</th>
-              <th scope="col" className={cn(head, "pl-3")}>Matching markers</th>
-            </tr>
-          </thead>
-          <tbody>
-            {candidates.map((c, i) => (
-              <tr key={c.cell_type} className={cn("border-b border-line", i === 0 && "font-bold")}>
-                <td className="py-[8px] pr-3">{c.cell_type}</td>
-                <td className="px-3 py-[8px] text-right font-mono whitespace-nowrap">
-                  {c.overlap} of {c.n_markers}
-                </td>
-                <td className="px-3 py-[8px] text-right font-mono whitespace-nowrap">
-                  <PValue p={c.adj_p} />
-                </td>
-                <td className="py-[8px] pl-3 font-mono text-[13px] font-normal text-body">{c.matching_markers || "–"}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      </>
-      )}
+        </div>
+      </MoreSection>
     </section>
   );
 }

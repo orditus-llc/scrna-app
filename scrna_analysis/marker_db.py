@@ -125,3 +125,14 @@ def match_to_genes(
         else:
             too_few[cell_type] = len(found)
     return MarkerMatch(sets=sets, missing=missing, too_few=too_few, case_matched=len(case_matched))
+
+
+def cell_types_by_gene(marker_sets: Mapping[str, Iterable[str]]) -> dict[str, list[str]]:
+    """Gene -> the cell types whose marker set lists it, in the order of `marker_sets`.
+
+    For showing which cell types a cluster's top genes are known markers of (the review panel)."""
+    out: dict[str, list[str]] = {}
+    for cell_type, genes in marker_sets.items():
+        for gene in dict.fromkeys(genes):
+            out.setdefault(gene, []).append(cell_type)
+    return out

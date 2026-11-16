@@ -83,7 +83,7 @@ export function SampleTable({
                     value={s.name}
                     maxLength={40}
                     onChange={(e) => set(i, { name: e.target.value })}
-                    className="w-full min-w-[140px] rounded-[4px] border border-field bg-white px-2 py-[6px] text-[14px]"
+                    className="w-full min-w-[140px] rounded-none border border-field bg-white px-2 py-[6px] text-[14px]"
                   />
                 </td>
                 <td className="py-2 pr-3">
@@ -93,7 +93,7 @@ export function SampleTable({
                     maxLength={40}
                     placeholder="e.g. control"
                     onChange={(e) => set(i, { condition: e.target.value })}
-                    className="w-full min-w-[120px] rounded-[4px] border border-field bg-white px-2 py-[6px] text-[14px]"
+                    className="w-full min-w-[120px] rounded-none border border-field bg-white px-2 py-[6px] text-[14px]"
                   />
                 </td>
                 <td className="py-2 text-right">
@@ -101,7 +101,7 @@ export function SampleTable({
                     type="button"
                     aria-label={`Remove ${s.file.name}`}
                     onClick={() => onChange(samples.filter((_, j) => j !== i))}
-                    className="inline-flex size-7 items-center justify-center rounded-[4px] text-muted hover:bg-chip hover:text-ink"
+                    className="inline-flex size-7 items-center justify-center rounded-none text-muted hover:bg-chip hover:text-ink"
                   >
                     <X size={15} aria-hidden="true" />
                   </button>
@@ -194,7 +194,7 @@ export function SampleColumnChoice({ info }: { info: SamplesInfo }) {
           <select
             value={sampleColumn}
             onChange={(e) => setSampleColumn(e.target.value)}
-            className="rounded-[4px] border border-field bg-white px-[10px] py-2 text-[14px] font-normal"
+            className="rounded-none border border-field bg-white px-[10px] py-2 text-[14px] font-normal"
           >
             <option value="">Choose a column</option>
             {info.choices.map((c) => (
@@ -211,7 +211,7 @@ export function SampleColumnChoice({ info }: { info: SamplesInfo }) {
           <select
             value={conditionColumn}
             onChange={(e) => setConditionColumn(e.target.value)}
-            className="rounded-[4px] border border-field bg-white px-[10px] py-2 text-[14px] font-normal"
+            className="rounded-none border border-field bg-white px-[10px] py-2 text-[14px] font-normal"
           >
             <option value="">None</option>
             {info.choices

@@ -117,7 +117,7 @@ export function ConfirmMetadata({ meta }: { meta: MetadataInfo }) {
                 setSpecies(next);
                 setTissue("");
               }}
-              className="rounded-[4px] border border-field bg-white px-[10px] py-2 text-[14px]"
+              className="rounded-none border border-field bg-white px-[10px] py-2 text-[14px]"
             >
               <option value="">Choose a species</option>
               {meta.species_options.map((o) => (
@@ -168,7 +168,7 @@ export function ConfirmMetadata({ meta }: { meta: MetadataInfo }) {
               id="meta_stage"
               value={stage}
               onChange={(e) => setStage(e.target.value)}
-              className="max-w-[320px] rounded-[4px] border border-field bg-white px-[10px] py-2 text-[14px]"
+              className="max-w-[320px] rounded-none border border-field bg-white px-[10px] py-2 text-[14px]"
             >
               <option value="">Not specified</option>
               {meta.stage_options.map((o) => (
@@ -190,7 +190,7 @@ export function ConfirmMetadata({ meta }: { meta: MetadataInfo }) {
               rows={2}
               placeholder="e.g. healthy donor, fresh tissue"
               onChange={(e) => setAbout(e.target.value)}
-              className="rounded-[4px] border border-field bg-white px-[10px] py-2 text-[14px]"
+              className="rounded-none border border-field bg-white px-[10px] py-2 text-[14px]"
             />
             <span className="text-[12px] text-muted">Shown in the run report; not used in the analysis.</span>
           </div>
@@ -252,7 +252,7 @@ function CensusTissuePicker({
         aria-required="true"
         value={tissue}
         onChange={(e) => onChoose(e.target.value)}
-        className="max-w-[420px] rounded-[4px] border border-field bg-white px-[10px] py-2 text-[14px]"
+        className="max-w-[420px] rounded-none border border-field bg-white px-[10px] py-2 text-[14px]"
       >
         <option value="">Choose a tissue</option>
         {ready.length > 0 && (

@@ -982,7 +982,7 @@ def test_unresolved_note_mentions_species_and_tissue_only_when_most_clusters_fai
     assert payloads.unresolved_note(summary(["Unknown"] * 2, nothing=True)) is None  # the other box says it
     some = payloads.unresolved_note(summary(["Unknown", "B cells", "T cells"]))
     assert some.startswith("1 cluster is Unknown: the checks disagree or neither is confident") and "species" not in some
-    assert "Open the To review tab and click a cluster to see why" in some
+    assert some == "1 cluster is Unknown: the checks disagree or neither is confident."
     most = payloads.unresolved_note(summary(["Unknown", "Unknown", "B cells"]))
     assert most.startswith("2 of 3 clusters are Unknown. When most clusters fail, check that the species")
 
@@ -1031,3 +1031,31 @@ def test_batch_correction_from_the_page():
         with pytest.raises(payloads.InputError, match=message):
             payloads.reduction_params_from_browser({**as_boxes(payloads.reduction_settings(P)), **bad}, P)
     assert payloads.reduction_settings(P)["batch_correction"] is False  # off by default
+
+
+def test_review_panel_top_genes_come_from_the_marker_ranking_and_the_reference(full_run):
+    """Each cluster's top genes in its review panel are Marker Genes' top-ranked genes, and "known
+    marker of" lists exactly the reference cell types whose markers (as matched to the data) include it."""
+    from scrna_analysis import markers as marker_tools
+
+    results = payloads.annotation_payload(full_run)["results"]
+    result = full_run.stage_result("annotate")
+    expected = marker_tools.marker_table(result.adata, n_top=payloads.TOP_GENES_SHOWN)
+    sets = result.details["match"].sets
+    assert set(results["top_genes"]) == {c["cluster"] for c in results["clusters"]}
+    for cluster, genes in results["top_genes"].items():
+        rows = expected[expected["group"] == cluster]
+        assert [g["gene"] for g in genes] == rows["gene"].tolist()
+        assert [g["rank"] for g in genes] == list(range(1, len(genes) + 1))
+        for g, r in zip(genes, rows.itertuples()):
+            assert g["log_fold_change"] == pytest.approx(r.logfoldchange)
+            assert g["frac_in_cluster"] == pytest.approx(r.frac_in_group)
+            assert g["marker_of"] == [t for t, s in sets.items() if g["gene"] in s]
+    assert any(g["marker_of"] for genes in results["top_genes"].values() for g in genes)  # some are known markers
+    assert json.loads(json.dumps(results["top_genes"])) == results["top_genes"]
+
+
+def test_top_genes_without_a_marker_reference_have_no_cell_types(full_run):
+    result = full_run.stage_result("annotate")
+    genes = payloads.top_genes(result.adata, None)
+    assert genes and all(g["marker_of"] == [] for gs in genes.values() for g in gs)

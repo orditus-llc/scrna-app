@@ -161,7 +161,7 @@ export function DataOverview({ workflow, onNavigate }: { workflow: WorkflowPaylo
         </div>
 
         {confirming && (
-          <div role="alertdialog" aria-label="Replace the current analysis" className="flex flex-wrap items-center gap-3 rounded-[4px] border border-ink bg-panel px-4 py-3 text-[14px]">
+          <div role="alertdialog" aria-label="Replace the current analysis" className="flex flex-wrap items-center gap-3 rounded-none border border-ink bg-panel px-4 py-3 text-[14px]">
             <span className="min-w-0 flex-[1_1_320px]">
               <b>Loading new data replaces the current analysis.</b>{" "}
               {confirming.kind === "file"
@@ -185,7 +185,7 @@ export function DataOverview({ workflow, onNavigate }: { workflow: WorkflowPaylo
           <div role="status" className="flex flex-col gap-[6px] text-[14px] text-body">
             <span>{busy.what}</span>
             {busy.progress !== null && (
-              <span className="h-[6px] w-full max-w-[420px] overflow-hidden rounded-[2px] bg-chip" aria-hidden="true">
+              <span className="h-[6px] w-full max-w-[420px] overflow-hidden rounded-none bg-chip" aria-hidden="true">
                 <span className="block h-full bg-ink transition-[width]" style={{ width: `${Math.round(busy.progress * 100)}%` }} />
               </span>
             )}

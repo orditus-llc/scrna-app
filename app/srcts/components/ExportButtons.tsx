@@ -10,7 +10,7 @@ export function ExportButtons({ info }: { info: ExportInfo }) {
   const link = (name: string, file: string, label: string, icon: React.ReactNode, primary: boolean) => {
     const url = info.available ? serverDownloadUrl(name) : null;
     const style = cn(
-      "inline-flex items-center gap-2 rounded-[4px] px-3 py-[7px] text-[13px] font-bold no-underline",
+      "inline-flex items-center gap-2 rounded-none px-3 py-[7px] text-[13px] font-bold no-underline",
       primary ? "bg-ink text-white hover:bg-[#2a2a2e]" : "border border-field bg-white text-ink hover:bg-chip",
     );
     return url ? (
@@ -18,7 +18,7 @@ export function ExportButtons({ info }: { info: ExportInfo }) {
         {icon} {label}
       </a>
     ) : (
-      <span aria-disabled="true" className="inline-flex items-center gap-2 rounded-[4px] border border-line bg-chip px-3 py-[7px] text-[13px] font-bold text-off">
+      <span aria-disabled="true" className="inline-flex items-center gap-2 rounded-none border border-line bg-chip px-3 py-[7px] text-[13px] font-bold text-off">
         {icon} {label}
       </span>
     );

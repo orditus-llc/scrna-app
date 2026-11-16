@@ -13,6 +13,7 @@ from dataclasses import asdict, replace
 from typing import Any
 
 import numpy as np
+import pandas as pd
 
 from scrna_analysis.params import (
     DEFAULT_N_TOP_GENES,
@@ -1091,6 +1092,7 @@ def markers_payload(run: AnalysisRun) -> dict[str, Any]:
 
 CANDIDATES_SHOWN = 5  # candidate cell types listed in a cluster's evidence
 DOTPLOT_MARKERS_PER_CLUSTER = 3  # matching markers of each cluster's best candidate in the dot plot
+TOP_GENES_SHOWN = 10  # a cluster's top marker genes in its review panel
 
 
 def annotation_settings(params: AnalysisParams) -> dict[str, Any]:
@@ -1338,6 +1340,8 @@ def annotation_payload(run: AnalysisRun) -> dict[str, Any]:
         # CellTypist's answer per cluster (Step A: shown beside the marker check), or why it didn't run.
         "celltypist": result.summary.get("celltypist"),
         "candidates": _candidates(summary),  # the best candidates per cluster
+        # Each cluster's top marker genes and the reference cell types they are known markers of.
+        "top_genes": top_genes(adata, match.sets if match else None),
         "dotplot": {
             "genes": [{"gene": g, "cell_type": owner.get(g)} for g in dot_genes],
             "values": [] if expr is None else [
@@ -1368,6 +1372,25 @@ def annotation_payload(run: AnalysisRun) -> dict[str, Any]:
         },
     }
     return payload
+
+
+def top_genes(adata, marker_sets=None, n: int = TOP_GENES_SHOWN) -> dict[str, list[dict[str, Any]]]:
+    """Cluster -> its top `n` marker genes (Marker Genes' ranking), each with its log fold change, the
+    share of the cluster's and the other cells expressing it, and the cell types of the marker
+    reference that list it (`marker_sets`: cell type -> genes as named in the data; None = no reference)."""
+    table = marker_tools.marker_table(adata, n_top=n)
+    marker_of = marker_db_tools.cell_types_by_gene(marker_sets) if marker_sets else {}
+    has_pts = "frac_in_group" in table.columns
+
+    def number(value) -> float | None:
+        return None if value is None or pd.isna(value) else float(value)
+
+    return {str(group): [{"gene": str(r.gene), "rank": int(r.rank), "log_fold_change": number(r.logfoldchange),
+                          "frac_in_cluster": number(r.frac_in_group) if has_pts else None,
+                          "frac_in_rest": number(r.frac_in_rest) if has_pts else None,
+                          "marker_of": marker_of.get(str(r.gene), [])}
+                         for r in rows.itertuples(index=False)]
+            for group, rows in table.groupby("group", sort=False)}
 
 
 def _candidates(summary) -> dict[str, list[dict[str, Any]]]:
@@ -1416,10 +1439,9 @@ def unresolved_note(summary: dict[str, Any]) -> str | None:
         return None
     if n / len(clusters) > MOSTLY_UNRESOLVED:
         return (f"{n} of {len(clusters)} clusters are {consensus_tools.UNKNOWN}. When most clusters fail, check that the "
-                "species and tissue on Data Overview fit your sample. Open the To review tab and click a cluster to see why.")
+                "species and tissue on Data Overview fit your sample.")
     are = "cluster is" if n == 1 else "clusters are"
-    return (f"{n} {are} {consensus_tools.UNKNOWN}: the checks disagree or neither is confident. Open the To review "
-            "tab and click a cluster to see why, then review it yourself.")
+    return f"{n} {are} {consensus_tools.UNKNOWN}: the checks disagree or neither is confident."
 
 
 # Step B's wording in one place (analyst, 2026-11-13: "One check only" for now; whether to show the two

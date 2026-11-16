@@ -152,7 +152,7 @@ function MarkerResults({
                 id="mk_shown"
                 value={shown}
                 onChange={(e) => setShown(e.target.value)}
-                className="rounded-[4px] border border-field bg-white px-2 py-1 text-[13px]"
+                className="rounded-none border border-field bg-white px-2 py-1 text-[13px]"
               >
                 {SHOWN_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>
@@ -168,7 +168,7 @@ function MarkerResults({
                 id="mk_heat_genes"
                 value={heatGenes}
                 onChange={(e) => setHeatGenes(e.target.value)}
-                className="rounded-[4px] border border-field bg-white px-2 py-1 text-[13px]"
+                className="rounded-none border border-field bg-white px-2 py-1 text-[13px]"
               >
                 {results.heatmap.options.map((n) => (
                   <option key={n} value={String(n)}>
@@ -193,7 +193,7 @@ function MarkerResults({
             aria-pressed={c === cluster}
             onClick={() => onSelect(c)}
             className={cn(
-              "inline-flex items-center gap-2 rounded-[4px] border px-3 py-[6px] text-[14px] font-bold",
+              "inline-flex items-center gap-2 rounded-none border px-3 py-[6px] text-[14px] font-bold",
               c === cluster ? "border-ink bg-ink text-white" : "border-field bg-white text-ink hover:bg-chip",
             )}
           >

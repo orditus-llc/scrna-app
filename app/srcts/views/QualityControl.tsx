@@ -11,7 +11,7 @@ import { KeptPerSample, SampleLimitsTable, sampleLimitBoxes, sampleLimitSettings
 import { StepHeader, SummaryStrip, type SummaryItem } from "../components/StepPage";
 import { Tabs } from "../components/Tabs";
 import { goTo, type Page } from "../navigation";
-import { ActionBar } from "./stepShared";
+import { ActionBar, useServerWait } from "./stepShared";
 import { PlotlyChart } from "../components/PlotlyChart";
 import { Button } from "../components/ui/button";
 import {
@@ -80,7 +80,14 @@ export function QualityControl({
   const [, sendBoxes] = useShinyInput<FilterBoxes | null>("filter_settings", null, { debounceMs: 400 });
 
   const [boxes, setBoxes] = useState<FilterBoxes | null>(null);
-  const [busy, setBusy] = useState<"run" | "apply" | null>(null);
+  // What is running ("run" = Run QC, "apply" = Apply Filtering) until the server has finished with it.
+  const wait = useServerWait(notice);
+  const [busyWhat, setBusyWhat] = useState<"run" | "apply" | null>(null);
+  const busy = wait.waiting ? busyWhat : null;
+  const setBusy = (what: "run" | "apply") => {
+    setBusyWhat(what);
+    wait.start();
+  };
   // Inspecting a group of cells (looking only: it never changes the filter settings).
   const [inspect, setInspect] = useState<InspectBoxes>({ metric: "n_genes", from: "", to: "" });
   const [focus, setFocus] = useState<string | null>(null);
@@ -135,8 +142,6 @@ export function QualityControl({
   useEffect(() => {
     if (boxes) sendBoxes(boxes);
   }, [boxes]); // eslint-disable-line react-hooks/exhaustive-deps -- sendBoxes is stable
-  // Stop "busy" when the server answers (new results or a message).
-  useEffect(() => setBusy(null), [qc, notice?.id]);
 
   if (!qc) return <p className="m-0 px-8 py-10 text-muted">Loading…</p>;
   // The thresholds suggested from the data: for the edited MADs if any, else from QC.
@@ -159,7 +164,7 @@ export function QualityControl({
       <StepHeader step={step} />
 
       {!qc.metrics_done ? (
-        <section className="flex flex-col gap-3 rounded-[4px] border-2 border-ink p-5">
+        <section className="flex flex-col gap-3 rounded-none border-2 border-ink p-5">
           <h2 className="m-0 text-[16px] font-bold">Measure every cell</h2>
           <p className="m-0 max-w-[760px] text-[14px] text-body">
             Flags mitochondrial genes and calculates, for every cell, the number of genes detected, the total counts and
@@ -576,7 +581,7 @@ function PreviewCharts({
 
   return (
     <section aria-label="Preview" className="flex min-w-0 flex-[999_1_560px] flex-col">
-      <p className="m-0 flex items-start gap-[10px] rounded-[4px] bg-accent-tint px-3 py-[9px] text-[14px] leading-snug text-ink">
+      <p className="m-0 flex items-start gap-[10px] rounded-none bg-accent-tint px-3 py-[9px] text-[14px] leading-snug text-ink">
         <MoveHorizontal aria-hidden="true" size={18} className="mt-[1px] flex-none text-accent-text" />
         <span>
           <b>Drag sideways across a chart</b> to highlight those cells in both charts. Double-click or press Esc to clear.
@@ -598,7 +603,7 @@ function PreviewCharts({
             <select
               value={shown === null ? "" : String(shown)}
               onChange={(e) => setShown(e.target.value === "" ? null : Number(e.target.value))}
-              className="rounded-[4px] border border-field bg-white px-2 py-1 text-[13px] font-normal"
+              className="rounded-none border border-field bg-white px-2 py-1 text-[13px] font-normal"
             >
               <option value="">All {samples.length} samples</option>
               {samples.map((s, i) => (
@@ -823,7 +828,7 @@ function InspectSection({
   const head = "py-2 text-[12px] font-bold tracking-[0.04em] text-muted uppercase";
 
   return (
-    <section aria-label="Inspect a group of cells" className="flex flex-col gap-3 rounded-[4px] border border-line bg-panel px-4 py-3">
+    <section aria-label="Inspect a group of cells" className="flex flex-col gap-3 rounded-none border border-line bg-panel px-4 py-3">
       <button
         type="button"
         aria-expanded={open}
@@ -856,7 +861,7 @@ function InspectSection({
               setBoxes({ metric: e.target.value as QcMetric, from: "", to: "" });
               setSortBy(e.target.value as QcMetric);
             }}
-            className="rounded-[4px] border border-field bg-white px-[10px] py-2 text-[14px] font-normal"
+            className="rounded-none border border-field bg-white px-[10px] py-2 text-[14px] font-normal"
           >
             {metrics.map((m) => (
               <option key={m} value={m}>
@@ -873,7 +878,7 @@ function InspectSection({
             value={boxes.from}
             onChange={(e) => setBoxes({ ...boxes, from: e.target.value })}
             placeholder="no lower end"
-            className="w-[150px] rounded-[4px] border border-field bg-white px-[10px] py-2 text-right font-mono text-[14px]"
+            className="w-[150px] rounded-none border border-field bg-white px-[10px] py-2 text-right font-mono text-[14px]"
           />
         </label>
         <label className="flex flex-col gap-1 text-[13px] font-bold">
@@ -884,7 +889,7 @@ function InspectSection({
             value={boxes.to}
             onChange={(e) => setBoxes({ ...boxes, to: e.target.value })}
             placeholder="no upper end"
-            className="w-[150px] rounded-[4px] border border-field bg-white px-[10px] py-2 text-right font-mono text-[14px]"
+            className="w-[150px] rounded-none border border-field bg-white px-[10px] py-2 text-right font-mono text-[14px]"
           />
         </label>
         <Button variant="secondary" size="small" disabled={boxes.from === "" && boxes.to === "" && focus === null} onClick={onClear}>
@@ -1032,7 +1037,7 @@ function InspectSection({
         <p className="m-0 text-[14px] text-muted">No cells in this range.</p>
       )}
       {selected.size === 0 && !error && boxes.from === "" && boxes.to === "" && (
-        <p className="m-0 rounded-[4px] bg-white px-4 py-5 text-center text-[14px] text-muted">
+        <p className="m-0 rounded-none bg-white px-4 py-5 text-center text-[14px] text-muted">
           No cells selected. Type a range or drag across a chart.
         </p>
       )}
@@ -1190,7 +1195,7 @@ function MetricsSection({ qc }: { qc: QcPayload }) {
               layout={{ title: { text: v.title, font: { size: 14 } }, xaxis: { visible: false }, yaxis: { gridcolor: "#ececef" } }}
             />
           ) : (
-            <div key={v.title} className="flex h-[300px] items-center justify-center rounded-[4px] bg-chip text-center text-[14px] text-muted">
+            <div key={v.title} className="flex h-[300px] items-center justify-center rounded-none bg-chip text-center text-[14px] text-muted">
               {v.title}. Unavailable: no mitochondrial genes found.
             </div>
           ),

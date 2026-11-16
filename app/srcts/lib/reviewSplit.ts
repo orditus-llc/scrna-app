@@ -34,3 +34,13 @@ export function splitForReview<T extends Reviewable>(
   const labeled = clusters.filter((c) => isReviewed(c.cluster)).sort((a, b) => byCluster(a.cluster, b.cluster));
   return { toReview, labeled };
 }
+
+/** The cluster to open after `current` in the review panel: the next one still to review, in To
+ * review order (`order`), wrapping around to the start; null when no other cluster is left. */
+export function nextToReview(order: string[], current: string): string | null {
+  const others = order.filter((c) => c !== current);
+  if (others.length === 0) return null;
+  const at = order.indexOf(current);
+  if (at === -1) return others[0];
+  return order.slice(at + 1).find((c) => c !== current) ?? others[0];
+}

@@ -549,6 +549,16 @@ export type CellTypistResult =
     }
   | { model: string; error: string };
 
+/** One of a cluster's top marker genes, for its review panel. */
+export interface TopGene {
+  gene: string;
+  rank: number; // 1 = most specific to the cluster
+  log_fold_change: number | null;
+  frac_in_cluster: number | null; // 0–1
+  frac_in_rest: number | null; // 0–1
+  marker_of: string[]; // cell types of the marker reference that list it (empty = none, or no reference)
+}
+
 export interface Candidate {
   cell_type: string;
   overlap: number;
@@ -612,6 +622,7 @@ export interface AnnotationPayload {
     unknown_label: string; // "Unknown"
     review_groups: ReviewGroup[];
     candidates: Record<string, Candidate[]>; // cluster -> best candidates first
+    top_genes: Record<string, TopGene[]>; // cluster -> its top marker genes
     dotplot: {
       genes: { gene: string; cell_type: string | null }[]; // the cell type it is a marker of
       values: { group: string; gene: string; mean_expr: number; frac_expressing: number }[];

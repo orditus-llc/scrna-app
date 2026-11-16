@@ -22,7 +22,7 @@ export function Toast({ notice, shownElsewhere }: { notice: Notice | null; shown
   return (
     <div
       role={visible.kind === "error" ? "alert" : "status"}
-      className="fixed right-6 bottom-6 z-50 flex max-w-[420px] items-start gap-3 rounded-[4px] bg-ink px-4 py-3 text-sm text-white shadow-[0_2px_8px_rgba(0,0,0,0.18)]"
+      className="fixed right-6 bottom-6 z-50 flex max-w-[420px] items-start gap-3 rounded-none bg-ink px-4 py-3 text-sm text-white shadow-[0_2px_8px_rgba(0,0,0,0.18)]"
     >
       <span
         aria-hidden="true"

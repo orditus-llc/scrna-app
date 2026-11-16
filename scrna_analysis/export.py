@@ -79,7 +79,10 @@ def analyzed_anndata(run: AnalysisRun) -> ad.AnnData:
             "X": "log-normalized values, all genes kept after QC",
             "layers": {"counts": "raw counts of the same cells and genes"},
             "obs_columns": {"clusters": "leiden" if "cluster" in included else None,
+                            # The final label per cluster (both checks combined, or "Unknown"), and the marker
+                            # check's own label.
                             "predicted_cell_types": "cell_type_predicted" if "annotate" in included else None,
+                            "marker_check": "cell_type_marker_check" if "cell_type_marker_check" in out.obs else None,
                             "reviewed_labels": review.REVIEWED_KEY if reviewed else None,
                             # Several samples only: which sample and condition each cell came from, and
                             # how mixed its neighbors are across batches (0-1).

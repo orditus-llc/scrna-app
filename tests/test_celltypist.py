@@ -28,7 +28,7 @@ def models_ready():
 
 @pytest.fixture(scope="module")
 def demo_run(raw_data_path, models_ready):
-    run = AnalysisRun(raw_data_path, DEFAULT_PARAMS, metadata={"species": "human", "tissues": ["Blood"]})
+    run = AnalysisRun(raw_data_path, DEFAULT_PARAMS, metadata={"species": "human", "tissue": "blood"})
     for stage in ("load", "compute_qc_metrics", "apply_filter", "preprocess", "reduce_dimensions", "cluster", "find_markers"):
         getattr(run, stage)()
     return run
@@ -72,17 +72,19 @@ def test_same_answers_as_celltypist_called_directly(demo_run):
     assert 0 < summary.n_genes_matched <= summary.n_model_genes
 
 
-def test_annotation_records_celltypist_and_keeps_the_marker_labels(demo_run):
-    with_ct = demo_run.params.annotation
-    demo_run.annotate()
-    assert "celltypist" not in demo_run.stage_result("annotate").summary  # PanglaoDB-only metadata: no tissue, no model
-    marker_labels = demo_run.result().obs["cell_type_predicted"].copy()
+def test_annotation_records_celltypist_and_keeps_the_marker_check_labels(demo_run):
     from dataclasses import replace
+    with_ct = demo_run.params.annotation
+    assert with_ct.celltypist.model == MODEL  # suggested from human blood
+    demo_run.annotate(replace(with_ct, celltypist=replace(with_ct.celltypist, model=None)))
+    assert "celltypist" not in demo_run.stage_result("annotate").summary  # no model chosen
+    marker_labels = demo_run.result().obs["cell_type_marker_check"].astype(str)
     demo_run.annotate(replace(with_ct, celltypist=replace(with_ct.celltypist, model=MODEL)))
     s = demo_run.stage_result("annotate").summary["celltypist"]
     assert s["model"] == MODEL and len(s["clusters"]) == demo_run.result().obs["leiden"].nunique()
     out = demo_run.result()
-    assert (out.obs["cell_type_predicted"] == marker_labels).all()  # the marker check's labels are unchanged
+    # The marker check's own labels are unchanged; the final label (Step B) may differ.
+    assert (out.obs["cell_type_marker_check"].astype(str) == marker_labels).all()
     assert {ct.CELL_KEY, ct.PREDICTION_KEY} <= set(out.obs)
     assert demo_run.record()["params"]["annotation"]["celltypist"]["model"] == MODEL
 
@@ -100,7 +102,7 @@ def test_a_missing_or_changed_model_is_explained(demo_run, tmp_path):
 
 
 def test_mouse_data_with_a_human_model_warns_or_stops(mouse_10x_path, models_ready):
-    run = AnalysisRun(mouse_10x_path, DEFAULT_PARAMS, metadata={"species": "mouse", "tissues": ["Brain"]})
+    run = AnalysisRun(mouse_10x_path, DEFAULT_PARAMS, metadata={"species": "mouse", "tissue": "brain"})
     for stage in ("load", "compute_qc_metrics", "apply_filter", "preprocess", "reduce_dimensions", "cluster"):
         getattr(run, stage)()
     try:
@@ -128,7 +130,7 @@ def test_page_data_and_report(raw_data_path, models_ready):
         getattr(run, stage)()
     results = payloads.annotation_payload(run)["results"]
     assert results["celltypist"]["model"] == MODEL and len(results["celltypist"]["clusters"]) == len(results["clusters"])
-    assert "CellTypist" in report.methods_text(run) and "did not change it" in report.methods_text(run)
+    assert "CellTypist" in report.methods_text(run) and "broad cell types" in report.methods_text(run)
     html = report.run_report_html(run, "test")
     assert "CellTypist (share of votes)" in html and "Domínguez Conde" in html
     # The page's choice: none, or one of the offered models.

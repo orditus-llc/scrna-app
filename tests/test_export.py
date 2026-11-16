@@ -101,7 +101,7 @@ def test_run_report_page(reviewed_run):
     assert "Cells &lt;b&gt;&amp; co" in page and "<b>& co" not in page  # typed text is shown, not run
     assert "note with &lt;i&gt;" in page
     assert "<th>Species and tissue</th><td>not confirmed</td>" in page  # this run had no metadata
-    reviewed_run.metadata = {"species": "human", "tissues": ["Blood"], "about": "x", "confirmed_by": "user",
+    reviewed_run.metadata = {"species": "human", "tissue": "blood", "about": "x", "confirmed_by": "user",
                              "confirmed_at": None}
     page = report.run_report_html(reviewed_run, "My dataset")
     assert "<th>Species and tissue</th><td>Human · Blood</td>" in page and "<td>the analyst</td>" in page

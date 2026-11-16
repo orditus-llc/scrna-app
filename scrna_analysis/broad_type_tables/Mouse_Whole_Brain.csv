@@ -1,0 +1,335 @@
+label,broad_type
+001 CLA-EPd-CTX Car3 Glut,neuron
+002 IT EP-CLA Glut,neuron
+003 L5/6 IT TPE-ENT Glut,neuron
+004 L6 IT CTX Glut,neuron
+005 L5 IT CTX Glut,neuron
+006 L4/5 IT CTX Glut,neuron
+007 L2/3 IT CTX Glut,neuron
+008 L2/3 IT ENT Glut,neuron
+009 L2/3 IT PIR-ENTl Glut,neuron
+010 IT AON-TT-DP Glut,neuron
+011 L2 IT ENT-po Glut,neuron
+012 MEA Slc17a7 Glut,neuron
+013 COAp Grxcr2 Glut,neuron
+014 LA-BLA-BMA-PA Glut,neuron
+015 ENTmv-PA-COAp Glut,neuron
+016 CA1-ProS Glut,neuron
+017 CA3 Glut,neuron
+018 L2 IT PPP-APr Glut,neuron
+019 L2/3 IT PPP Glut,neuron
+020 L2/3 IT RSP Glut,neuron
+021 L4 RSP-ACA Glut,neuron
+022 L5 ET CTX Glut,neuron
+023 SUB-ProS Glut,neuron
+024 L5 PPP Glut,neuron
+025 CA2-FC-IG Glut,neuron
+026 NLOT Rho Glut,neuron
+027 L6b EPd Glut,neuron
+028 L6b/CT ENT Glut,neuron
+029 L6b CTX Glut,neuron
+030 L6 CT CTX Glut,neuron
+031 CT SUB Glut,neuron
+032 L5 NP CTX Glut,neuron
+033 NP SUB Glut,neuron
+034 NP PPP Glut,neuron
+035 OB Eomes Ms4a15 Glut,neuron
+036 HPF CR Glut,neuron
+037 DG Glut,neuron
+038 DG-PIR Ex IMN,neuron
+039 OB Meis2 Thsd7b Gaba,neuron
+040 OB Trdn Gaba,neuron
+041 OB-in Frmd7 Gaba,neuron
+042 OB-out Frmd7 Gaba,neuron
+043 OB-mi Frmd7 Gaba,neuron
+044 OB Dopa-Gaba,neuron
+045 OB-STR-CTX Inh IMN,neuron
+046 Vip Gaba,neuron
+047 Sncg Gaba,neuron
+048 RHP-COA Ndnf Gaba,neuron
+049 Lamp5 Gaba,neuron
+050 Lamp5 Lhx6 Gaba,neuron
+051 Pvalb chandelier Gaba,neuron
+052 Pvalb Gaba,neuron
+053 Sst Gaba,neuron
+054 STR Prox1 Lhx6 Gaba,neuron
+055 STR Lhx8 Gaba,neuron
+056 Sst Chodl Gaba,neuron
+057 NDB-SI-MA-STRv Lhx8 Gaba,neuron
+058 PAL-STR Gaba-Chol,neuron
+059 GPe-SI Sox6 Cyp26b1 Gaba,neuron
+060 OT D3 Folh1 Gaba,neuron
+061 STR D1 Gaba,neuron
+062 STR D2 Gaba,neuron
+063 STR D1 Sema5a Gaba,neuron
+064 STR-PAL Chst9 Gaba,neuron
+065 IA Mgp Gaba,neuron
+066 NDB-SI-ant Prdm12 Gaba,neuron
+067 LSX Sall3 Pax6 Gaba,neuron
+068 LSX Otx2 Gaba,neuron
+069 LSX Nkx2-1 Gaba,neuron
+070 LSX Prdm12 Slit2 Gaba,neuron
+071 LSX Prdm12 Zeb2 Gaba,neuron
+072 LSX Sall3 Lmo1 Gaba,neuron
+073 MEA-BST Sox6 Gaba,neuron
+074 MEA-BST Lhx6 Sp9 Gaba,neuron
+075 MEA-BST Lhx6 Nr2e1 Gaba,neuron
+076 MEA-BST Lhx6 Nfib Gaba,neuron
+077 CEA-BST Gal Avp Gaba,neuron
+078 SI-MA-ACB Ebf1 Bnc2 Gaba,neuron
+079 CEA-BST Six3 Cyp26b1 Gaba,neuron
+080 CEA-AAA-BST Six3 Sp9 Gaba,neuron
+081 ACB-BST-FS D1 Gaba,neuron
+082 CEA-BST Ebf1 Pdyn Gaba,neuron
+083 CEA-BST Rai14 Pdyn Crh Gaba,neuron
+084 BST-SI-AAA Six3 Slc22a3 Gaba,neuron
+085 SI-MPO-LPO Lhx8 Gaba,neuron
+086 MPO-ADP Lhx8 Gaba,neuron
+087 MPN-MPO-LPO Lhx6 Zfhx3 Gaba,neuron
+088 BST Tac2 Gaba,neuron
+089 PVR Six3 Sox3 Gaba,neuron
+090 BST-MPN Six3 Nrgn Gaba,neuron
+091 ARH-PVi Six6 Dopa-Gaba,neuron
+092 TMv-PMv Tbx3 Hist-Gaba,neuron
+093 RT-ZI Gnb3 Gaba,neuron
+094 SCH Six6 Cdc14a Gaba,neuron
+095 DMH Prdm13 Gaba,neuron
+096 PVHd Gsc Gaba,neuron
+097 PVHd-SBPV Six3 Prox1 Gaba,neuron
+098 AHN-SBPV-PVHd Pdrm12 Gaba,neuron
+099 SBPV-PVa Six6 Satb2 Gaba,neuron
+100 AHN Onecut3 Gaba,neuron
+101 ZI Pax6 Gaba,neuron
+102 DMH-LHA Gsx1 Gaba,neuron
+103 PVHd-DMH Lhx6 Gaba,neuron
+104 TU-ARH Otp Six6 Gaba,neuron
+105 TMd-DMH Foxd2 Gaba,neuron
+106 PVpo-VMPO-MPN Hmx2 Gaba,neuron
+107 DMH Hmx2 Gaba,neuron
+108 ARH-PVp Tbx3 Gaba,neuron
+109 LGv-ZI Otx2 Gaba,neuron
+110 BST-po Iigp1 Glut,neuron
+111 TRS-BAC Sln Glut,neuron
+112 GPi Tbr1 Cngb3 Gaba-Glut,neuron
+113 MEA-COA-BMA Ccdc42 Glut,neuron
+114 COAa-PAA-MEA Barhl2 Glut,neuron
+115 MS-SF Bsx Glut,neuron
+116 AVPV-MEPO-SFO Tbr1 Glut,neuron
+117 LHA Barhl2 Glut,neuron
+118 ADP-MPO Trp73 Glut,neuron
+119 SI-MA-LPO-LHA Skor1 Glut,neuron
+120 MEA Otp Foxp2 Glut,neuron
+121 MEA-BST Otp Zic2 Glut,neuron
+122 LHA-MEA Otp Glut,neuron
+123 DMH Nkx2-4 Glut,neuron
+124 MPN-MPO-PVpo Hmx2 Glut,neuron
+125 DMH Hmx2 Glut,neuron
+126 ARH-PVp Tbx3 Glut,neuron
+127 DMH-LHA Vgll2 Glut,neuron
+128 VMH Fezf1 Glut,neuron
+129 VMH Nr5a1 Glut,neuron
+130 LHA Pmch Glut,neuron
+131 LHA-AHN-PVH Otp Trh Glut,neuron
+132 AHN-RCH-LHA Otp Fezf1 Glut,neuron
+133 PVH-SO-PVa Otp Glut,neuron
+134 PH-ant-LHA Otp Bsx Glut,neuron
+135 STN-PSTN Pitx2 Glut,neuron
+136 PMv-TMv Pitx2 Glut,neuron
+137 PH-an Pitx2 Glut,neuron
+138 PH Pitx2 Glut,neuron
+139 PH-LHA Foxb1 Glut,neuron
+140 PMd-LHA Foxb1 Glut,neuron
+141 PH-SUM Foxa1 Glut,neuron
+142 HY Gnrh1 Glut,neuron
+143 MM-ant Foxb1 Glut,neuron
+144 MM Foxb1 Glut,neuron
+145 MH Tac2 Glut,neuron
+146 LH Pou4f1 Sox1 Glut,neuron
+147 AD Serpinb7 Glut,neuron
+148 AV Col27a1 Glut,neuron
+149 PVT-PT Ntrk1 Glut,neuron
+150 CM-IAD-CL-PCN Sema5b Glut,neuron
+151 TH Prkcd Grin2c Glut,neuron
+152 RE-Xi Nox4 Glut,neuron
+153 MG-POL-SGN Nts Glut,neuron
+154 PF Fzd5 Glut,neuron
+155 PRC-PAG Pax6 Glut,neuron
+156 MB-ant-ve Dmrta2 Glut,neuron
+158 MRN-PAG Nkx6-1 Glut,neuron
+159 IF-RL-CLI-PAG Foxa1 Glut,neuron
+160 PAG-SC Neurod2 Meis2 Glut,neuron
+161 PAG Pou4f3 Glut,neuron
+162 CUN Evx2 Lhx2 Glut,neuron
+163 APN C1ql2 Glut,neuron
+164 APN C1ql4 Glut,neuron
+165 PAG-MRN Pou3f1 Glut,neuron
+166 MRN Pou3f1 C1ql4 Glut,neuron
+167 PRC-PAG Tcf7l2 Irx2 Glut,neuron
+168 SPA-SPFm-SPFp-POL-PIL-PoT Sp9 Glut,neuron
+169 PAG-SC Pou4f1 Zic1 Glut,neuron
+170 PAG-MRN Tfap2b Glut,neuron
+171 PAG Pou4f1 Bnc2 Glut,neuron
+172 PAG Pou4f1 Ebf2 Glut,neuron
+173 PAG Pou4f2 Glut,neuron
+174 PAG Pou4f2 Mesi2 Glut,neuron
+175 SC Bnc2 Glut,neuron
+176 SCig Foxb1 Glut,neuron
+177 SCig-an-PPT Foxb1 Glut,neuron
+178 SCig Foxb1 Otx2 Glut,neuron
+179 SCdg-PAG Tfap2b Glut,neuron
+180 SCiw Pitx2 Glut,neuron
+181 IC Tfap2d Maf Glut,neuron
+182 CUN-PPN Evx2 Meis2 Glut,neuron
+183 PBG Mtnr1a Glut-Chol,neuron
+184 PAG Tcf24 Glut,neuron
+185 SCig Tfap2b Chrnb3 Glut,neuron
+186 SCop Pou4f2 Neurod2 Glut,neuron
+187 SCsg Pde5a Glut,neuron
+188 SCop Sln Glut,neuron
+189 PAG Ucn Glut,neuron
+190 ND-INC Foxd2 Glut,neuron
+191 PAG-MRN Rln3 Gaba,neuron
+192 PPN-CUN-PCG Otp En1 Gaba,neuron
+193 MRN-PPN-CUN Pax8 Gaba,neuron
+194 MRN-VTN-PPN Pax5 Cdh23 Gaba,neuron
+195 SNr-VTA Pax5 Npas1 Gaba,neuron
+196 PAG-PPN Pax5 Sox21 Gaba,neuron
+197 SNr Six3 Gaba,neuron
+198 IC Six3 En2 Gaba,neuron
+199 PAG-MRN-RN Foxa2 Gaba,neuron
+200 PAG-ND-PCG Onecut1 Gaba,neuron
+201 PAG-RN Nkx2-2 Otx1 Gaba,neuron
+202 PRT Tcf7l2 Gaba,neuron
+203 LGv-SPFp-SPFm Nkx2-2 Tcf7l2 Gaba,neuron
+204 SC Otx2 Gcnt4 Gaba,neuron
+205 SC-PAG Lef1 Emx2 Gaba,neuron
+206 SCm-PAG Cdh23 Gaba,neuron
+207 SCs Dmbx1 Gaba,neuron
+208 SC Lef1 Otx2 Gaba,neuron
+209 SCs Pax7 Nfia Gaba,neuron
+210 PRT Mecom Gaba,neuron
+211 SC Tnnt1 Gli3 Gaba,neuron
+212 SCs Lef1 Gli3 Gaba,neuron
+213 SCsg Gabrr2 Gaba,neuron
+214 IPN Otp Crisp1 Gaba,neuron
+215 SNc-VTA-RAmb Foxa1 Dopa,neuron
+216 MB-MY Tph2 Glut-Sero,neuron
+217 PB Lmx1a Glut,neuron
+218 PSV Lmx1a Trpv6 Glut,neuron
+219 PB-SUT Tlx3 Lhx2 Glut,neuron
+220 PB Pax5 Glut,neuron
+221 LDT-PCG Vsx2 Lhx4 Glut,neuron
+222 PB Evx2 Glut,neuron
+223 B-PB Nr4a2 Glut,neuron
+224 PCG-PRNr Vsx2 Nkx6-1 Glut,neuron
+225 PRNc-NI-SG-RPO Vsx2 Nr4a2 Glut,neuron
+226 PRNc-PARN Tlx1 Glut,neuron
+227 PB-PSV Phox2b Glut,neuron
+228 PSV Pvalb Lhx2 Glut,neuron
+229 PB-NTS Phox2b Ebf3 Lmx1b Glut,neuron
+230 PRNr Otp Nfib Glut,neuron
+231 IPN-LDT Vsx2 Nkx6-1 Glut,neuron
+232 LDT Vsx2 Nkx6-1 Nfib Glut,neuron
+233 NLL-SOC Spp1 Glut,neuron
+234 MEV Ppp1r1c Glut,neuron
+235 PG-TRN-LRN Fat2 Glut,neuron
+236 IRN Vip Glut,neuron
+237 PRP-NI-PRNc-GRN Otp Glut,neuron
+238 NTS Phox2b Glut,neuron
+239 MARN-GRN Pyy Glut,neuron
+240 MDRNv Lhx4 Qrfprl Glut,neuron
+241 NTS Mbnl3 Glut,neuron
+242 PGRNd Dmbx1 Glut,neuron
+243 PGRN-PARN-MDRN Hoxb5 Glut,neuron
+244 MV-SPIV Slc6a2 Glut,neuron
+245 SPVI-SPVC Tlx3 Ebf3 Glut,neuron
+246 CU-ECU-SPVI Foxb1 Glut,neuron
+247 MV-SPIV Phox2b Ebf3 Lbx1 Glut,neuron
+248 MV-SPIV Zic4 Neurod2 Glut,neuron
+249 NTS Aldh1a2 Glut,neuron
+250 CBN Neurod2 Pvalb Glut,neuron
+251 NTS Dbh Glut,neuron
+252 DMX VII Tbx20 Chol,neuron
+253 IO Fgl2 Glut,neuron
+254 VCO Mafa Meis2 Glut,neuron
+255 SPVO Mafa Meis2 Glut,neuron
+256 SPVC Mafa Glut,neuron
+257 SPVC Ccdc172 Glut,neuron
+258 SPVC Nmu Glut,neuron
+259 MDRNd Bves Glut,neuron
+260 MDRNv Crp Glut,neuron
+261 HB Calcb Chol,neuron
+262 Pineal Crx Glut,neuron
+263 CS-RPO Meis2 Gaba,neuron
+264 PRNc Otp Gly-Gaba,neuron
+265 PB Sst Gly-Gaba,neuron
+266 PRNc Prox1 Brs3 Gly-Gaba,neuron
+267 CS-PRNr-PCG Tmem163 Otp Gaba,neuron
+268 CS-PRNr-DR En1 Sox2 Gaba,neuron
+269 LDT Fgf7 Gaba,neuron
+270 LDT-DTN Gata3 Nfix Gaba,neuron
+271 NI-RPO Gata3 Nr4a2 Gaba,neuron
+272 LDT-PCG-CS Gata3 Lhx1 Gaba,neuron
+273 PDTg-PCG Pax6 Gaba,neuron
+274 PDTg Otp Shroom3 Gaba,neuron
+275 PDTg Otp Olig3 Gaba,neuron
+276 LDT-PCG St18 Gaba,neuron
+277 DTN-LDT-IPN Otp Pax3 Gaba,neuron
+278 NLL Gata3 Gly-Gaba,neuron
+281 POR Gata3 Gly-Gaba,neuron
+282 POR Spp1 Gly-Gaba,neuron
+283 PRP Otp Gly-Gaba,neuron
+284 GRN-IRN-MDRNd Ikzf1 Gly-Gaba,neuron
+285 MY Lhx1 Gly-Gaba,neuron
+286 PPY-PGRNl Vip Glyc-Gaba,neuron
+287 MV-SPIV-PRP Dmbx1 Gly-Gaba,neuron
+288 MDRN Hoxb5 Ebf2 Gly-Gaba,neuron
+289 MDRNd Prox1 Pax6 Gly-Gaba,neuron
+290 MY Prox1 Lmo7 Gly-Gaba,neuron
+291 NTS-MDRNd Prox1 Zic1 Gly-Gaba,neuron
+292 MV Nkx6-1 Gly-Gaba,neuron
+293 PAS-MV Ebf2 Gly-Gaba,neuron
+294 MV Pax6 Gly-Gaba,neuron
+295 CBN Dmbx1 Gaba,neuron
+296 RPA Pax6 Hoxb5 Gly-Gaba,neuron
+298 PRP Gata3 Slc6a5 Gly-Gaba,neuron
+299 MARN-PPY Ngfr Gly-Gaba,neuron
+300 PARN-MDRNd-NTS Gbx2 Gly-Gaba,neuron
+301 MV Nr4a2 Gly-Gaba,neuron
+302 MV Xdh Gly-Gaba,neuron
+303 IRN Dmbx1 Pax2 Gly-Gaba,neuron
+304 NTS-PARN Neurod2 Gly-Gaba,neuron
+305 SPVI-SPVC Sall3 Nfib Gly-Gaba,neuron
+306 SPVI-SPVC Sall3 Lhx1 Gly-Gaba,neuron
+307 RO-RPA Pkd2l1 Gaba,neuron
+308 DCO Il22 Gly-Gaba,neuron
+309 CB PLI Gly-Gaba,neuron
+310 CBX Golgi Gly-Gaba,neuron
+311 CBX MLI Megf11 Gaba,neuron
+312 CBX MLI Cdh22 Gaba,neuron
+313 CBX Purkinje Gaba,neuron
+314 CB Granule Glut,neuron
+315 DCO UBC Glut,neuron
+316 Bergmann NN,astrocyte
+317 Astro-CB NN,astrocyte
+318 Astro-NT NN,astrocyte
+319 Astro-TE NN,astrocyte
+320 Astro-OLF NN,astrocyte
+321 Astroependymal NN,astrocyte
+322 Tanycyte NN,ependymal cell
+323 Ependymal NN,ependymal cell
+324 Hypendymal NN,ependymal cell
+325 CHOR NN,epithelial cell
+326 OPC NN,oligodendrocyte precursor cell
+327 Oligo NN,oligodendrocyte
+328 OEC NN,own label
+329 ABC NN,fibroblast
+330 VLMC NN,fibroblast
+331 Peri NN,pericyte
+332 SMC NN,smooth muscle cell
+333 Endo NN,endothelial cell
+334 Microglia NN,microglia
+335 BAM NN,macrophage
+336 Monocytes NN,monocyte
+337 DC NN,dendritic cell
+338 Lymphoid NN,none

@@ -34,7 +34,9 @@ PARAM_SECTIONS = [
 # the reference's recorded params, so they're checked separately (each was verified to
 # give bit-identical results to the reference).
 WRITTEN_OUT_DEFAULTS = {
-    "hvg": {"n_top_genes": None},  # Scanpy's default (use the cut-offs); added 2026-10-26
+    # n_top_genes: Scanpy's default (use the cut-offs), added 2026-10-26; per_sample: has no effect on a
+    # single dataset such as PBMC3k, added 2026-11-16.
+    "hvg": {"n_top_genes": None, "per_sample": True},
     "pca": {"svd_solver": "arpack"},
     "leiden": {"directed": True},
     "markers": {"reference": "rest", "corr_method": "benjamini-hochberg", "tie_correct": False},
@@ -73,9 +75,9 @@ def test_seed_matches_reference(reference_summary):
 # --- General behavior ------------------------------------------------------------------
 
 def test_annotation_has_no_species_or_tissue_by_default():
-    """Nothing about the dataset is assumed: species and tissues are chosen per dataset."""
-    m = DEFAULT_PARAMS.annotation.markers
-    assert m.species is None and m.tissues == ()
+    """Nothing about the dataset is assumed: species and tissue are chosen per dataset."""
+    a = DEFAULT_PARAMS.annotation
+    assert a.markers.species is None and a.census.tissue is None and a.celltypist.model is None
 
 
 def test_to_dict_is_json_serializable():

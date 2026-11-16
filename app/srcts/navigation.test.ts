@@ -8,8 +8,8 @@ describe("pageFromHash", () => {
     for (const page of PAGES) expect(pageFromHash(`#${page}`)).toBe(page);
   });
 
-  it("covers all seven steps and Explore Results", () => {
-    expect(PAGES).toEqual([...STEP_KEYS, "explorer"]);
+  it("covers all seven steps, Explore Results and Compare Conditions", () => {
+    expect(PAGES).toEqual([...STEP_KEYS, "explorer", "compare_conditions"]);
   });
 
   it("returns null for an empty or unknown address", () => {

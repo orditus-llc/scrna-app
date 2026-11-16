@@ -1,6 +1,4 @@
-"""Cell-type marker tables built from CELLxGENE Census reference cells (supervisor-approved,
-2026-11-09).
-
+"""Cell-type marker tables built from CELLxGENE Census reference cells. 
 Census doesn't publish marker genes: it holds millions of labeled cells. So a marker table is
 built once per Census release, species and tissue, ahead of time (`scripts/build_census_markers.py`),
 and the app reads the small saved table. Four steps:
@@ -201,76 +199,9 @@ def load_marker_table(path: str | Path) -> tuple[dict[str, tuple[str, ...]], dic
     return sets, provenance
 
 
-# --- Census tissues and the matching PanglaoDB tissues ------------------------------------------
+# --- Census tissues ------------------------------------------------------------------------------
 
 TISSUE_LIST = "tissues.json"  # per release folder: species -> Census tissues with their cell counts
-
-# Census tissue (`tissue_general`) -> the PanglaoDB tissues ("organs") with the same cells. The app's
-# own mapping (2026-11-09), used to fill in PanglaoDB's tissues for its automatic second check; the
-# user can change them. Census tissues without a clear PanglaoDB match map to nothing.
-PANGLAODB_TISSUES: dict[str, tuple[str, ...]] = {
-    "blood": ("Blood", "Immune system"),
-    "bone marrow": ("Blood", "Bone", "Immune system"),
-    "spleen": ("Blood", "Immune system"),
-    "lymph node": ("Immune system",),
-    "immune system": ("Immune system",),
-    "pleural fluid": ("Immune system",),
-    "cerebrospinal fluid": ("Immune system",),
-    "brain": ("Brain",),
-    "cortex": ("Brain",),
-    "central nervous system": ("Brain",),
-    "nervous system": ("Brain",),
-    "spinal cord": ("Brain",),
-    "eye": ("Eye",),
-    "optic cup": ("Eye",),
-    "lung": ("Lungs",),
-    "respiratory system": ("Lungs",),
-    "nose": ("Olfactory system",),
-    "breast": ("Mammary gland",),
-    "milk": ("Mammary gland",),
-    "heart": ("Heart",),
-    "vasculature": ("Vasculature",),
-    "kidney": ("Kidney",),
-    "liver": ("Liver",),
-    "gallbladder": ("Liver",),
-    "pancreas": ("Pancreas",),
-    "exocrine gland": ("Pancreas",),
-    "small intestine": ("GI tract",),
-    "large intestine": ("GI tract",),
-    "intestine": ("GI tract",),
-    "colon": ("GI tract",),
-    "stomach": ("GI tract",),
-    "esophagus": ("GI tract",),
-    "digestive system": ("GI tract",),
-    "mucosa": ("GI tract",),
-    "lamina propria": ("GI tract", "Immune system"),
-    "tongue": ("Oral cavity",),
-    "saliva": ("Oral cavity",),
-    "esophagogastric junction": ("GI tract",),
-    "skin of body": ("Skin",),
-    "endocrine gland": ("Adrenal glands", "Parathyroid glands", "Thyroid"),
-    "adrenal gland": ("Adrenal glands",),
-    "placenta": ("Placenta",),
-    "embryo": ("Embryo",),
-    "musculature": ("Skeletal muscle", "Smooth muscle"),
-    "skeletal system": ("Bone",),
-    "adipose tissue": ("Connective tissue",),
-    "uterus": ("Reproductive",),
-    "ovary": ("Reproductive",),
-    "fallopian tube": ("Reproductive",),
-    "testis": ("Reproductive",),
-    "prostate gland": ("Reproductive",),
-    "reproductive system": ("Reproductive",),
-    "bladder organ": ("Urinary bladder",),
-    "urinary bladder": ("Urinary bladder",),
-    "ureter": ("Urinary bladder",),
-    "urethra": ("Urinary bladder",),
-}
-
-
-def panglaodb_tissues_for(tissue: str | None) -> tuple[str, ...]:
-    """The PanglaoDB tissues matching a Census tissue (empty when there is no clear match)."""
-    return PANGLAODB_TISSUES.get((tissue or "").strip().lower(), ())
 
 
 def fetch_tissue_list(release: str = CensusMarkerParams.release, folder: str | Path = CENSUS_DIR) -> Path:

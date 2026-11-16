@@ -1,5 +1,4 @@
-"""CellTypist: a second, independent opinion on each cluster's cell type (Phase 0 of the supervisor's
-plan, docs/Census_reference_build_plan.md; analyst choices 2026-11-12).
+"""CellTypist: a second, independent opinion on each cluster's cell type. 
 
 CellTypist (Domínguez Conde et al. 2022, Science; Xu et al. 2023, Cell) is a classifier (logistic
 regression) trained on labeled reference cells. It looks at every gene of every cell and predicts a
@@ -50,6 +49,12 @@ SUGGESTED_MODELS: dict[tuple[str, str], str] = {
     ("human", "immune system"): "Immune_All_Low.pkl",
     ("mouse", "brain"): "Mouse_Whole_Brain.pkl",  # most mouse brain data is adult (analyst's choice)
 }
+# The same for samples from embryos or fetuses (the metadata's optional stage "developing"; analyst,
+# 2026-11-13). Tissues not listed here fall back to SUGGESTED_MODELS.
+SUGGESTED_MODELS_DEVELOPING: dict[tuple[str, str], str] = {
+    ("mouse", "brain"): "Developing_Mouse_Brain.pkl",
+}
+STAGES = ("adult", "developing")  # the metadata's optional developmental stage
 # Other models offered for a species (e.g. embryonic brain), besides its suggestions.
 ALTERNATIVES: dict[str, tuple[str, ...]] = {"human": (), "mouse": ("Developing_Mouse_Brain.pkl",)}
 
@@ -58,9 +63,12 @@ class CellTypistError(ValueError):
     """CellTypist can't run with these settings. The message says why."""
 
 
-def suggest_model(species: str | None, tissue: str | None) -> str | None:
-    """The suggested model for a species and Census tissue, or None."""
-    return SUGGESTED_MODELS.get(((species or "").lower(), (tissue or "").lower()))
+def suggest_model(species: str | None, tissue: str | None, stage: str | None = None) -> str | None:
+    """The suggested model for a species, Census tissue and (optional) developmental stage, or None."""
+    key = ((species or "").lower(), (tissue or "").lower())
+    if stage == "developing" and key in SUGGESTED_MODELS_DEVELOPING:
+        return SUGGESTED_MODELS_DEVELOPING[key]
+    return SUGGESTED_MODELS.get(key)
 
 
 def model_choices(species: str | None, folder: str | Path = MODEL_DIR) -> list[dict]:
@@ -68,6 +76,7 @@ def model_choices(species: str | None, folder: str | Path = MODEL_DIR) -> list[d
     download and whether it is downloaded."""
     species = (species or "").lower()
     names = list(dict.fromkeys([m for (sp, _), m in SUGGESTED_MODELS.items() if sp == species]
+                               + [m for (sp, _), m in SUGGESTED_MODELS_DEVELOPING.items() if sp == species]
                                + list(ALTERNATIVES.get(species, ()))))
     listing = read_listing(folder)
     return [{"model": n, "details": (listing.get(n) or {}).get("details"), "version": (listing.get(n) or {}).get("version"),

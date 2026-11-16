@@ -1,5 +1,6 @@
-// Step 7: cell types predicted from a marker database (PanglaoDB). Settings on the left:
-// species, tissues, the database line and the test's checks. On the right the UMAP by
+// Step 7: cell types predicted from the CELLxGENE Census marker reference for the sample's tissue,
+// with CellTypist's answer beside it. Settings on the left: species and tissue (from Data Overview),
+// the reference line, the CellTypist model and the test's checks. On the right the UMAP by
 // predicted cell type, one row per cluster (click for its evidence: the best candidates and
 // their matching markers), and a dot plot of the matching markers. Predictions only:
 // analyst-reviewed labels are never part of the app.
@@ -19,6 +20,7 @@ import { Button } from "../components/ui/button";
 import { Prerequisite, SettingsAndResults, StepHeader } from "../components/StepPage";
 import { clusterColors } from "../lib/clusterColors";
 import { reviewedGroups } from "../lib/reviewedGroups";
+import { splitForReview } from "../lib/reviewSplit";
 import { cn } from "../lib/utils";
 import { goTo } from "../navigation";
 import {
@@ -32,7 +34,7 @@ import {
   type Click,
   type ClusterPrediction,
   type ClusterReview,
-  type ReferenceKey,
+  type FinalCluster,
   type Step,
 } from "../types";
 import { Empty, fmt, Loading, prerequisiteKey, SettingsReset, StepBar, sameAs, SectionTitle, stepOf, useRunButton, type PageProps } from "./stepShared";
@@ -49,6 +51,7 @@ export const STATUS_TEXT: Record<AnnotationStatus, string> = {
   too_few_markers: "Too few matching markers",
   not_significant: "Not significant",
   ambiguous: "Ambiguous",
+  no_reference: "No reference yet",
 };
 
 /** The server's reasons for "Unresolved" ("not_significant, ambiguous") in words. */
@@ -72,22 +75,12 @@ function AnnotationContent({ workflow, data, step, onNavigate }: PageProps & { d
   const run = useRunButton<AnnotationBoxes>("run_annotation", "cell_type_annotation", data, workflow.notice);
   const changedSinceRun = data.results !== null && !sameAs(boxes, toBoxes(data.settings.current));
   const r = data.results;
-  const db = data.database;
   const meta = data.metadata;
-  const speciesKey = data.settings.current.species;
-  const byTissue = (speciesKey && db.cell_types[speciesKey]) || {};
-  const chosenTypes = new Set(meta.tissues.flatMap((t) => byTissue[t] ?? []));
-
   const census = data.census;
-  const censusOn = census.available && boxes.use_census;
   let missing: string | null = null;
   if (!meta.species) missing = "Confirm the species and tissue on Data Overview, then run.";
   else if (!meta.has_markers) missing = "Cell types can't be predicted for this species (the references cover human and mouse).";
-  else if (censusOn && !census.has_table)
-    missing = `There is no Census reference for ${census.tissue?.toLowerCase()} yet. Choose "PanglaoDB only" under References, then run.`;
-  else if (!censusOn && !db.available) missing = "PanglaoDB isn't available, so cell types can't be predicted.";
-  else if (!censusOn && meta.tissues.length === 0) missing = "Choose PanglaoDB tissues on Data Overview, then run.";
-
+  else if (!census.available) missing = "Choose the tissue on Data Overview, then run.";
 
   const checks: (keyof AnnotationBoxes)[] = ["top_n_genes", "max_adj_p", "min_overlap", "ambiguity_fold"];
   const checksOf = (b: AnnotationBoxes) => Object.fromEntries(checks.map((k) => [k, b[k]]));
@@ -105,7 +98,7 @@ function AnnotationContent({ workflow, data, step, onNavigate }: PageProps & { d
           <>
             <SectionTitle>Settings</SectionTitle>
             <div className="border-b border-line py-[14px]">
-            <InfoBox label="Species, tissue and marker source" className="flex flex-col gap-[6px]">
+            <InfoBox label="Species, tissue and reference" className="flex flex-col gap-[6px]">
               <span className="text-[14px] leading-snug">
                 <span className="font-bold">Species and tissue</span>{" "}
                 <InfoTip label="About species and tissue">
@@ -115,11 +108,7 @@ function AnnotationContent({ workflow, data, step, onNavigate }: PageProps & { d
               </span>
               <span className="text-[14px] text-ink">
                 {meta.species ?? "Not confirmed"}
-                {meta.tissue ? (
-                  <span className="text-body"> · {meta.tissue}</span>
-                ) : (
-                  meta.tissues.length > 0 && <span className="text-body"> · {meta.tissues.join(", ")}</span>
-                )}
+                {meta.tissue && <span className="text-body"> · {meta.tissue}</span>}
               </span>
               <button
                 type="button"
@@ -128,50 +117,22 @@ function AnnotationContent({ workflow, data, step, onNavigate }: PageProps & { d
               >
                 Change in Data Overview
               </button>
-            {censusOn && (
+            {census.available && meta.has_markers && (
               <p className="m-0 mt-1 border-t border-field pt-2 text-[14px] text-body">
-                First: <b className="text-ink">CELLxGENE Census</b> ({census.release}) ·{" "}
-                {census.has_table ? `reference cells from ${census.tissue?.toLowerCase()}` : "no reference built for this tissue yet"}{" "}
+                Marker check: <b className="text-ink">CELLxGENE Census</b> ({census.release}) ·{" "}
+                {census.has_table
+                  ? `reference cells from ${census.tissue?.toLowerCase()}`
+                  : `no reference for ${census.tissue?.toLowerCase()} yet, so the marker check won't run`}{" "}
                 <InfoTip label="About the Census reference">
                   Marker genes computed ahead of time from healthy reference cells in CELLxGENE Census (CC BY 4.0): each cell
                   type with at least 100 cells from 2 or more studies, compared with the cell types it isn't related to in
-                  the Cell Ontology.
+                  the Cell Ontology. A cell type is tested only if at least {data.selection.min_markers} of its markers are in
+                  your data. More tissues are being added.
                 </InfoTip>
               </p>
-            )}
-            {db.available ? (
-              <p className="m-0 mt-1 border-t border-field pt-2 text-[14px] text-body">
-                {censusOn ? "Then, for Unresolved clusters: " : "Markers: "}
-                <b className="text-ink">{db.name}</b> ({db.version}) ·{" "}
-                {meta.has_markers ? `${fmt(chosenTypes.size)} cell types from ${meta.tissues.join(", ") || "no tissue"}` : "no cell types for this species"}{" "}
-                <InfoTip label="About the marker selection">
-                  {data.selection.canonical_only ? "Canonical markers" : "Markers"} expressed in more than{" "}
-                  {Math.round(100 * data.selection.min_sensitivity)}% of the cell type's cells in this species, as in
-                  decoupler's {db.name} tutorial. A cell type is tested only if at least {data.selection.min_markers} of
-                  its markers are in your data.
-                </InfoTip>
-              </p>
-            ) : (
-              <div className="pt-2">
-                <Note dot="bg-accent">{db.problem}</Note>
-              </div>
             )}
             </InfoBox>
             </div>
-            {census.available && meta.has_markers && (
-              <RuledSelect
-                id="an_references"
-                label="References"
-                help="Census first, then PanglaoDB for the clusters Census leaves Unresolved (a confident Census label is never replaced). PanglaoDB only: when no Census reference exists for your tissue, or to compare."
-                value={boxes.use_census ? "census" : "panglaodb"}
-                options={[
-                  { value: "census", label: "Census, then PanglaoDB" },
-                  { value: "panglaodb", label: "PanglaoDB only" },
-                ]}
-                onChange={(v) => set({ use_census: v === "census" })}
-                reference="census"
-              />
-            )}
             {meta.has_markers && data.celltypist.choices.length > 0 && (
               <RuledSelect
                 id="an_celltypist"
@@ -183,7 +144,7 @@ function AnnotationContent({ workflow, data, step, onNavigate }: PageProps & { d
                     value: c.model,
                     label: `${c.model.replace(/\.pkl$/, "").replaceAll("_", " ")}${c.downloaded ? "" : " (not downloaded)"}`,
                   })),
-                  { value: "", label: "None (marker check only)" },
+                  { value: "", label: census.has_table ? "None (marker check only)" : "None" },
                 ]}
                 onChange={(v) => set({ celltypist_model: v })}
                 reference={data.celltypist.suggested ?? ""}
@@ -244,7 +205,7 @@ function AnnotationContent({ workflow, data, step, onNavigate }: PageProps & { d
         }
         results={
           r ? (
-            <AnnotationResults data={data} results={r} />
+            <AnnotationResults results={r} />
           ) : (
             <>
               <SectionTitle>Predicted cell types</SectionTitle>
@@ -278,28 +239,30 @@ function AnnotationContent({ workflow, data, step, onNavigate }: PageProps & { d
 
 type Results = NonNullable<AnnotationPayload["results"]>;
 
-function AnnotationResults({ data, results }: { data: AnnotationPayload; results: Results }) {
+function AnnotationResults({ results }: { results: Results }) {
   const clusterOrder = results.clusters.map((c) => c.cluster);
   const cColors = useMemo(() => clusterColors(clusterOrder), [results]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Cell types in the order of their first cluster, Unresolved last. Each takes the color of
-  // its first cluster; Unresolved is grey.
+  // Final cell types in the order of their first cluster, Unknown last. Each takes the color of
+  // its first cluster; Unknown is grey.
+  const unknown = results.unknown_label;
+  const finalOf = useMemo(() => Object.fromEntries(results.final.map((f) => [f.cluster, f])), [results]);
   const { groups, colors } = useMemo(() => {
-    const labels = [...new Set(results.clusters.map((c) => c.predicted_label))].sort(
-      (a, b) => Number(a === data.unresolved_label) - Number(b === data.unresolved_label),
+    const labels = [...new Set(results.final.map((c) => c.final_label))].sort(
+      (a, b) => Number(a === unknown) - Number(b === unknown),
     );
     const colorOf: Record<string, string> = {};
     for (const label of labels) {
-      const first = results.clusters.find((c) => c.predicted_label === label)!;
-      colorOf[label] = label === data.unresolved_label ? UNRESOLVED_COLOR : cColors[first.cluster];
+      const first = results.final.find((c) => c.final_label === label)!;
+      colorOf[label] = label === unknown ? UNRESOLVED_COLOR : cColors[first.cluster];
     }
     return {
       groups: labels.map((label) => ({ key: label, label, n: results.label_counts[label] ?? 0 })),
       colors: colorOf,
     };
-  }, [results, data, cColors]);
+  }, [results, unknown, cColors]);
 
-  const [view, setView] = useState<"types" | "clusters" | "dots">("types");
+  const [view, setView] = useState<"types" | "review" | "labeled" | "dots">("types");
   const [panel, setPanel] = useState<string | null>(null); // the cluster whose evidence is open
 
   // The analyst's review: each decision is sent to the server, which records it.
@@ -307,7 +270,19 @@ function AnnotationResults({ data, results }: { data: AnnotationPayload; results
   const [reviewClick, setReviewClick] = useShinyInput<Click<ReviewSend>>("review_cluster", 0);
   const sendReview = (send: ReviewSend) => setReviewClick({ n: clickCount(reviewClick) + 1, settings: send });
   const anyReview = Object.keys(reviews).length > 0;
-  const [show, setShow] = useState<"predicted" | "reviewed">("predicted");
+  // The map shows your label for each reviewed cluster and the suggestion for the rest ("current",
+  // analyst 2026-11-16); the suggestions alone or your labels alone are a choice away. The computed
+  // suggestions themselves never change.
+  const [show, setShow] = useState<"current" | "predicted" | "reviewed">("current");
+  const current = useMemo(() => {
+    const labels: Record<string, string> = {};
+    for (const f of results.final) {
+      const mine = reviews[f.cluster]?.label;
+      if (mine !== undefined) labels[f.cluster] = mine;
+      else if (f.final_label !== unknown) labels[f.cluster] = f.final_label;
+    }
+    return reviewedGroups(results.cell_cluster, clusterOrder, labels, cColors, unknown);
+  }, [results, cColors, unknown]); // eslint-disable-line react-hooks/exhaustive-deps
   const reviewed = useMemo(
     () =>
       reviewedGroups(
@@ -320,18 +295,88 @@ function AnnotationResults({ data, results }: { data: AnnotationPayload; results
     [results, cColors], // eslint-disable-line react-hooks/exhaustive-deps
   );
   const showReviewed = show === "reviewed" && anyReview;
-  // When nothing matched, one grey "Unresolved" group hides the structure: color by cluster instead.
-  const allUnresolved = results.clusters.every((c) => c.predicted_label === data.unresolved_label);
+  const showCurrent = show === "current" && anyReview;
+  // When no cluster is named, one grey "Unknown" group hides the structure: color by cluster instead.
+  const allUnresolved = results.final.every((c) => c.final_label === unknown);
+  // The two review tabs: clusters still to label (grouped by how the checks compare) and labeled ones.
+  const split = useMemo(() => splitForReview(results.final, reviews, results.review_groups), [results, reviews]);
+  const markerOf = useMemo(() => Object.fromEntries(results.clusters.map((c) => [c.cluster, c])), [results]);
+  const nLabeled = split.labeled.length;
+  const nClusters = results.final.length;
+  const csv = (
+    <CsvDownload
+      name="Cell Type Annotation predictions"
+      columns={[
+        { key: "cluster", header: "Cluster" },
+        { key: "n_cells", header: "Cells" },
+        { key: "final_label", header: "Suggested cell type" },
+        { key: "confidence", header: "Confidence" },
+        { key: "agreement_text", header: "Agreement" },
+        { key: "reason", header: "Why" },
+        { key: "predicted_label", header: "Marker check" },
+        { key: "status", header: "Marker check status" },
+        { key: "best_candidate", header: "Best candidate" },
+        { key: "overlap", header: "Matching markers" },
+        { key: "n_markers", header: "Markers tested" },
+        { key: "adj_p", header: "Adjusted p-value" },
+        { key: "matching_markers", header: "Matching marker genes" },
+        { key: "second_candidate", header: "Runner-up" },
+        { key: "second_overlap", header: "Runner-up matching markers" },
+        { key: "second_adj_p", header: "Runner-up adjusted p-value" },
+        { key: "database", header: "Marker reference" },
+        { key: "celltypist", header: "CellTypist (majority vote)" },
+        { key: "celltypist_share", header: "CellTypist share of cells" },
+        { key: "your_label", header: "Your label" },
+        { key: "review", header: "Your review" },
+        { key: "review_note", header: "Your note" },
+        { key: "reviewed_at", header: "Reviewed at (UTC)" },
+      ]}
+      rows={() =>
+        results.clusters.map((c) => {
+          const r = reviews[c.cluster];
+          const f = finalOf[c.cluster];
+          return {
+            ...c,
+            final_label: f?.final_label ?? "",
+            confidence: f?.confidence_text ?? "",
+            agreement_text: f?.agreement_text ?? "",
+            reason: f?.reason ?? "",
+            status: STATUS_TEXT[c.status],
+            best_candidate: c.overlap === 0 ? "" : c.best_candidate,
+            database: referenceName(results),
+            celltypist: celltypistByCluster(results)?.[c.cluster]?.label ?? "",
+            celltypist_share: celltypistByCluster(results)?.[c.cluster]?.share ?? "",
+            your_label: r?.label ?? "",
+            review: r ? REVIEW_TEXT[r.decision] : results.review.not_reviewed_label,
+            review_note: r?.note ?? "",
+            reviewed_at: r?.reviewed_at ?? "",
+          };
+        })
+      }
+    />
+  );
+  const tableProps = {
+    markers: markerOf,
+    celltypist: celltypistByCluster(results),
+    colors: cColors,
+    selected: panel,
+    onSelect: setPanel,
+    reviews,
+    unknown,
+    onConfirm: (cluster: string) => sendReview({ cluster, decision: "confirm" }),
+  };
 
   return (
     <>
       <InfoBox label="About these results" className="flex flex-col gap-1">
         <p className="m-0 text-[14px] text-body">
-          <b className="text-ink">Predicted from marker evidence:</b> proposals to review, not confirmed identities.
-          Confident means a cluster passed the checks, not that its label is right.
+          <b className="text-ink">Predicted from two checks</b> (Census marker genes and CellTypist): suggestions, not
+          confirmed identities. You confirm or rename every cluster.
         </p>
         <p className="m-0 text-[13px] text-muted">
-          {fmt(results.n_cell_types_tested)} cell types tested, from {results.database.name} ({results.database.version}).
+          {results.database
+            ? `${fmt(results.n_cell_types_tested)} cell types tested, from ${results.database.name} (${results.database.version}).`
+            : `No CELLxGENE Census reference for ${(results.settings.census_tissue ?? "this tissue").toLowerCase()} yet, so the marker check didn't run.${celltypistByCluster(results) ? " CellTypist's answer is shown for each cluster." : ""}`}
         </p>
       </InfoBox>
       {results.nothing_matched && (
@@ -345,11 +390,6 @@ function AnnotationResults({ data, results }: { data: AnnotationPayload; results
       {results.unresolved_note && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
           <Note dot="bg-accent">{results.unresolved_note}</Note>
-          {view !== "clusters" && (
-            <Button variant="secondary" size="small" onClick={() => setView("clusters")}>
-              Open the Clusters tab
-            </Button>
-          )}
         </div>
       )}
       {results.notes.map((n) => (
@@ -365,11 +405,13 @@ function AnnotationResults({ data, results }: { data: AnnotationPayload; results
           CellTypist: {n}
         </Note>
       ))}
+      <ReviewProgress labeled={nLabeled} total={nClusters} onOpen={split.toReview.length > 0 ? () => { setView("review"); setPanel(split.toReview[0].clusters[0].cluster); } : undefined} />
       <Tabs
         label="Cell type views"
         tabs={[
           { key: "types", label: "Cell types" },
-          { key: "clusters", label: "Clusters" },
+          { key: "review", label: `To review (${nClusters - nLabeled})` },
+          { key: "labeled", label: `Labeled clusters (${nLabeled})` },
           { key: "dots", label: "Marker dot plot" },
         ]}
         active={view}
@@ -381,35 +423,51 @@ function AnnotationResults({ data, results }: { data: AnnotationPayload; results
               <select
                 id="an_show"
                 value={show}
-                onChange={(e) => setShow(e.target.value as "predicted" | "reviewed")}
+                onChange={(e) => setShow(e.target.value as "current" | "predicted" | "reviewed")}
                 className="rounded-[4px] border border-field bg-white px-2 py-1 text-[13px]"
               >
-                <option value="predicted">Predicted cell types</option>
-                <option value="reviewed">Your labels</option>
+                <option value="current">Your labels, then suggestions</option>
+                <option value="predicted">Suggested cell types only</option>
+                <option value="reviewed">Your labels only</option>
               </select>
             </label>
           ) : undefined
         }
       >
-        {view === "types" && !showReviewed && allUnresolved && (
+        {view === "types" && showCurrent && (
+          <GroupedUmap
+            title="Cell types on the UMAP"
+            description="Your label for each cluster you've reviewed; the suggested cell type for the others (Unknown in grey). Hover or click a cell type to highlight it."
+            listHeading="Cell type"
+            groups={current.groups}
+            colors={current.colors}
+            cellGroup={current.cellLabel}
+            umap={results.umap}
+            cells={results.cells}
+            extraHover={(i) => {
+              const c = results.cell_cluster[i];
+              return reviews[c]
+                ? `Cluster ${c} · your label (suggested: ${finalOf[c]?.final_label ?? "–"})`
+                : `Cluster ${c} · suggestion, not reviewed yet`;
+            }}
+          />
+        )}
+        {view === "types" && !showReviewed && !showCurrent && allUnresolved && (
           <GroupedUmap
             title="Clusters on the UMAP"
-            description="No cluster has a confident cell type, so cells are colored by cluster. Hover or click a cluster to highlight it."
-            listHeading="Cluster (all Unresolved)"
+            description="No cluster could be named, so cells are colored by cluster. Hover or click a cluster to highlight it."
+            listHeading={`Cluster (all ${unknown})`}
             groups={results.clusters.map((c) => ({ key: c.cluster, label: `Cluster ${c.cluster}`, n: c.n_cells }))}
             colors={cColors}
             cellGroup={results.cell_cluster}
             umap={results.umap}
             cells={results.cells}
-            extraHover={(i) => {
-              const row = results.clusters.find((x) => x.cluster === results.cell_cluster[i]);
-              return row && row.overlap > 0 ? `Unresolved · best candidate: ${row.best_candidate}` : "Unresolved";
-            }}
+            extraHover={(i) => `${unknown} · ${finalOf[results.cell_cluster[i]]?.agreement_text ?? ""}`}
           />
         )}
-        {view === "types" && !showReviewed && !allUnresolved && (
+        {view === "types" && !showReviewed && !showCurrent && !allUnresolved && (
           <GroupedUmap
-            title="Predicted cell types on the UMAP"
+            title="Suggested cell types on the UMAP"
             description="Hover or click a cell type to highlight it."
             listHeading="Cell type"
             groups={groups}
@@ -417,13 +475,13 @@ function AnnotationResults({ data, results }: { data: AnnotationPayload; results
             cellGroup={results.cell_label}
             umap={results.umap}
             cells={results.cells}
-            extraHover={(i) => `Cluster ${results.cell_cluster[i]}`}
+            extraHover={(i) => `Cluster ${results.cell_cluster[i]} · ${finalOf[results.cell_cluster[i]]?.agreement_text ?? ""}`}
           />
         )}
         {view === "types" && showReviewed && (
           <GroupedUmap
             title="Your labels on the UMAP"
-            description="Your reviewed labels (Not reviewed in grey). Review clusters in the Clusters tab."
+            description="Your labels (Not reviewed in grey). Label clusters in the To review tab."
             listHeading="Your label"
             groups={reviewed.groups}
             colors={reviewed.colors}
@@ -432,78 +490,66 @@ function AnnotationResults({ data, results }: { data: AnnotationPayload; results
             cells={results.cells}
             extraHover={(i) => {
               const c = results.cell_cluster[i];
-              const predicted = results.clusters.find((x) => x.cluster === c)?.predicted_label;
+              const predicted = finalOf[c]?.final_label;
               return `Cluster ${c} · predicted: ${predicted ?? "–"}`;
             }}
           />
         )}
-        {view === "clusters" && (
-          <>
+        {view === "review" && (
+          <div className="flex flex-col gap-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="m-0 text-[13px] text-body">
-                Click a cluster to see its evidence and to confirm or rename its label.
+                The app suggests a cell type; you decide. Click <b>Review</b> to see a cluster's evidence, then confirm or
+                rename it. Labeled clusters move to Labeled clusters.
               </p>
-              <CsvDownload
-                name="Cell Type Annotation predictions"
-                columns={[
-                  { key: "cluster", header: "Cluster" },
-                  { key: "n_cells", header: "Cells" },
-                  { key: "predicted_label", header: "Predicted cell type" },
-                  { key: "status", header: "Status" },
-                  { key: "best_candidate", header: "Best candidate" },
-                  { key: "overlap", header: "Matching markers" },
-                  { key: "n_markers", header: "Markers tested" },
-                  { key: "adj_p", header: "Adjusted p-value" },
-                  { key: "matching_markers", header: "Matching marker genes" },
-                  { key: "second_candidate", header: "Runner-up" },
-                  { key: "second_overlap", header: "Runner-up matching markers" },
-                  { key: "second_adj_p", header: "Runner-up adjusted p-value" },
-                  { key: "database", header: "Marker database" },
-                  { key: "celltypist", header: "CellTypist (majority vote)" },
-                  { key: "celltypist_share", header: "CellTypist share of cells" },
-                  { key: "your_label", header: "Your label" },
-                  { key: "review", header: "Your review" },
-                  { key: "review_note", header: "Your note" },
-                  { key: "reviewed_at", header: "Reviewed at (UTC)" },
-                ]}
-                rows={() =>
-                  results.clusters.map((c) => {
-                    const r = reviews[c.cluster];
-                    return {
-                      ...c,
-                      status: STATUS_TEXT[c.status],
-                      best_candidate: c.overlap === 0 ? "" : c.best_candidate,
-                      database: referenceName(results, c.label_source ?? results.first_reference),
-                      celltypist: celltypistByCluster(results)?.[c.cluster]?.label ?? "",
-                      celltypist_share: celltypistByCluster(results)?.[c.cluster]?.share ?? "",
-                      your_label: r?.label ?? "",
-                      review: r ? REVIEW_TEXT[r.decision] : results.review.not_reviewed_label,
-                      review_note: r?.note ?? "",
-                      reviewed_at: r?.reviewed_at ?? "",
-                    };
-                  })
-                }
-              />
+              {csv}
             </div>
-            <PredictionTable
-              celltypist={celltypistByCluster(results)}
-              clusters={results.clusters}
-              colors={cColors}
-              selected={panel}
-              onSelect={setPanel}
-              reviews={reviews}
-              onConfirm={(cluster) => sendReview({ cluster, decision: "confirm" })}
-            />
+            {split.toReview.length === 0 ? (
+              <Note dot="bg-ok">
+                Every cluster is labeled.{" "}
+                <button type="button" className="font-bold underline" onClick={() => setView("labeled")}>
+                  Open Labeled clusters
+                </button>
+              </Note>
+            ) : (
+              split.toReview.map((g) => (
+                <section key={g.key} aria-label={g.label} className="flex flex-col gap-2">
+                  <div className="flex flex-col gap-[2px]">
+                    <h3 className="m-0 text-[14px] font-bold text-ink">
+                      {g.label} <span className="font-normal text-muted">· {g.clusters.length} {g.clusters.length === 1 ? "cluster" : "clusters"}</span>
+                    </h3>
+                    {g.description && <p className="m-0 text-[13px] text-muted">{g.description}</p>}
+                  </div>
+                  <ClusterTable mode="review" rows={g.clusters} {...tableProps} />
+                </section>
+              ))
+            )}
             <p className="m-0 text-[13px] text-muted">
               Limitation: each cluster is tested as a whole, so a small group of different cells inside it can be missed.
             </p>
-          </>
+          </div>
+        )}
+        {view === "labeled" && (
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="m-0 text-[13px] text-body">
+                Your labels, in cluster order. Click <b>Review</b> to change a label, or clear it to send the cluster back to
+                To review.
+              </p>
+              {csv}
+            </div>
+            {nLabeled === 0 ? (
+              <Note dot="bg-accent">No cluster is labeled yet. Confirm or rename clusters in To review.</Note>
+            ) : (
+              <ClusterTable mode="labeled" rows={split.labeled} {...tableProps} />
+            )}
+          </div>
         )}
         {view === "dots" && <MarkerDotPlot results={results} clusterOrder={clusterOrder} selected={panel} onSelect={setPanel} />}
       </Tabs>
       {panel !== null && (
-        <SidePanel title={`Cluster ${panel}: evidence`} onClose={() => setPanel(null)}>
-          <Evidence key={panel} results={results} cluster={panel} color={cColors[panel]} review={reviews[panel]} onReview={sendReview} />
+        <SidePanel title={`Cluster ${panel}: review`} onClose={() => setPanel(null)}>
+          <Evidence key={panel} results={results} final={finalOf[panel]} cluster={panel} color={cColors[panel]} review={reviews[panel]} onReview={sendReview} />
         </SidePanel>
       )}
     </>
@@ -521,7 +567,8 @@ interface ReviewSend {
 const REVIEW_TEXT: Record<ClusterReview["decision"], string> = { confirmed: "Confirmed", renamed: "Renamed" };
 
 /** The "Your label" cell: the reviewed label and how it was decided, or a quick Confirm. */
-function ReviewCell({ review, onConfirm }: { review: ClusterReview | undefined; onConfirm: () => void }) {
+function ReviewCell({ review, canConfirm, onConfirm }: { review: ClusterReview | undefined; canConfirm: boolean; onConfirm: () => void }) {
+  if (!review && !canConfirm) return <span className="text-[13px] text-muted">Open to label</span>;
   if (!review)
     return (
       <Button
@@ -552,11 +599,13 @@ function ReviewCell({ review, onConfirm }: { review: ClusterReview | undefined; 
  * Saved on the server and recorded with the date; never changes the prediction itself. */
 function ReviewBox({
   row,
+  finalLabel,
   review,
   candidates,
   onReview,
 }: {
   row: ClusterPrediction;
+  finalLabel: string;
   review: ClusterReview | undefined;
   candidates: Candidate[];
   onReview: (send: ReviewSend) => void;
@@ -564,7 +613,7 @@ function ReviewBox({
   const [label, setLabel] = useState(review?.decision === "renamed" ? review.label : "");
   const [note, setNote] = useState(review?.note ?? "");
   const listId = `review_suggestions_${row.cluster}`;
-  const suggestions = [...new Set([row.best_candidate, ...candidates.map((c) => c.cell_type)])];
+  const suggestions = [...new Set([finalLabel, row.best_candidate, ...candidates.map((c) => c.cell_type)].filter((x): x is string => !!x && x !== "Unknown"))];
   const confirmedNow = review?.decision === "confirmed" && !review.prediction_changed;
   return (
     <section aria-label="Your review" className="flex flex-col gap-3 rounded-[4px] border border-line bg-panel p-4">
@@ -585,15 +634,19 @@ function ReviewBox({
       </div>
       {review?.prediction_changed && (
         <Note dot="bg-accent">
-          You confirmed “{review.label}”, but the prediction is now “{row.predicted_label}”. Confirm it again or rename it.
+          You confirmed “{review.label}”, but the prediction is now “{finalLabel}”. Confirm it again or rename it.
         </Note>
       )}
-      <div className="flex flex-wrap items-center gap-2">
-        <Button variant="secondary" size="small" disabled={confirmedNow} onClick={() => onReview({ cluster: row.cluster, decision: "confirm", note })}>
-          Confirm “{row.predicted_label}”
-        </Button>
-        <span className="text-[13px] text-muted">or give your own label:</span>
-      </div>
+      {finalLabel === "Unknown" ? (
+        <span className="text-[13px] text-muted">No cell type was predicted. Give your own label:</span>
+      ) : (
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="secondary" size="small" disabled={confirmedNow} onClick={() => onReview({ cluster: row.cluster, decision: "confirm", note })}>
+            Confirm “{finalLabel}”
+          </Button>
+          <span className="text-[13px] text-muted">or give your own label:</span>
+        </div>
+      )}
       <div className="flex flex-wrap items-end gap-2">
         <label className="flex min-w-0 flex-[1_1_220px] flex-col gap-1 text-[13px] font-bold">
           Your label
@@ -644,22 +697,9 @@ function ReviewBox({
   );
 }
 
-function StatusMark({ status }: { status: AnnotationStatus }) {
-  return status === "confident" ? (
-    <span className="inline-flex items-center gap-[6px] text-[13px] font-bold whitespace-nowrap text-ink">
-      <span aria-hidden="true" className="size-2 rounded-full bg-ok" />
-      {STATUS_TEXT[status]}
-    </span>
-  ) : (
-    <span className="inline-flex items-center gap-[6px] text-[13px] font-bold whitespace-nowrap text-accent-text">
-      <span aria-hidden="true" className="text-[10px]">▲</span>
-      {STATUS_TEXT[status]}
-    </span>
-  );
-}
-
 /** A p-value as a number a reader can take in: 0.012, or 2.3 × 10⁻¹² when it's tiny. */
-function PValue({ p }: { p: number }) {
+function PValue({ p }: { p: number | null }) {
+  if (p === null) return <>–</>;
   if (p >= 0.001) return <>{p.toFixed(3)}</>;
   const [mantissa, exponent] = p.toExponential(1).split("e");
   return (
@@ -681,172 +721,259 @@ function celltypistByCluster(results: Results): Record<string, CellTypistCluster
   return Object.fromEntries(ct.clusters.map((c) => [c.cluster, c]));
 }
 
-function PredictionTable({
+/** The final label's agreement: green dot when both checks agree, teal ▲ otherwise. */
+function AgreementMark({ final }: { final: FinalCluster }) {
+  const agree = final.agreement === "agree";
+  return (
+    <span className={cn("inline-flex items-center gap-[6px] text-[13px] font-bold whitespace-nowrap", agree ? "text-ink" : "text-accent-text")}>
+      {agree ? <span aria-hidden="true" className="size-2 rounded-full bg-ok" /> : <span aria-hidden="true" className="text-[10px]">▲</span>}
+      {final.agreement_text}
+    </span>
+  );
+}
+
+/** "Labeled 3 of 8 clusters" with a bar: how far the user's review has come. */
+function ReviewProgress({ labeled, total, onOpen }: { labeled: number; total: number; onOpen?: () => void }) {
+  const done = total > 0 && labeled === total;
+  return (
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2" role="status">
+      <span className="text-[14px] text-ink">
+        <b>
+          Labeled {fmt(labeled)} of {fmt(total)} clusters
+        </b>
+        <span className="text-muted">{done ? " · review complete" : " · you confirm or rename every cluster"}</span>
+      </span>
+      <span
+        aria-hidden="true"
+        className="h-[6px] min-w-[120px] flex-[1_1_160px] overflow-hidden rounded-[3px] bg-chip"
+      >
+        <span className={cn("block h-full", done ? "bg-ok" : "bg-ink")} style={{ width: `${total ? (100 * labeled) / total : 0}%` }} />
+      </span>
+      {onOpen && (
+        <Button variant="secondary" size="small" onClick={onOpen}>
+          Review next cluster
+        </Button>
+      )}
+    </div>
+  );
+}
+
+/** How sure the suggestion is: green dot for High, teal ▲ for Medium and Low. */
+function ConfidenceMark({ final }: { final: FinalCluster }) {
+  const high = final.confidence === "high";
+  return (
+    <span
+      className={cn("inline-flex items-center gap-[6px] text-[13px] font-bold whitespace-nowrap", high ? "text-ink" : "text-accent-text")}
+      title={final.agreement_text}
+    >
+      {high ? <span aria-hidden="true" className="size-2 rounded-full bg-ok" /> : <span aria-hidden="true" className="text-[10px]">▲</span>}
+      {final.confidence_text}
+    </span>
+  );
+}
+
+/** One table of clusters. "review": still to label (Confirm + Review). "labeled": the user's labels
+ * with the suggestion beside them (Review to change). Both keep the two checks' columns. */
+function ClusterTable({
+  mode,
+  rows,
+  markers,
   celltypist,
-  clusters,
   colors,
   selected,
   onSelect,
   reviews,
+  unknown,
   onConfirm,
 }: {
+  mode: "review" | "labeled";
+  rows: FinalCluster[];
+  markers: Record<string, ClusterPrediction>;
   celltypist: Record<string, CellTypistCluster> | null;
-  clusters: ClusterPrediction[];
   colors: Record<string, string>;
   selected: string | null;
-  onSelect: (cluster: string) => void;
+  onSelect: (cluster: string | null) => void;
   reviews: Record<string, ClusterReview>;
+  unknown: string;
   onConfirm: (cluster: string) => void;
 }) {
   const head = "py-2 text-[12px] font-bold tracking-[0.04em] text-muted uppercase";
+  const review = mode === "review";
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[760px] border-collapse text-[14px]">
+      <table className="w-full min-w-[640px] border-collapse text-[14px]">
         <thead>
           <tr className="border-b border-ink text-left">
             <th scope="col" className={cn(head, "pr-3")}>Cluster</th>
             <th scope="col" className={cn(head, "px-3 text-right")}>Cells</th>
-            <th scope="col" className={cn(head, "px-3")}>Predicted cell type</th>
+            {!review && <th scope="col" className={cn(head, "px-3")}>Your label</th>}
+            <th scope="col" className={cn(head, "px-3")}>Suggested cell type</th>
+            <th scope="col" className={cn(head, "px-3")}>Confidence</th>
+            <th scope="col" className={cn(head, "px-3")}>Marker check</th>
             {celltypist && <th scope="col" className={cn(head, "px-3")}>CellTypist</th>}
-            <th scope="col" className={cn(head, "px-3")}>Your label</th>
-            <th scope="col" className={cn(head, "px-3")}>Status</th>
-            <th scope="col" className={cn(head, "px-3 text-right")}>Matching markers</th>
-            <th scope="col" className={cn(head, "px-3 text-right")}>Adjusted p-value</th>
-            <th scope="col" className={cn(head, "pl-3")}>Runner-up</th>
+            {!review && <th scope="col" className={cn(head, "px-3")}>Your note</th>}
+            <th scope="col" className={cn(head, "pl-3 text-right")}>
+              <span className="sr-only">Actions</span>
+            </th>
           </tr>
         </thead>
         <tbody>
-          {clusters.map((c) => (
-            <tr
-              key={c.cluster}
-              onClick={() => onSelect(c.cluster)}
-              className={cn(
-                "cursor-pointer border-b border-line",
-                c.cluster === selected ? "bg-chip" : "hover:bg-panel",
-                c.status !== "confident" && "bg-accent-tint",
-              )}
-            >
-              <td className="py-[11px] pr-3">
-                <button
-                  type="button"
-                  aria-pressed={c.cluster === selected}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onSelect(c.cluster);
-                  }}
-                  className="inline-flex items-center gap-2 font-bold"
-                >
-                  <span aria-hidden="true" className="size-3 rounded-full ring-1 ring-black/25" style={{ background: colors[c.cluster] }} />
-                  {c.cluster}
-                </button>
-              </td>
-              <td className="px-3 py-[11px] text-right font-mono">{fmt(c.n_cells)}</td>
-              <td className="px-3 py-[11px] font-bold">
-                {c.predicted_label}
-                {c.status !== "confident" && (
-                  <span className="block text-[13px] font-normal text-muted">
-                    {c.overlap === 0 ? "no matching markers" : `best candidate: ${c.best_candidate}`}
+          {rows.map((f) => {
+            const c = markers[f.cluster];
+            const r = reviews[f.cluster];
+            const suggested = f.final_label !== unknown;
+            return (
+              <tr
+                key={f.cluster}
+                onClick={() => onSelect(f.cluster)}
+                className={cn("cursor-pointer border-b border-line", f.cluster === selected ? "bg-chip" : "hover:bg-panel")}
+              >
+                <td className="py-[11px] pr-3">
+                  <span className="inline-flex items-center gap-2 font-bold">
+                    <span aria-hidden="true" className="size-3 rounded-full ring-1 ring-black/25" style={{ background: colors[f.cluster] }} />
+                    {f.cluster}
                   </span>
+                </td>
+                <td className="px-3 py-[11px] text-right font-mono">{fmt(f.n_cells)}</td>
+                {!review && (
+                  <td className="px-3 py-[11px]">
+                    <ReviewCell review={r} canConfirm={false} onConfirm={() => undefined} />
+                  </td>
                 )}
-              </td>
-              {celltypist && (
                 <td className="px-3 py-[11px]">
-                  {celltypist[c.cluster] ? (
-                    <>
-                      {celltypist[c.cluster].label}
-                      <span className="block font-mono text-[13px] text-muted">
-                        {Math.round(100 * celltypist[c.cluster].share)}% of cells
-                      </span>
-                    </>
-                  ) : (
-                    "–"
+                  {suggested ? <span className="font-bold">{f.final_label}</span> : <span className="text-muted">No suggestion</span>}
+                </td>
+                <td className="px-3 py-[11px]">
+                  <ConfidenceMark final={f} />
+                  {!review && <span className="block text-[13px] text-muted">{f.agreement_text}</span>}
+                </td>
+                <td className="px-3 py-[11px]">
+                  {c?.predicted_label ?? "–"}
+                  {c && c.status !== "confident" && (
+                    <span className="block text-[13px] font-normal text-muted">
+                      {c.status === "no_reference"
+                        ? "no reference for this tissue yet"
+                        : c.overlap === 0
+                          ? "no matching markers"
+                          : `best candidate: ${c.best_candidate}`}
+                    </span>
                   )}
                 </td>
-              )}
-              <td className="px-3 py-[11px]">
-                <ReviewCell review={reviews[c.cluster]} onConfirm={() => onConfirm(c.cluster)} />
-              </td>
-              <td className="px-3 py-[11px]">
-                <StatusMark status={c.status} />
-              </td>
-              <td className="px-3 py-[11px] text-right font-mono whitespace-nowrap">
-                {c.overlap} of {c.n_markers}
-              </td>
-              <td className="px-3 py-[11px] text-right font-mono whitespace-nowrap">
-                <PValue p={c.adj_p} />
-              </td>
-              <td className="py-[11px] pl-3 text-body">{c.second_candidate ?? "–"}</td>
-            </tr>
-          ))}
+                {celltypist && (
+                  <td className="px-3 py-[11px]">
+                    {celltypist[f.cluster] ? (
+                      <>
+                        {celltypist[f.cluster].label}
+                        <span className="block font-mono text-[13px] text-muted">{Math.round(100 * celltypist[f.cluster].share)}% of cells</span>
+                      </>
+                    ) : (
+                      "–"
+                    )}
+                  </td>
+                )}
+                {!review && <td className="max-w-[240px] px-3 py-[11px] text-[13px] text-body">{r?.note || "–"}</td>}
+                <td className="py-[11px] pl-3 text-right whitespace-nowrap">
+                  <span className="inline-flex items-center gap-2">
+                    {review && suggested && (
+                      <Button
+                        variant="secondary"
+                        size="small"
+                        title={`Confirm “${f.final_label}” (click Review to rename it instead)`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onConfirm(f.cluster);
+                        }}
+                      >
+                        Confirm
+                      </Button>
+                    )}
+                    <Button
+                      size="small"
+                      variant={review ? "primary" : "secondary"}
+                      aria-pressed={f.cluster === selected}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelect(f.cluster);
+                      }}
+                    >
+                      Review →
+                    </Button>
+                  </span>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
   );
 }
 
-/** A reference's name for the page, e.g. "CELLxGENE Census (2025-11-08)". */
-function referenceName(results: Results, key: ReferenceKey, withVersion = true): string {
-  const r = results.references.find((x) => x.key === key);
-  if (!r) return key;
-  return withVersion ? `${r.name} (${r.version})` : r.name;
+/** The marker check's reference for the page, e.g. "CELLxGENE Census (2025-11-08)". */
+function referenceName(results: Results, withVersion = true): string {
+  const db = results.database;
+  if (!db) return "no reference";
+  return withVersion ? `${db.name} (${db.version})` : db.name;
 }
 
-/** "How was this identified?": what each reference said for this cluster, and which one gave the
- * label. Census comes first; PanglaoDB labels only clusters Census leaves Unresolved. */
-function HowIdentified({ results, row }: { results: Results; row: ClusterPrediction }) {
+/** "How was this identified?": the marker check's answer (CELLxGENE Census) and CellTypist's
+ * second opinion for this cluster. CellTypist never changes the marker check's label. */
+function HowIdentified({ results, row, final }: { results: Results; row: ClusterPrediction; final: FinalCluster | undefined }) {
+  const ct = celltypistByCluster(results)?.[row.cluster];
+  const model = results.celltypist && !("error" in results.celltypist) ? results.celltypist.model : null;
   return (
     <section aria-label="How was this identified?" className="flex flex-col gap-2 rounded-[4px] border border-line bg-chip p-4">
       <h4 className="m-0 text-[13px] font-bold tracking-[0.04em] text-muted uppercase">How was this identified?</h4>
+      {final && (
+        <div className="flex flex-col gap-1 border-b border-line pb-2">
+          <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[14px]">
+            <b>{final.final_label}</b>
+            <AgreementMark final={final} />
+          </span>
+          <span className="text-[13px] text-body">{final.reason}</span>
+        </div>
+      )}
       <ul className="m-0 flex list-none flex-col gap-[6px] p-0 text-[14px]">
-        {results.references.map((ref) => {
-          const a = results.answers[ref.key]?.[row.cluster];
-          if (!a) return null;
-          const used = row.label_source === ref.key;
-          return (
-            <li key={ref.key} className="flex flex-col gap-[2px]">
-              <span>
-                <b>{ref.name}</b> <span className="text-muted">({ref.tissues.join(", ")})</span>:{" "}
-                {a.status === "confident" ? (
-                  <b>{a.predicted_label}</b>
-                ) : (
-                  <>
-                    Unresolved ({STATUS_TEXT[a.status].toLowerCase()})
-                    {a.overlap > 0 && <span className="text-muted">; closest: {a.best_candidate}</span>}
-                  </>
-                )}
-                {used && <span className="ml-2 text-[13px] font-bold text-ok">✓ label used</span>}
-              </span>
-              {a.status === "confident" && (
-                <span className="text-[13px] text-muted">
-                  {a.overlap} of {a.n_markers} markers match, adjusted p-value <PValue p={a.adj_p} />
-                </span>
-              )}
-            </li>
-          );
-        })}
-        {celltypistByCluster(results)?.[row.cluster] && (() => {
-          const c = celltypistByCluster(results)![row.cluster];
-          const ct = results.celltypist as Extract<NonNullable<Results["celltypist"]>, { clusters: unknown }>;
-          return (
-            <li className="flex flex-col gap-[2px] border-t border-line pt-[6px]">
-              <span>
-                <b>CellTypist</b> <span className="text-muted">({ct.model.replace(/\.pkl$/, "").replaceAll("_", " ")})</span>:{" "}
-                <b>{c.label}</b> <span className="text-[13px] text-muted">· second opinion</span>
-              </span>
-              <span className="text-[13px] text-muted">
-                {Math.round(100 * c.share)}% of the cluster's cells vote for it (mean probability {c.mean_probability.toFixed(2)})
-                {c.runner_up ? `; next: ${c.runner_up} (${Math.round(100 * (c.runner_up_share ?? 0))}%)` : ""}
-              </span>
-            </li>
-          );
-        })()}
+        <li className="flex flex-col gap-[2px]">
+          <span>
+            <b>Marker check</b>{" "}
+            <span className="text-muted">
+              ({results.database ? `${results.database.name}, ${results.database.tissue?.toLowerCase()}` : "no reference"})
+            </span>
+            :{" "}
+            {row.status === "confident" ? (
+              <b>{row.predicted_label}</b>
+            ) : row.status === "no_reference" ? (
+              <>not run: no Census reference for this tissue yet</>
+            ) : (
+              <>
+                Unresolved ({STATUS_TEXT[row.status].toLowerCase()})
+                {row.overlap > 0 && <span className="text-muted">; closest: {row.best_candidate}</span>}
+              </>
+            )}
+          </span>
+          {row.status === "confident" && (
+            <span className="text-[13px] text-muted">
+              {row.overlap} of {row.n_markers} markers match, adjusted p-value <PValue p={row.adj_p} />
+            </span>
+          )}
+        </li>
+        {ct && model && (
+          <li className="flex flex-col gap-[2px] border-t border-line pt-[6px]">
+            <span>
+              <b>CellTypist</b> <span className="text-muted">({model.replace(/\.pkl$/, "").replaceAll("_", " ")})</span>:{" "}
+              <b>{ct.label}</b>
+            </span>
+            <span className="text-[13px] text-muted">
+              {Math.round(100 * ct.share)}% of the cluster's cells vote for it (mean probability {ct.mean_probability.toFixed(2)})
+              {ct.runner_up ? `; next: ${ct.runner_up} (${Math.round(100 * (ct.runner_up_share ?? 0))}%)` : ""}
+            </span>
+          </li>
+        )}
       </ul>
       <p className="m-0 text-[13px] text-muted">
-        {row.label_source === "PanglaoDB"
-          ? "Census left this cluster Unresolved, so PanglaoDB's label is used."
-          : row.label_source === "Census"
-            ? "Census labels come first; PanglaoDB is shown for comparison and never replaces them."
-            : "Neither reference gave a confident label. Review this cluster yourself."}
+        Both answers are compared as broad cell types (for example T cell, monocyte, neuron). A cluster is named when
+        they agree, or when one is confident and the other gives no confident answer.
       </p>
     </section>
   );
@@ -855,23 +982,22 @@ function HowIdentified({ results, row }: { results: Results; row: ClusterPredict
 /** Why one cluster got its prediction: its best candidate cell types and their matching markers. */
 function Evidence({
   results,
+  final,
   cluster,
   color,
   review,
   onReview,
 }: {
   results: Results;
+  final: FinalCluster | undefined;
   cluster: string;
   color: string;
   review: ClusterReview | undefined;
   onReview: (send: ReviewSend) => void;
 }) {
   const row = results.clusters.find((c) => c.cluster === cluster);
-  // Whose candidates to show: the reference that gave the label (or the first one); the user can
-  // switch to the other ("Check PanglaoDB").
-  const [shown, setShown] = useState<ReferenceKey>(row?.label_source ?? results.first_reference);
-  const candidates = results.candidates_by_reference[shown]?.[cluster] ?? [];
-  const nTested = shown === results.first_reference ? results.n_cell_types_tested : null;
+  const candidates = results.candidates[cluster] ?? [];
+  const nTested = results.n_cell_types_tested;
   const settings = results.settings;
   const chart = useMemo(() => {
     const data: Data[] = [
@@ -900,7 +1026,7 @@ function Evidence({
       ],
     };
     return { data, layout };
-  }, [cluster, results, shown]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [cluster, results]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!row) return null;
   const markers = (row.matching_markers || "").split(", ").filter(Boolean);
@@ -911,16 +1037,22 @@ function Evidence({
       <div className="flex flex-wrap items-center gap-3">
         <span aria-hidden="true" className="size-3 rounded-full ring-1 ring-black/25" style={{ background: color }} />
         <h3 className="m-0 text-[16px] font-bold">
-          Cluster {cluster}: {row.predicted_label}
+          Cluster {cluster}: {final?.final_label ?? row.predicted_label}
         </h3>
-        <StatusMark status={row.status} />
+        {final && <AgreementMark final={final} />}
         <span className="font-mono text-[13px] text-muted">{fmt(row.n_cells)} cells</span>
       </div>
-      <ReviewBox row={row} review={review} candidates={candidates} onReview={onReview} />
-      {(results.references.length > 1 || celltypistByCluster(results)) && <HowIdentified results={results} row={row} />}
+      <ReviewBox row={row} finalLabel={final?.final_label ?? row.predicted_label} review={review} candidates={candidates} onReview={onReview} />
+      <HowIdentified results={results} row={row} final={final} />
       <dl className="m-0 grid grid-cols-[max-content_minmax(0,1fr)] gap-x-6 gap-y-[6px] text-[14px]">
         <dt className="text-muted">Best candidate</dt>
-        <dd className="m-0 font-bold">{row.overlap === 0 ? "none: no cell type has a matching marker" : row.best_candidate}</dd>
+        <dd className="m-0 font-bold">
+          {row.status === "no_reference"
+            ? "none: no reference for this tissue yet"
+            : row.overlap === 0
+              ? "none: no cell type has a matching marker"
+              : row.best_candidate}
+        </dd>
         <dt className="text-muted">Matching markers</dt>
         <dd className="m-0">
           {row.overlap} of its {row.n_markers} markers are among the cluster's top {fmt(settings.top_n_genes)} genes
@@ -946,7 +1078,7 @@ function Evidence({
         </dd>
         {row.reasons && (
           <>
-            <dt className="text-muted">Why Unresolved</dt>
+            <dt className="text-muted">Why the marker check is Unresolved</dt>
             <dd className="m-0 flex flex-col gap-1">
               <span className="font-bold text-accent-text">{reasonsText(row.reasons)}</span>
               {results.guidance[cluster] && <span className="text-[13px] text-body">{results.guidance[cluster]}</span>}
@@ -954,27 +1086,12 @@ function Evidence({
           </>
         )}
       </dl>
+      {candidates.length > 0 && (
+      <>
       <div className="mt-1 flex flex-wrap items-center justify-between gap-3">
         <h4 className="m-0 text-[13px] font-bold tracking-[0.04em] text-muted uppercase">
-          Best {candidates.length}
-          {nTested !== null ? ` of ${fmt(nTested)}` : ""} cell types in {referenceName(results, shown, false)}
+          Best {candidates.length} of {fmt(nTested)} cell types in {referenceName(results, false)}
         </h4>
-        {results.references.length > 1 && (
-          <label className="flex items-center gap-2 text-[13px]">
-            Show
-            <select
-              value={shown}
-              onChange={(e) => setShown(e.target.value as ReferenceKey)}
-              className="rounded-[4px] border border-field bg-white px-2 py-1 text-[13px]"
-            >
-              {results.references.map((r) => (
-                <option key={r.key} value={r.key}>
-                  {r.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
       </div>
       <PlotlyChart
         data={chart.data}
@@ -982,14 +1099,14 @@ function Evidence({
         height={Math.max(180, 34 * candidates.length + 80)}
         label={`Best candidate cell types for cluster ${cluster}`}
         download={{
-          name: `Cell Type Annotation cluster ${cluster} candidates ${shown}`,
-          title: `Cluster ${cluster}: best candidate cell types in ${referenceName(results, shown)} (−log₁₀ adjusted p-value; dashed line = significance level)`,
+          name: `Cell Type Annotation cluster ${cluster} candidates`,
+          title: `Cluster ${cluster}: best candidate cell types in ${referenceName(results)} (−log₁₀ adjusted p-value; dashed line = significance level)`,
         }}
       />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <span className="text-[13px] text-muted">Bars past the dashed line pass the significance check.</span>
         <CsvDownload
-          name={`Cell Type Annotation cluster ${cluster} candidates ${shown}`}
+          name={`Cell Type Annotation cluster ${cluster} candidates`}
           columns={[
             { key: "cell_type", header: "Cell type" },
             { key: "overlap", header: "Matching markers" },
@@ -1026,6 +1143,8 @@ function Evidence({
           </tbody>
         </table>
       </div>
+      </>
+      )}
     </section>
   );
 }
@@ -1121,10 +1240,9 @@ function Caption({ children }: { children: ReactNode }) {
   return <p className="m-0 text-[13px] text-body">{children}</p>;
 }
 
-/** The checks as boxes (species and tissues come from Data Overview). */
+/** The checks as boxes (species and tissue come from Data Overview). */
 function toBoxes(s: AnnotationSettings): AnnotationBoxes {
   return {
-    use_census: s.use_census,
     celltypist_model: s.celltypist_model ?? "",
     top_n_genes: String(s.top_n_genes),
     max_adj_p: String(s.max_adj_p),

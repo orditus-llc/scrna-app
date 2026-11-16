@@ -21,6 +21,7 @@ Tolerances (CLAUDE.md, "Strict test tolerances"; the reason for each looser chec
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 
 import anndata as ad
 import numpy as np
@@ -47,26 +48,46 @@ def expected():
     return json.loads((EXPECTED / "kang_summary.json").read_text()), ad.read_h5ad(EXPECTED / "kang_results.h5ad")
 
 
-@pytest.fixture(scope="module")
-def kang_run(kang_path):
-    """The app on Kang with its default settings, up to Preprocessing (samples from the file's columns)."""
-    run = AnalysisRun(kang_path, DEFAULT_PARAMS, sample_columns={"sample": "replicate", "condition": "label"},
-                      metadata={"species": "human", "tissues": ["Blood"]})
+# The app's defaults pick highly variable genes within each sample (the notebook's "per_sample"); the
+# notebook's "pooled" variant is the same settings with that switched off.
+POOLED = replace(DEFAULT_PARAMS, hvg=replace(DEFAULT_PARAMS.hvg, per_sample=False))
+
+
+def _kang(kang_path, params):
+    """The app on Kang up to Preprocessing (samples from the file's columns)."""
+    run = AnalysisRun(kang_path, params, sample_columns={"sample": "replicate", "condition": "label"},
+                      metadata={"species": "human", "tissue": "blood"})
     for stage in ("load", "compute_qc_metrics", "apply_filter", "preprocess"):
         getattr(run, stage)()
     return run
 
 
 @pytest.fixture(scope="module")
-def runs(kang_run):
+def kang_run(kang_path):
+    """Pooled highly variable genes (the notebook's "pooled" runs)."""
+    return _kang(kang_path, POOLED)
+
+
+@pytest.fixture(scope="module")
+def kang_run_per_sample(kang_path):
+    """The app's default settings: genes picked within each sample (the notebook's "per_sample" runs)."""
+    return _kang(kang_path, DEFAULT_PARAMS)
+
+
+def _downstream(run, integ):
+    run.reduce_dimensions(integration_params=integ)
+    run.cluster()
+    run.find_markers()
+    return {"reduced": run.stage_result("reduce_dimensions"), "clustered": run.result("cluster"),
+            "markers": run.result("markers")}
+
+
+@pytest.fixture(scope="module")
+def runs(kang_run, kang_run_per_sample):
     """Dimensionality Reduction, Clustering and Marker Genes without and with Harmony (by sample)."""
-    out = {}
-    for name, integ in (("pooled_none", IntegrationParams()), ("pooled_harmony", IntegrationParams(method="harmony"))):
-        kang_run.reduce_dimensions(integration_params=integ)
-        kang_run.cluster()
-        kang_run.find_markers()
-        out[name] = {"reduced": kang_run.stage_result("reduce_dimensions"), "clustered": kang_run.result("cluster"),
-                     "markers": kang_run.result("markers")}
+    out = {name: _downstream(kang_run, integ)
+           for name, integ in (("pooled_none", IntegrationParams()), ("pooled_harmony", IntegrationParams(method="harmony")))}
+    out["per_sample_none"] = _downstream(kang_run_per_sample, IntegrationParams())
     return out
 
 
@@ -104,6 +125,18 @@ def test_normalization_and_highly_variable_genes_match(kang_run, expected):
     assert sorted(map(str, pre.var_names)) == sorted(summary["hvg"]["pooled"])
     totals = np.asarray(kang_run.result("filter").X.sum(axis=1)).ravel()
     assert float(np.median(totals)) == summary["normalize_target_sum_used"]
+    assert kang_run.stage_result("preprocess").summary["hvg_per_sample"] is False
+
+
+def test_highly_variable_genes_within_each_sample_match(kang_run_per_sample, expected):
+    """The app's default with several samples: genes picked within each sample, exactly the notebook's list."""
+    summary, _ = expected
+    pre = kang_run_per_sample.result("preprocess")
+    assert sorted(map(str, pre.var_names)) == sorted(summary["hvg"]["per_sample"])
+    assert len(summary["hvg"]["per_sample"]) == summary["hvg"]["n_per_sample"]
+    assert kang_run_per_sample.stage_result("preprocess").summary["hvg_per_sample"] is True
+    assert pre.var["highly_variable_nbatches"].max() <= len(kang_run_per_sample.samples)
+    assert kang_run_per_sample.record()["params"]["hvg"]["per_sample"] is True
 
 
 # --- Without batch correction ----------------------------------------------------------------------
@@ -115,7 +148,7 @@ def aligned(a, b):
 
 def test_pca_and_mixing_match(runs, expected):
     summary, ref = expected
-    for name in ("pooled_none", "pooled_harmony"):
+    for name in ("pooled_none", "pooled_harmony", "per_sample_none"):
         reduced = runs[name]["reduced"]
         variance = np.asarray(reduced.details[0].variance_ratio)
         assert np.allclose(variance, summary["runs"][name]["pca_variance_ratio"], rtol=0, atol=1e-6)
@@ -127,13 +160,14 @@ def test_pca_and_mixing_match(runs, expected):
             summary["runs"][name]["mixing_before_mean"], abs=1e-9)
 
 
-def test_clusters_markers_and_composition_match_without_correction(runs, expected):
+@pytest.mark.parametrize("name", ["pooled_none", "per_sample_none"])
+def test_clusters_markers_and_composition_match_without_correction(runs, expected, name):
     summary, ref = expected
-    r = summary["runs"]["pooled_none"]
-    clustered = runs["pooled_none"]["clustered"]
-    assert adjusted_rand_score(clustered.obs["leiden"], ref.obs["leiden_pooled_none"]) == 1.0
+    r = summary["runs"][name]
+    clustered = runs[name]["clustered"]
+    assert adjusted_rand_score(clustered.obs["leiden"], ref.obs[f"leiden_{name}"]) == 1.0
     assert {str(k): v for k, v in clustered.obs["leiden"].value_counts().items()} == r["cluster_sizes"]
-    table = marker_tools.marker_table(runs["pooled_none"]["markers"], n_top=25)
+    table = marker_tools.marker_table(runs[name]["markers"], n_top=25)
     assert {str(g): list(rows["gene"]) for g, rows in table.groupby("group")} == r["top25_markers"]
     comp = integration.composition(clustered, "sample", "leiden").set_index(["sample", "group"])
     for row in r["composition"]:
@@ -144,20 +178,22 @@ def test_clusters_markers_and_composition_match_without_correction(runs, expecte
 
 # --- With Harmony ------------------------------------------------------------------------------------
 
-def test_harmony_step_by_step_from_the_notebooks_own_coordinates(kang_run, expected):
+@pytest.mark.parametrize("variant", ["pooled", "per_sample"])
+def test_harmony_step_by_step_from_the_notebooks_own_coordinates(kang_run, kang_run_per_sample, expected, variant):
     """Each step exactly, given the previous step's saved answer: Harmony from the notebook's PCA,
     the mixing score from its corrected coordinates, and clustering from those coordinates."""
     _, ref = expected
-    a = kang_run.result("preprocess").copy()
-    a.obsm["X_pca"] = ref.obsm["X_pca_pooled_harmony"].copy()
+    name = f"{variant}_harmony"
+    a = (kang_run if variant == "pooled" else kang_run_per_sample).result("preprocess").copy()
+    a.obsm["X_pca"] = ref.obsm[f"X_pca_{name}"].copy()
     out, _ = integration.run_harmony(a, IntegrationParams(method="harmony"), n_components=50)
-    assert np.array_equal(out.obsm[integration.CORRECTED_KEY], ref.obsm["X_pca_harmony_pooled_harmony"])
+    assert np.array_equal(out.obsm[integration.CORRECTED_KEY], ref.obsm[f"X_pca_harmony_{name}"])
     after = integration.sample_mixing(out.obsm[integration.CORRECTED_KEY], out.obs["sample"])
-    assert np.allclose(after, ref.obs["mixing_after_pooled_harmony"].to_numpy(), rtol=0, atol=1e-9)
+    assert np.allclose(after, ref.obs[f"mixing_after_{name}"].to_numpy(), rtol=0, atol=1e-9)
     sc.pp.neighbors(out, n_neighbors=15, n_pcs=50, use_rep=integration.CORRECTED_KEY, random_state=0)
     from scrna_analysis.clustering import cluster_leiden
     clustered, _ = cluster_leiden(out, DEFAULT_PARAMS.leiden)
-    assert adjusted_rand_score(clustered.obs["leiden"], ref.obs["leiden_pooled_harmony"]) == 1.0
+    assert adjusted_rand_score(clustered.obs["leiden"], ref.obs[f"leiden_{name}"]) == 1.0
 
 
 def test_harmony_end_to_end_agrees_closely(runs, expected):

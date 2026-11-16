@@ -1,0 +1,175 @@
+label,broad_type
+Bad cells: Undefined,none
+Blood: Erythrocyte,erythroid cell
+Blood: Erythroid progenitor,erythroid cell
+Blood: Platelet,megakaryocyte/platelet
+Blood: Undefined,none
+Choroid plexus: Choroid plexus,epithelial cell
+Ectoderm: Adenohypophyseal placode,own label
+Ectoderm: Dorsal early ectoderm,own label
+Ectoderm: Early ectoderm,own label
+Ectoderm: Lateral nasal pit,own label
+Ectoderm: Lens,own label
+Ectoderm: Olfactory epithelium,own label
+Ectoderm: Olfactory pit,own label
+Ectoderm: Oral ectoderm,own label
+Ectoderm: Otic vesicle,own label
+Ectoderm: Pharyngeal epithelium,own label
+Ectoderm: Surface ectoderm,own label
+Ectoderm: Undefined,own label
+Endoderm: Gut,own label
+Ependymal: Forebrain,ependymal cell
+Ependymal: Mixed region,ependymal cell
+Ependymal: Undefined,ependymal cell
+Fibroblast: Arachnoid,fibroblast
+Fibroblast: Arachnoid barrier cells,fibroblast
+Fibroblast: Chondrocytes,own label
+Fibroblast: Dura,fibroblast
+Fibroblast: Early fibroblasts,fibroblast
+Fibroblast: Intermediate meninges 1,fibroblast
+Fibroblast: Intermediate meninges 2,fibroblast
+Fibroblast: Perivascular fibroblast-like cells,fibroblast
+Fibroblast: Pia 1,fibroblast
+Fibroblast: Pia 2,fibroblast
+Fibroblast: Pia 3,fibroblast
+Fibroblast: Undefined,fibroblast
+Gastrulation: Anterior primitive streak,own label
+Gastrulation: Cardiac mesoderm,own label
+Gastrulation: Definitive endoderm,own label
+Gastrulation: Endoderm,own label
+Gastrulation: Epiblast,own label
+Gastrulation: Extraembryonic ectoderm,own label
+Gastrulation: Extraembryonic endoderm,own label
+Gastrulation: Hematoendothelial lineage,own label
+Gastrulation: Mesenchyme,own label
+Gastrulation: Mesoderm,own label
+Gastrulation: Nascent mesoderm,own label
+Gastrulation: Node,own label
+Gastrulation: Osteochondral mesoderm,own label
+Gastrulation: Parietal endoderm,own label
+Gastrulation: Primordial germ cells,own label
+Gastrulation: Undefined,own label
+Gastrulation: Visceral endoderm,own label
+Glioblast: Forebrain,neural progenitor
+Glioblast: Forebrain astrocyte,astrocyte
+Glioblast: Hindbrain,neural progenitor
+Glioblast: Midbrain,neural progenitor
+Glioblast: Mixed region,neural progenitor
+Glioblast: Mixed region astrocytes,astrocyte
+Glioblast: PreOPC,oligodendrocyte precursor cell
+Glioblast: Spinal cord,neural progenitor
+Glioblast: Undefined,neural progenitor
+Immune: Axon tract-associated microglia,microglia
+Immune: Cycling microglia,microglia
+Immune: Cycling perivascular macrophages,macrophage
+Immune: Early macrophage,macrophage
+Immune: Infiltrating immune,none
+Immune: Non-cycling microglia,microglia
+Immune: Non-cycling perivascular macrophages,macrophage
+Immune: Undefined,none
+Mesenchyme: Mesenchyme,own label
+Mesenchyme: Undefined,none
+Mesoderm: Cardiac,own label
+Mesoderm: Paraxial,own label
+Mesoderm: Pharyngeal,own label
+Neural crest: Neural crest,own label
+Neural tube: Anterior,neural progenitor
+Neural tube: Caudal,neural progenitor
+Neural tube: Floor plate,neural progenitor
+Neural tube: Neuromesodermal progenitors,own label
+Neural tube: Optic cup,neural progenitor
+Neural tube: Undefined,neural progenitor
+Neuroblast: Cajal-Retzius,neural progenitor
+Neuroblast: Forebrain,neural progenitor
+Neuroblast: Forebrain GABAergic,neural progenitor
+Neuroblast: Forebrain glutamatergic,neural progenitor
+Neuroblast: Hindbrain,neural progenitor
+Neuroblast: Hindbrain GABAergic,neural progenitor
+Neuroblast: Hindbrain glutamatergic,neural progenitor
+Neuroblast: Hindbrain glycinergic,neural progenitor
+Neuroblast: Midbrain,neural progenitor
+Neuroblast: Midbrain GABAergic,neural progenitor
+Neuroblast: Midbrain glutamatergic,neural progenitor
+Neuroblast: Mixed region,neural progenitor
+Neuroblast: Mixed region glutamatergic,neural progenitor
+Neuroblast: Motor neuron,neural progenitor
+Neuroblast: Neuronal intermediate progenitor,neural progenitor
+Neuroblast: Sensory neuron,neural progenitor
+Neuroblast: Spinal cord glutamatergic,neural progenitor
+Neuroblast: Thalamus glutamatergic,neural progenitor
+Neuroblast: Undefined,neural progenitor
+Neuron: Cajal-Retzius,neuron
+Neuron: Cerebellum GABAergic,neuron
+Neuron: Cerebellum glutamatergic,neuron
+Neuron: Cortical or hippocampal glutamatergic,neuron
+Neuron: Diencephalon glutamatergic,neuron
+Neuron: Dorsal midbrain glutamatergic,neuron
+Neuron: Epithalamus glutamatergic,neuron
+Neuron: Forebrain GABAergic,neuron
+Neuron: Forebrain glutamatergic,neuron
+Neuron: Hindbrain GABAergic,neuron
+Neuron: Hindbrain glutamatergic,neuron
+Neuron: Hindbrain glycinergic,neuron
+Neuron: Hindbrain serotoninergic,neuron
+Neuron: Hypothalamus,neuron
+Neuron: Hypothalamus glutamatergic,neuron
+Neuron: Midbrain GABAergic,neuron
+Neuron: Midbrain dopaminergic,neuron
+Neuron: Midbrain glutamatergic,neuron
+Neuron: Midbrain-hindbrain GABAergic,neuron
+Neuron: Mixed region,neuron
+Neuron: Mixed region GABAergic,neuron
+Neuron: Mixed region and neurotransmitter,neuron
+Neuron: Mixed region glutamatergic,neuron
+Neuron: Motor neuron,neuron
+Neuron: Pituitary neuroendocrine,neuron
+Neuron: Posterior hindbrain glutamatergic,neuron
+Neuron: Sensory neuron,neuron
+Neuron: Spinal cord glutamatergic,neuron
+Neuron: Spinal cord glycinergic,neuron
+Neuron: Undefined,neuron
+Olfactory ensheathing cell: Olfactory ensheathing cell,own label
+Oligodendrocyte: Committed oligodendrocyte precursor,oligodendrocyte precursor cell
+Oligodendrocyte: Oligodendrocyte,oligodendrocyte
+Oligodendrocyte: Oligodendrocyte precursor cell,oligodendrocyte precursor cell
+Oligodendrocyte: Undefined,none
+Pineal gland: Pineal gland,own label
+Radial glia: Anteromedial cerebral pole,neural progenitor
+Radial glia: Bergmann glia,astrocyte
+Radial glia: Cortical hem,neural progenitor
+Radial glia: Diencephalic roof plate,neural progenitor
+Radial glia: Diencephalon,neural progenitor
+Radial glia: Dorsal diencephalon,neural progenitor
+Radial glia: Dorsal forebrain,neural progenitor
+Radial glia: Dorsal hindbrain,neural progenitor
+Radial glia: Dorsal hindbrain and spinal cord,neural progenitor
+Radial glia: Dorsal midbrain,neural progenitor
+Radial glia: Early choroid plexus,neural progenitor
+Radial glia: Ependymal-like,ependymal cell
+Radial glia: Forebrain,neural progenitor
+Radial glia: Fourth-ventricle roof plate,neural progenitor
+Radial glia: Hindbrain,neural progenitor
+Radial glia: Hindbrain floor plate,neural progenitor
+Radial glia: Hindbrain roof plate,neural progenitor
+Radial glia: Hypothalamic floor-plate like,neural progenitor
+Radial glia: Hypothalamus,neural progenitor
+Radial glia: Late isthmic organizer,neural progenitor
+Radial glia: Midbrain,neural progenitor
+Radial glia: Midbrain basal plate,neural progenitor
+Radial glia: Midbrain floor plate,neural progenitor
+Radial glia: Midbrain-hindbrain boundary,neural progenitor
+Radial glia: Mixed region,neural progenitor
+Radial glia: Roof plate,neural progenitor
+Radial glia: Spinal cord,neural progenitor
+Radial glia: Undefined,neural progenitor
+Radial glia: Ventral hindbrain,neural progenitor
+Radial glia: Ventral midbrain,neural progenitor
+Radial glia: Zona limitans intrathalamica,neural progenitor
+Schwann cell: Schwann cell,own label
+Subcommissural organ: Subcommissural organ hypendymal cell,ependymal cell
+Undefined: Sensory neuron,neuron
+Vascular: Angioblast,own label
+Vascular: Endothelial,endothelial cell
+Vascular: Pericyte,pericyte
+Vascular: Undefined,none
+Vascular: Vascular smooth muscle,smooth muscle cell

@@ -16,7 +16,6 @@ import { reviewedGroups } from "../lib/reviewedGroups";
 import { cn } from "../lib/utils";
 import { goTo, type Page } from "../navigation";
 import type { CompositionRow, ExploreSamples, ExportInfo, ExplorePayload, GenePayload } from "../types";
-import { STATUS_TEXT } from "./AnnotationPage";
 
 type Mode = "cluster" | "cell_type" | "reviewed" | "sample" | "condition" | "composition" | "n_genes" | "total_counts" | "pct_mt" | "gene";
 type Results = NonNullable<ExplorePayload["results"]>;
@@ -276,7 +275,7 @@ function ClusterDetails({
 }: {
   cluster: string | null;
   results: Results;
-  prediction: { predicted_label: string; status: string } | undefined;
+  prediction: { predicted_label: string; agreement: string; agreement_text: string } | undefined;
   onGene: (gene: string) => void;
   onNavigate: (page: Page) => void;
 }) {
@@ -292,8 +291,8 @@ function ClusterDetails({
       {prediction && (
         <span className="text-[14px]">
           Predicted: <b>{prediction.predicted_label}</b>{" "}
-          <span className={prediction.status === "confident" ? "text-muted" : "font-bold text-accent-text"}>
-            ({prediction.status === "confident" ? STATUS_TEXT.confident : `▲ ${STATUS_TEXT[prediction.status as keyof typeof STATUS_TEXT] ?? prediction.status}`})
+          <span className={prediction.agreement === "agree" ? "text-muted" : "font-bold text-accent-text"}>
+            ({prediction.agreement === "agree" ? prediction.agreement_text : `▲ ${prediction.agreement_text}`})
           </span>
         </span>
       )}
@@ -513,27 +512,39 @@ function DetailsBox({ children }: { children: ReactNode }) {
   return <div className="flex flex-col gap-2 rounded-[4px] border border-line bg-panel p-3 text-[13px] text-muted">{children}</div>;
 }
 
-/** The analyst's reviewed labels on the UMAP (clusters not reviewed in grey). */
+/** Your labels on the UMAP: your label for each reviewed cluster, the suggested cell type for the
+ * others (Unknown in grey; analyst 2026-11-16). The suggestions themselves never change. */
 function ReviewedView({ results, cColors, clusterOrder }: { results: Results; cColors: Record<string, string>; clusterOrder: string[] }) {
-  const r = useMemo(
-    () => reviewedGroups(results.cell_cluster, clusterOrder, results.reviewed ?? {}, cColors, results.not_reviewed_label),
-    [results, cColors, clusterOrder],
-  );
+  const mine = results.reviewed ?? {};
   const predicted = useMemo(
     () => Object.fromEntries((results.predictions?.clusters ?? []).map((c) => [c.cluster, c.predicted_label])),
     [results],
   );
+  const unknown = results.predictions?.unresolved_label ?? results.not_reviewed_label;
+  const r = useMemo(() => {
+    const labels: Record<string, string> = {};
+    for (const c of clusterOrder) {
+      if (mine[c] !== undefined) labels[c] = mine[c];
+      else if (predicted[c] !== undefined && predicted[c] !== unknown) labels[c] = predicted[c];
+    }
+    return reviewedGroups(results.cell_cluster, clusterOrder, labels, cColors, unknown);
+  }, [results, cColors, clusterOrder, predicted, unknown]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <GroupedUmap
       title="Your labels on the UMAP"
-      description="Your reviewed labels (Not reviewed in grey). Predictions are kept separately."
-      listHeading="Your label"
+      description="Your label for each cluster you've reviewed; the suggested cell type for the others (Unknown in grey)."
+      listHeading="Cell type"
       groups={r.groups}
       colors={r.colors}
       cellGroup={r.cellLabel}
       umap={results.umap}
       cells={results.cells}
-      extraHover={(i) => `Cluster ${results.cell_cluster[i]} · predicted: ${predicted[results.cell_cluster[i]] ?? "–"}`}
+      extraHover={(i) => {
+        const c = results.cell_cluster[i];
+        return mine[c] !== undefined
+          ? `Cluster ${c} · your label (suggested: ${predicted[c] ?? "–"})`
+          : `Cluster ${c} · suggestion, not reviewed yet`;
+      }}
     />
   );
 }

@@ -2,9 +2,7 @@
 // description). Required before the analysis continues, because they decide which cell types Cell
 // Type Annotation compares. The demo's arrive confirmed from its metadata; uploads start empty,
 // with the species suggested from how the mitochondrial genes are named. The tissue is one of
-// CELLxGENE Census's tissues (the first cell-type reference); the matching PanglaoDB tissues (the
-// automatic second check) are filled in and can be changed. Without Census's tissue list, the
-// PanglaoDB tissues are chosen directly.
+// CELLxGENE Census's tissues; those with a Census marker reference come first.
 import { useShinyInput } from "@posit-dev/shinyreact";
 import { Check } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -17,8 +15,8 @@ import { Button } from "./ui/button";
 interface MetadataSend {
   species: string;
   tissue: string | null; // the Census tissue
-  tissues: string[]; // PanglaoDB tissues
   about: string;
+  stage: string | null; // "adult", "developing" or null (not given)
 }
 
 export function ConfirmMetadata({ meta }: { meta: MetadataInfo }) {
@@ -26,9 +24,8 @@ export function ConfirmMetadata({ meta }: { meta: MetadataInfo }) {
   const [editing, setEditing] = useState(!meta.confirmed);
   const [species, setSpecies] = useState(meta.species ?? meta.suggested_species ?? "");
   const [tissue, setTissue] = useState(meta.tissue ?? "");
-  const [tissues, setTissues] = useState<string[]>(meta.tissues);
-  const [changingPanglao, setChangingPanglao] = useState(false);
   const [about, setAbout] = useState(meta.about ?? "");
+  const [stage, setStage] = useState(meta.stage ?? "");
   const sent = useRef(false);
 
   // The server has accepted the confirmation when the metadata changes: close the form.
@@ -39,23 +36,16 @@ export function ConfirmMetadata({ meta }: { meta: MetadataInfo }) {
     }
   }, [meta.text, meta.about, meta.confirmed_by]);
 
-  const counts = meta.tissue_cell_types[species] ?? {};
   const needsTissue = meta.marker_species.includes(species);
   const censusTissues = meta.census_tissues[species] ?? [];
-  const useCensus = censusTissues.length > 0;
-  const ready = species !== "" && (!needsTissue || (useCensus ? tissue !== "" : tissues.length > 0));
+  const ready = species !== "" && (!needsTissue || tissue !== "");
 
   const startEditing = () => {
     setSpecies(meta.species ?? meta.suggested_species ?? "");
     setTissue(meta.tissue ?? "");
-    setTissues(meta.tissues);
-    setChangingPanglao(false);
     setAbout(meta.about ?? "");
+    setStage(meta.stage ?? "");
     setEditing(true);
-  };
-  const chooseTissue = (next: string) => {
-    setTissue(next);
-    setTissues(censusTissues.find((t) => t.tissue === next)?.panglaodb ?? []);
   };
   const confirm = () => {
     sent.current = true;
@@ -63,9 +53,9 @@ export function ConfirmMetadata({ meta }: { meta: MetadataInfo }) {
       n: clickCount(click) + 1,
       settings: {
         species,
-        tissue: needsTissue && useCensus ? tissue : null,
-        tissues: needsTissue ? tissues : [],
+        tissue: needsTissue ? tissue : null,
         about,
+        stage: stage || null,
       },
     });
   };
@@ -126,7 +116,6 @@ export function ConfirmMetadata({ meta }: { meta: MetadataInfo }) {
                 const next = e.target.value;
                 setSpecies(next);
                 setTissue("");
-                setTissues((meta.census_tissues[next] ?? []).length > 0 ? [] : tissues.filter((t) => (meta.tissue_cell_types[next]?.[t] ?? 0) > 0));
               }}
               className="rounded-[4px] border border-field bg-white px-[10px] py-2 text-[14px]"
             >
@@ -145,34 +134,50 @@ export function ConfirmMetadata({ meta }: { meta: MetadataInfo }) {
                 Tissue {needsTissue && <Required />}
               </span>{" "}
               <InfoTip label="About Tissue">
-                Where your cells come from. Cell types are compared first with CELLxGENE Census reference cells from this
-                tissue, then with PanglaoDB for clusters Census leaves Unresolved.
+                Where your cells come from. Cell types are compared with CELLxGENE Census reference cells from this tissue,
+                and CellTypist gives a second opinion where it has a model.
               </InfoTip>
             </legend>
             {species === "" ? (
               <span className="text-[13px] text-muted">Choose a species to see its tissues.</span>
             ) : !needsTissue ? (
               <span className="text-[13px] text-muted">
-                Not needed: the marker database has no cell types for this species, so Cell Type Annotation will be left
-                out. Every other step works.
+                Not needed: there are no cell-type references for this species, so Cell Type Annotation will be left out.
+                Every other step works.
               </span>
-            ) : useCensus ? (
-              <CensusTissuePicker
-                options={censusTissues}
-                tissue={tissue}
-                onChoose={chooseTissue}
-                panglao={tissues}
-                panglaoCounts={meta.tissues_available ? counts : null}
-                changing={changingPanglao}
-                onChanging={setChangingPanglao}
-                onPanglao={setTissues}
-              />
-            ) : !meta.tissues_available ? (
-              <span className="text-[13px] font-bold text-accent-text">{meta.tissue_problem}</span>
+            ) : censusTissues.length > 0 ? (
+              <CensusTissuePicker options={censusTissues} tissue={tissue} onChoose={setTissue} />
             ) : (
-              <TissueChoices counts={counts} chosen={tissues} onChange={setTissues} />
+              <span className="text-[13px] font-bold text-accent-text">
+                The list of tissues isn't available on this installation, so the tissue can't be chosen yet.
+              </span>
             )}
           </fieldset>
+
+          <div className="flex max-w-[560px] flex-col gap-[6px]">
+            <span className="flex items-center gap-1">
+              <label htmlFor="meta_stage" className="text-[14px] font-bold">
+                Stage <span className="font-normal text-muted">(optional)</span>
+              </label>
+              <InfoTip label="About Stage">
+                Whether the sample comes from an adult or from an embryo or fetus. Used to suggest a matching CellTypist
+                model, for example the developing mouse brain model for embryonic brain.
+              </InfoTip>
+            </span>
+            <select
+              id="meta_stage"
+              value={stage}
+              onChange={(e) => setStage(e.target.value)}
+              className="max-w-[320px] rounded-[4px] border border-field bg-white px-[10px] py-2 text-[14px]"
+            >
+              <option value="">Not specified</option>
+              {meta.stage_options.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+          </div>
 
           <div className="flex max-w-[560px] flex-col gap-[6px]">
             <label htmlFor="meta_about" className="text-[14px] font-bold">
@@ -201,7 +206,7 @@ export function ConfirmMetadata({ meta }: { meta: MetadataInfo }) {
             )}
             {!ready && (
               <span className="text-[13px] text-muted">
-                {species === "" ? "Choose the species." : useCensus ? "Choose the tissue." : "Tick at least one tissue."}
+                {species === "" ? "Choose the species." : "Choose the tissue."}
               </span>
             )}
           </div>
@@ -226,58 +231,15 @@ function Required() {
   );
 }
 
-/** Tissue checkboxes, each with its number of cell types (tissues with none aren't listed). */
-function TissueChoices({
-  counts,
-  chosen,
-  onChange,
-}: {
-  counts: Record<string, number>;
-  chosen: string[];
-  onChange: (tissues: string[]) => void;
-}) {
-  const toggle = (t: string, on: boolean) => onChange(on ? [...chosen, t] : chosen.filter((c) => c !== t));
-  return (
-    <div className="grid grid-cols-[repeat(auto-fill,minmax(210px,1fr))] gap-x-4 gap-y-[6px]">
-      {Object.keys(counts)
-        .sort()
-        .map((t) => (
-          <label key={t} className="flex items-start gap-2 text-[14px] leading-snug">
-            <input
-              type="checkbox"
-              checked={chosen.includes(t)}
-              onChange={(e) => toggle(t, e.target.checked)}
-              className="mt-[2px] size-4 flex-none accent-ink"
-            />
-            <span className="min-w-0">
-              {t} <span className="font-mono text-[12px] whitespace-nowrap text-muted">{counts[t]}</span>
-            </span>
-          </label>
-        ))}
-    </div>
-  );
-}
-
-/** One Census tissue (those with a marker table first), and below it the PanglaoDB tissues used for
- * the second check, filled in from the Census tissue and changeable. */
+/** One Census tissue: those with a Census marker reference first, then the rest. */
 function CensusTissuePicker({
   options,
   tissue,
   onChoose,
-  panglao,
-  panglaoCounts,
-  changing,
-  onChanging,
-  onPanglao,
 }: {
   options: CensusTissue[];
   tissue: string;
   onChoose: (tissue: string) => void;
-  panglao: string[];
-  panglaoCounts: Record<string, number> | null; // null: PanglaoDB can't be read
-  changing: boolean;
-  onChanging: (on: boolean) => void;
-  onPanglao: (tissues: string[]) => void;
 }) {
   const ready = options.filter((o) => o.has_table);
   const others = options.filter((o) => !o.has_table);
@@ -302,7 +264,7 @@ function CensusTissuePicker({
             ))}
           </optgroup>
         )}
-        <optgroup label={ready.length > 0 ? "Other tissues (PanglaoDB only for now)" : "Tissues"}>
+        <optgroup label={ready.length > 0 ? "No Census reference yet" : "Tissues"}>
           {others.map((o) => (
             <option key={o.tissue} value={o.tissue}>
               {o.label}
@@ -312,32 +274,12 @@ function CensusTissuePicker({
       </select>
       {chosen && !chosen.has_table && (
         <span className="text-[13px] text-muted">
-          No Census reference is built for {chosen.label.toLowerCase()} yet; Cell Type Annotation will offer PanglaoDB only.
+          No Census reference is built for {chosen.label.toLowerCase()} yet, so Cell Type Annotation won't run the marker
+          check.{" "}
+          {chosen.celltypist_model
+            ? "CellTypist will still give its answer for each cluster."
+            : "CellTypist has no model for it either, so you'll review the clusters with their marker genes."}
         </span>
-      )}
-      {chosen && panglaoCounts && (
-        <div className="flex flex-col gap-2">
-          <span className="text-[13px] text-muted">
-            {panglao.length > 0 ? (
-              <>Also checked in PanglaoDB: {panglao.join(", ")}.</>
-            ) : (
-              <>No PanglaoDB tissue matches {chosen.label.toLowerCase()}; tick the closest ones for the second check (optional).</>
-            )}{" "}
-            {panglao.length > 0 && (
-              <button
-                type="button"
-                className="cursor-pointer border-0 bg-transparent p-0 text-[13px] font-bold text-ink underline underline-offset-2"
-                aria-expanded={changing}
-                onClick={() => onChanging(!changing)}
-              >
-                {changing ? "Done" : "Change"}
-              </button>
-            )}
-          </span>
-          {(changing || panglao.length === 0) && (
-            <TissueChoices counts={panglaoCounts} chosen={panglao} onChange={onPanglao} />
-          )}
-        </div>
       )}
     </div>
   );

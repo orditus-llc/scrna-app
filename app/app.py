@@ -42,7 +42,7 @@ DEMO_METADATA = {
     "label": "Demo data: human blood cells (PBMC3k, 10x Genomics)",
     "species": "human",
     "tissue": "blood",  # the Census tissue
-    "tissues": ["Immune system", "Blood"],  # PanglaoDB's tissue names (as the Census tissue maps them)
+    "stage": "adult",
     "about": "Peripheral blood mononuclear cells from a healthy donor (PBMC3k, 10x Genomics).",
 }
 DEMO_PATH = DEMO_METADATA["file"]
@@ -53,7 +53,7 @@ DEMO_SAMPLES = {
     "label": "Demo data: 16 samples of human blood cells, control vs interferon-beta (Kang et al. 2018)",
     "species": "human",
     "tissue": "blood",
-    "tissues": ["Immune system", "Blood"],
+    "stage": "adult",
     "about": "Peripheral blood mononuclear cells from 8 lupus patients, each cultured 6 hours with or without "
              "interferon-beta (Kang et al. 2018, Nature Biotechnology).",
     "sample_columns": {"sample": "replicate", "condition": "label"},
@@ -149,7 +149,7 @@ def server(input, output, session):
                       "data_overview")
             return
         open_dataset(DEMO_SAMPLES["file"], DEMO_SAMPLES["file"].name, DEMO_SAMPLES["label"],
-                     {k: DEMO_SAMPLES[k] for k in ("species", "tissue", "tissues", "about")},
+                     {k: DEMO_SAMPLES[k] for k in ("species", "tissue", "stage", "about")},
                      sample_columns=DEMO_SAMPLES["sample_columns"])
 
     @reactive.effect
@@ -184,7 +184,7 @@ def server(input, output, session):
     def _load_demo():
         if clicked(input.load_demo()):
             open_dataset(DEMO_PATH, DEMO_PATH.name, DEMO_METADATA["label"],
-                         {k: DEMO_METADATA[k] for k in ("species", "tissue", "tissues", "about")})
+                         {k: DEMO_METADATA[k] for k in ("species", "tissue", "stage", "about")})
 
     @reactive.effect
     @reactive.event(input.confirm_metadata)
@@ -194,11 +194,11 @@ def server(input, output, session):
         if not clicked(value):
             return
         try:
-            species, tissue, tissues, about = payloads.metadata_from_browser(sent_settings(value))
+            species, tissue, about, stage = payloads.metadata_from_browser(sent_settings(value))
         except payloads.InputError as problem:
             tell_user(str(problem), "data_overview")
             return
-        attempt(lambda: run.confirm_metadata(species, tissues, about, tissue=tissue), step="data_overview")
+        attempt(lambda: run.confirm_metadata(species, tissue, about, stage), step="data_overview")
 
     # --- Quality Control ------------------------------------------------------------------
     @reactive.effect
@@ -267,6 +267,13 @@ def server(input, output, session):
         if clicked(input.run_annotation()):
             run_with_settings(input.run_annotation(), payloads.annotation_params_from_browser,
                               run.annotate, step="cell_type_annotation")
+
+    @reactive.effect
+    @reactive.event(input.run_conditions)
+    def _run_conditions():
+        if clicked(input.run_conditions()):
+            run_with_settings(input.run_conditions(), payloads.condition_params_from_browser,
+                              run.compare_conditions, step="compare_conditions")
 
     @reactive.effect
     @reactive.event(input.run_reduction)
@@ -389,6 +396,12 @@ def server(input, output, session):
     def explore():
         changed()
         return payloads.explore_payload(run)
+
+    @reactive_output
+    def conditions():
+        changed()
+        group = input.conditions_group() if "conditions_group" in input else None
+        return payloads.conditions_payload(run, group)
 
     @reactive_output
     def explore_gene_values():

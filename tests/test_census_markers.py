@@ -133,7 +133,7 @@ def test_tables_save_and_load_with_their_fingerprint(tmp_path, ontology):
         cm.load_marker_table(tmp_path / "none.tsv.gz")
 
 
-# --- Census first, PanglaoDB second, in the analysis (made-up Census tables, known answers) -------
+# --- The Census reference in the analysis (made-up Census tables, known answers) ----------------
 
 from dataclasses import replace  # noqa: E402
 
@@ -171,43 +171,35 @@ def write_table(folder, types):
 
 
 def annotate(run, **census):
-    census = {"tissue": "blood", "use": True, **census}  # each test starts from Census + blood
+    census = {"tissue": "blood", **census}  # each test starts from blood
     params = replace(run.params.annotation, census=replace(run.params.annotation.census, **census))
     run.annotate(params)
     return run.stage_result("annotate").summary
 
 
-def test_census_labels_come_first(marked_run):
+def test_census_labels_come_from_the_table(marked_run):
     """A Census table made from each cluster's own top genes gives every cluster its own type."""
     run, folder = marked_run
     genes = top_genes(run)
     write_table(folder, [(f"made-up type {c}", f"X:{c}", g) for c, g in genes.items()])
     summary = annotate(run)
     assert {c["cluster"]: c["predicted_label"] for c in summary["clusters"]} == {c: f"made-up type {c}" for c in genes}
-    assert {c["label_source"] for c in summary["clusters"]} == {"Census"}
-    assert [r["name"] for r in summary["references"]] == ["CELLxGENE Census", "PanglaoDB"]
-    assert summary["database"]["role"] == "first" and summary["database"]["tissues"] == ["blood"]
-    assert set(summary["by_reference"]) == {"Census", "PanglaoDB"}  # PanglaoDB's answer is kept for every cluster
+    assert summary["database"]["name"] == "CELLxGENE Census" and summary["database"]["tissues"] == ["blood"]
+    assert summary["no_reference"] is False
+    assert not {"references", "by_reference", "tissue_hint", "best_anywhere"} & set(summary)  # PanglaoDB is gone
 
 
-def test_panglaodb_fills_only_the_clusters_census_leaves_unresolved(marked_run):
+def test_clusters_census_cant_name_stay_unresolved(marked_run):
+    """No fallback (PanglaoDB was removed 2026-11-12): clusters the table doesn't cover stay Unresolved."""
     run, folder = marked_run
     genes = top_genes(run)
-    covered = list(genes)[:1]  # one type only: unrelated clusters are left Unresolved by Census
+    covered = list(genes)[:1]  # one type only (from cluster 0's genes): clusters unlike it can't be named
     write_table(folder, [(f"made-up type {c}", f"X:{c}", genes[c]) for c in covered])
     summary = annotate(run)
-    census = {c["cluster"]: c for c in summary["by_reference"]["Census"]}
-    panglao = {c["cluster"]: c for c in summary["by_reference"]["PanglaoDB"]}
-    for c in summary["clusters"]:
-        cluster = c["cluster"]
-        if census[cluster]["predicted_label"] != "Unresolved":  # a confident Census label is never replaced
-            assert (c["predicted_label"], c["label_source"]) == (census[cluster]["predicted_label"], "Census")
-        elif panglao[cluster]["predicted_label"] != "Unresolved":
-            assert (c["predicted_label"], c["label_source"]) == (panglao[cluster]["predicted_label"], "PanglaoDB")
-            assert c["best_candidate"] == panglao[cluster]["best_candidate"]
-        else:
-            assert (c["predicted_label"], c["label_source"]) == ("Unresolved", None)
-    assert any(c["label_source"] == "PanglaoDB" for c in summary["clusters"])  # the fallback was used
+    labels = {c["cluster"]: c["predicted_label"] for c in summary["clusters"]}
+    assert labels[covered[0]] == f"made-up type {covered[0]}"
+    # Every other cluster gets that one type (similar cells) or stays Unresolved: nothing else fills in.
+    assert set(labels.values()) == {f"made-up type {covered[0]}", "Unresolved"}
     cells = run.result().obs["cell_type_predicted"].astype(str)
     assert cells.value_counts().to_dict() == summary["label_counts"]
 
@@ -222,20 +214,24 @@ def test_related_cell_types_dont_make_a_cluster_ambiguous(marked_run, ontology):
         (("B cell", term(ontology, "B cell")), ("T cell", term(ontology, "T cell")), "ambiguous"),
     ]:
         write_table(folder, [(a, a_term, genes[first]), (b, b_term, genes[first])])
-        census = {c["cluster"]: c for c in annotate(run)["by_reference"]["Census"]}
+        census = {c["cluster"]: c for c in annotate(run)["clusters"]}
         assert census[first]["status"] == expected
 
 
-def test_without_a_census_table_the_user_chooses_panglaodb_only(marked_run):
+def test_without_a_census_table_the_marker_check_doesnt_run(marked_run):
+    """No table for the tissue: every cluster "no_reference" (Unresolved), with a note; no error."""
     run, folder = marked_run
-    with pytest.raises(Exception, match="PanglaoDB only"):
-        annotate(run, tissue="spleen")  # no table for spleen
-    summary = annotate(run, tissue="spleen", use=False)
-    assert [r["name"] for r in summary["references"]] == ["PanglaoDB"]
-    assert {c["label_source"] for c in summary["clusters"]} <= {"PanglaoDB", None}
+    summary = annotate(run, tissue="spleen")  # no table for spleen in the made-up folder
+    assert summary["no_reference"] is True and summary["database"] is None
+    assert {c["status"] for c in summary["clusters"]} == {"no_reference"}
+    assert summary["marker_label_counts"] == {"Unresolved": run.result().n_obs}
+    # CellTypist still runs: its confident answers become the final labels ("One check only").
+    assert all(f["agreement"] in ("celltypist_only", "neither") for f in summary["final"])
+    assert "no CELLxGENE Census reference for spleen yet" in summary["notes"][0]
+    assert summary["nothing_matched"] is False  # that box is for a reference that matched nothing
 
 
-def test_the_census_tissue_fills_in_panglaodb_tissues(raw_data_path, tmp_path):
+def test_the_census_tissue_is_checked(raw_data_path, tmp_path):
     (tmp_path / RELEASE).mkdir()
     (tmp_path / RELEASE / cm.TISSUE_LIST).write_text(json.dumps(
         {"census_version": RELEASE, "tissues": {"human": [{"tissue": "blood", "n_cells": 10}], "mouse": []}}))
@@ -244,13 +240,12 @@ def test_the_census_tissue_fills_in_panglaodb_tissues(raw_data_path, tmp_path):
     with pytest.raises(PipelineError, match="Unknown tissue: kidney"):
         run.confirm_metadata("human", tissue="kidney")
     metadata = run.confirm_metadata("human", tissue="Blood")
-    assert (metadata["tissue"], metadata["tissues"]) == ("blood", ["Blood", "Immune system"])
+    assert metadata["tissue"] == "blood" and "tissues" not in metadata
     assert run.params.annotation.census.tissue == "blood"
     assert cm.census_tissues("human", RELEASE, tmp_path) == [{"tissue": "blood", "n_cells": 10, "has_table": False}]
-    assert cm.panglaodb_tissues_for("Not a tissue") == ()
 
 
-def test_methods_and_report_name_both_references_and_cite_census(marked_run):
+def test_methods_report_and_page_name_census_and_cite_it(marked_run):
     import sys
     from tests.conftest import PROJECT_ROOT
     sys.path.insert(0, str(PROJECT_ROOT / "app"))
@@ -260,20 +255,23 @@ def test_methods_and_report_name_both_references_and_cite_census(marked_run):
     run, folder = marked_run
     genes = top_genes(run)
     write_table(folder, [(f"made-up type {c}", f"X:{c}", genes[c]) for c in list(genes)[:1]])
-    summary = annotate(run)
-    n = sum(c["label_source"] == "PanglaoDB" for c in summary["clusters"])
+    annotate(run)
     text = report.methods_text(run)
     assert "CZ CELLxGENE Discover Census (release 2025-11-08" in text and "not related to it in the Cell Ontology" in text
-    assert f"Clusters left unresolved were tested in the same way against PanglaoDB" in text
-    assert f"{n} clusters were labeled this way" in text or f"{n} cluster was labeled this way" in text
+    assert "PanglaoDB" not in text
     html = report.run_report_html(run, "test")
-    assert "Cite: test" in html and "<th>From</th>" in html
-    # The page: each reference's answer per cluster, and candidates from both.
+    assert "Cite: test" in html and "PanglaoDB" not in html
     results = payloads.annotation_payload(run)["results"]
-    assert results["first_reference"] == "Census" and [r["key"] for r in results["references"]] == ["Census", "PanglaoDB"]
-    assert set(results["answers"]) == set(results["candidates_by_reference"]) == {"Census", "PanglaoDB"}
-    assert {c["label_source"] for c in results["clusters"]} <= {"Census", "PanglaoDB", None}
-    assert results["candidates"] == results["candidates_by_reference"]["Census"]
+    assert results["database"]["name"] == "CELLxGENE Census" and results["no_reference"] is False
+    assert set(results["candidates"]) == {c["cluster"] for c in results["clusters"]}
+    # A tissue without a table: said plainly in the Methods, the report and on the page.
+    annotate(run, tissue="spleen")
+    assert "No CELLxGENE Census marker reference was available for human spleen" in report.methods_text(run)
+    assert "no CELLxGENE Census reference for spleen yet" in report.run_report_html(run, "test")
+    results = payloads.annotation_payload(run)["results"]
+    assert results["database"] is None and results["no_reference"] is True and results["candidates"] == {}
+    assert results["guidance"] and all("no CELLxGENE Census reference for spleen yet" in g
+                                       for g in results["guidance"].values())
 
 
 def test_ribosomal_and_mitochondrial_genes_are_never_markers(ontology):

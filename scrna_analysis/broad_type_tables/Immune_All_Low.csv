@@ -1,0 +1,99 @@
+label,broad_type
+Age-associated B cells,B cell
+Alveolar macrophages,macrophage
+B cells,B cell
+CD16+ NK cells,NK cell
+CD16- NK cells,NK cell
+CD8a/a,T cell
+CD8a/b(entry),T cell
+CMP,blood stem/progenitor cell
+CRTAM+ gamma-delta T cells,T cell
+Classical monocytes,monocyte
+Cycling B cells,B cell
+Cycling DCs,dendritic cell
+Cycling NK cells,NK cell
+Cycling T cells,T cell
+Cycling gamma-delta T cells,T cell
+Cycling monocytes,monocyte
+DC,dendritic cell
+DC precursor,dendritic cell
+DC1,dendritic cell
+DC2,dendritic cell
+DC3,dendritic cell
+Double-negative thymocytes,T cell
+Double-positive thymocytes,T cell
+ELP,blood stem/progenitor cell
+ETP,blood stem/progenitor cell
+Early MK,megakaryocyte/platelet
+Early erythroid,erythroid cell
+Early lymphoid/T lymphoid,blood stem/progenitor cell
+Endothelial cells,endothelial cell
+Epithelial cells,epithelial cell
+Erythrocytes,erythroid cell
+Erythrophagocytic macrophages,macrophage
+Fibroblasts,fibroblast
+Follicular B cells,B cell
+Follicular helper T cells,T cell
+GMP,blood stem/progenitor cell
+Germinal center B cells,B cell
+Granulocytes,granulocyte
+HSC/MPP,blood stem/progenitor cell
+Hofbauer cells,macrophage
+ILC,own label
+ILC precursor,own label
+ILC1,own label
+ILC2,own label
+ILC3,own label
+Intermediate macrophages,macrophage
+Intestinal macrophages,macrophage
+Kidney-resident macrophages,macrophage
+Kupffer cells,macrophage
+Large pre-B cells,B cell
+Late erythroid,erythroid cell
+MAIT cells,T cell
+MEMP,blood stem/progenitor cell
+MNP,none
+Macrophages,macrophage
+Mast cells,mast cell
+Megakaryocyte precursor,megakaryocyte/platelet
+Megakaryocyte-erythroid-mast cell progenitor,blood stem/progenitor cell
+Megakaryocytes/platelets,megakaryocyte/platelet
+Memory B cells,B cell
+Memory CD4+ cytotoxic T cells,T cell
+Mid erythroid,erythroid cell
+Migratory DCs,dendritic cell
+Mono-mac,none
+Monocyte precursor,monocyte
+Monocytes,monocyte
+Myelocytes,granulocyte
+NK cells,NK cell
+NKT cells,T cell
+Naive B cells,B cell
+Neutrophil-myeloid progenitor,blood stem/progenitor cell
+Neutrophils,granulocyte
+Non-classical monocytes,monocyte
+Plasma cells,plasma cell
+Plasmablasts,plasma cell
+Pre-pro-B cells,B cell
+Pro-B cells,B cell
+Proliferative germinal center B cells,B cell
+Promyelocytes,granulocyte
+Regulatory T cells,T cell
+Small pre-B cells,B cell
+T(agonist),T cell
+Tcm/Naive cytotoxic T cells,T cell
+Tcm/Naive helper T cells,T cell
+Tem/Effector helper T cells,T cell
+Tem/Effector helper T cells PD1+,T cell
+Tem/Temra cytotoxic T cells,T cell
+Tem/Trm cytotoxic T cells,T cell
+Transitional B cells,B cell
+Transitional DC,dendritic cell
+Transitional NK,NK cell
+Treg(diff),T cell
+Trm cytotoxic T cells,T cell
+Type 1 helper T cells,T cell
+Type 17 helper T cells,T cell
+gamma-delta T cells,T cell
+pDC,dendritic cell
+pDC precursor,dendritic cell

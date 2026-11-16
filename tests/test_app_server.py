@@ -112,9 +112,9 @@ def test_uploading_a_10x_file_starts_its_analysis(mouse_10x_path):
         assert workflow(ts)["notice"]["text"] == payloads.CONFIRM_FIRST
         ts.set_inputs(run_remaining=1)
         assert workflow(ts)["notice"]["text"] == payloads.CONFIRM_FIRST and workflow(ts)["run_remaining"] is None
-        ts.set_inputs(confirm_metadata={"n": 1, "settings": {"species": "mouse", "tissues": []}})
+        ts.set_inputs(confirm_metadata={"n": 1, "settings": {"species": "mouse", "tissue": None}})
         assert workflow(ts)["notice"]["text"] == "Choose the tissue."  # nothing changed
-        ts.set_inputs(confirm_metadata={"n": 2, "settings": {"species": "mouse", "tissues": ["Brain"], "about": "E18"}})
+        ts.set_inputs(confirm_metadata={"n": 2, "settings": {"species": "mouse", "tissue": "brain", "about": "E18"}})
         data = workflow(ts)
         assert data["steps"][0]["status"] == "done" and not any(s["locked"] for s in data["steps"])
         assert data["dataset"]["metadata"]["text"] == "Mouse · Brain" and data["dataset"]["metadata"]["about"] == "E18"
@@ -131,7 +131,7 @@ def test_demo_data_is_named_as_demo(reference_summary):
         dataset = data["dataset"]
         assert dataset["label"].startswith("Demo data:")
         # The demo's metadata arrives confirmed, so nothing is locked.
-        assert dataset["metadata"]["confirmed_by"] == "dataset" and dataset["metadata"]["text"] == "Human · Blood"
+        assert dataset["metadata"]["confirmed_by"] == "dataset" and dataset["metadata"]["text"] == "Human · Blood · Adult"
         assert data["steps"][0]["status"] == "done" and not any(s["locked"] for s in data["steps"])
         assert dataset["n_cells"] == reference_summary["raw_shape"][0]
 
@@ -254,12 +254,11 @@ def boxes(settings: dict) -> dict:
 
 PREPROCESS_BOXES = boxes(payloads.preprocess_settings(REFERENCE_PRESET))
 REDUCTION_BOXES = boxes(payloads.reduction_settings(REFERENCE_PRESET))
-# Cell Type Annotation as the page sends it: the test's checks (defaults). Species and tissues
-# come from the dataset's metadata (the demo's: human; Immune system and Blood).
+# Cell Type Annotation as the page sends it: the test's checks (defaults). Species and tissue
+# come from the dataset's metadata (the demo's: human blood).
 ANNOTATION_BOXES = {"top_n_genes": "100", "max_adj_p": "0.05", "min_overlap": "3", "ambiguity_fold": "10"}
-DEMO_TISSUES = ["Blood", "Immune system"]
 # Confirming an uploaded mouse brain file's species and tissue on Data Overview.
-CONFIRM_MOUSE = {"n": 1, "settings": {"species": "mouse", "tissues": ["Brain"], "about": ""}}
+CONFIRM_MOUSE = {"n": 1, "settings": {"species": "mouse", "tissue": "brain", "about": ""}}
 
 
 # With regression off, scaling a sparse matrix makes it dense; Scanpy says so (expected).
@@ -339,7 +338,7 @@ def test_marker_genes_from_their_page(reference_summary):
 
 
 def test_whole_analysis_from_the_pages():
-    """All seven steps the way the pages run them, with cell types from PanglaoDB."""
+    """All seven steps the way the pages run them, with cell types from the Census reference."""
     with test_server(APP, timeout_secs=240) as ts:
         ts.set_inputs(load_demo=1)
         ts.set_inputs(run_qc=1)
@@ -350,10 +349,9 @@ def test_whole_analysis_from_the_pages():
         ts.set_inputs(run_markers={"n": 1, "settings": {"method": "wilcoxon"}})
         ts.set_inputs(run_annotation={"n": 1, "settings": ANNOTATION_BOXES})
         result = output(ts, "annotation")["results"]
-        # The demo's tissue is Census's "blood": Census first, PanglaoDB second (its tissues mapped from blood).
+        # The demo's tissue is Census's "blood"; CellTypist's answer comes with it.
         assert result["database"]["name"] == "CELLxGENE Census" and result["settings"]["census_tissue"] == "blood"
-        assert [r["key"] for r in result["references"]] == ["Census", "PanglaoDB"]
-        assert result["settings"]["tissues"] == DEMO_TISSUES
+        assert result["no_reference"] is False and result["celltypist"]["model"] == "Immune_All_Low.pkl"
         for c in result["clusters"]:
             assert c["predicted_label"] in (c["best_candidate"], "Unresolved")
         data = workflow(ts)
@@ -406,7 +404,7 @@ async def wait_for_job(ts, timeout: float = 240) -> dict:
 def test_run_remaining_from_the_start_uses_the_suggestions(fresh_reactive_lock):
     """One click after loading the demo runs every later step, filtering with the thresholds
     suggested from the data; progress is reported step by step. The demo comes with a description
-    of the sample (human blood), so Cell Type Annotation runs too, with those tissues."""
+    of the sample (human blood), so Cell Type Annotation runs too, with that tissue."""
     async def check():
         async with test_server_async(APP, timeout_secs=300) as ts:
             await ts.set_inputs(load_demo=1)
@@ -424,18 +422,18 @@ def test_run_remaining_from_the_start_uses_the_suggestions(fresh_reactive_lock):
             assert qc["filter"]["current"] == qc["filter"]["suggested"]  # filtered at the suggestion
             annotation = output(ts, "annotation")
             assert annotation["settings"]["current"]["species"] == "human"
-            assert annotation["settings"]["current"]["tissues"] == DEMO_TISSUES
+            assert annotation["settings"]["current"]["census_tissue"] == "blood"
             assert annotation["metadata"]["confirmed_by"] == "dataset"
     asyncio.run(check())
 
 
 def test_run_remaining_stops_where_a_choice_is_needed(mouse_10x_path, fresh_reactive_lock):
-    """Data from a species without cell types in the marker database ("Other species" on Data
+    """Data from a species without cell-type references ("Other species" on Data
     Overview): the job stops at Cell Type Annotation (a planned stop, not a failure) and says why."""
     async def check():
         async with test_server_async(APP, timeout_secs=300) as ts:
             await ts.set_inputs(upload_data=uploaded(mouse_10x_path, "brain.h5"))
-            await ts.set_inputs(confirm_metadata={"n": 1, "settings": {"species": "other", "tissues": []}})
+            await ts.set_inputs(confirm_metadata={"n": 1, "settings": {"species": "other"}})
             await ts.set_inputs(run_remaining=1)
             job = await wait_for_job(ts)
             assert job["status"] == "stopped" and job["total"] == 6 and job["stopped_step"] == "cell_type_annotation"
@@ -462,7 +460,7 @@ def test_run_remaining_after_the_notebook_thresholds_matches_the_reference(refer
             await ts.set_inputs(run_reduction={"n": 1, "settings": REDUCTION_BOXES})
             await ts.set_inputs(run_remaining=1)
             job = await wait_for_job(ts)
-            assert job["status"] == "done" and job["total"] == 3  # clustering, markers, annotation (demo tissues)
+            assert job["status"] == "done" and job["total"] == 3  # clustering, markers, annotation (demo tissue)
             top = output(ts, "markers")["results"]["top"]
             for cluster, genes in reference_summary["top25_markers"].items():
                 assert [row["gene"] for row in top[cluster][:25]] == genes
@@ -588,7 +586,7 @@ def test_quality_control_per_sample_from_the_page(kang_path):
     with test_server(APP, timeout_secs=240) as ts:
         ts.set_inputs(upload_data=uploaded(kang_path, "kang.h5ad"))
         ts.set_inputs(define_samples={"n": 1, "settings": {"sample_column": "replicate", "condition_column": "label"}})
-        ts.set_inputs(confirm_metadata={"n": 1, "settings": {"species": "human", "tissues": ["Blood"]}})
+        ts.set_inputs(confirm_metadata={"n": 1, "settings": {"species": "human", "tissue": "blood"}})
         ts.set_inputs(run_qc={"n": 1, "settings": {"mito_prefix": "MT-"}})
         qc = output(ts, "qc")
         limits = qc["filter"]["current"]["sample_limits"]
@@ -622,5 +620,5 @@ def test_several_samples_demo_runs_every_step(kang_path, fresh_reactive_lock):
             assert [s["status"] for s in data["steps"]] == ["done"] * 7
             assert data["steps"][0]["summary"].endswith("· 16 samples")
             assert len(output(ts, "qc")["filter"]["current"]["sample_limits"]) == 16  # limits per sample
-            assert "clusters confident" in data["steps"][6]["summary"]  # Cell Type Annotation ran
+            assert "clusters named" in data["steps"][6]["summary"]  # Cell Type Annotation ran
     asyncio.run(check())

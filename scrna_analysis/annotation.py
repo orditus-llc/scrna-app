@@ -1,9 +1,9 @@
 """Cell-type prediction from marker-gene evidence: an over-representation test.
 
-For each cluster and each cell type of a marker database (see `marker_db.py`): how many of
+For each cluster and each cell type of a marker table (the Census tables, `census_markers.py`): how many of
 the cell type's markers are among the cluster's top marker genes, and how unlikely is that
 by chance? One-sided Fisher's exact test (the hypergeometric test), as in decoupler's
-PanglaoDB tutorial; p-values are adjusted across the cell types tested for each cluster
+marker-based annotation tutorial; p-values are adjusted across the cell types tested for each cluster
 (Benjamini-Hochberg). The cell type with the smallest adjusted p-value is proposed only if
 it passes three checks (`EnrichmentParams`); otherwise the cluster stays "Unresolved" (its
 best candidate is still shown):
@@ -12,6 +12,10 @@ best candidate is still shown):
 - not_significant: adjusted p-value not below `max_adj_p`
 - ambiguous:       a significant runner-up's adjusted p-value is less than `ambiguity_fold`
                    times the best one's
+
+When there is no marker table for the sample's tissue, `no_reference` gives every cluster the
+status "no_reference" (Unresolved) instead, in the same layout, so the rest of the app needn't
+treat that case separately.
 
 Labels come only from the data and the marker sets. Cluster numbers are never used to
 assign labels, and analyst-reviewed labels are never read here (they live in
@@ -118,7 +122,7 @@ def predict_cell_types(
     `related(a, b)`: for references whose cell types are nested (Census: "naive B cell" is a kind
     of "B cell"), whether two cell types are the same lineage. The runner-up is then the best cell
     type *not* related to the best one, so a parent or child of the best match never makes a
-    cluster ambiguous. None (PanglaoDB): every other cell type counts.
+    cluster ambiguous. None: every other cell type counts.
 
     Writes `obs["cell_type_predicted"]` (may contain "Unresolved") and
     `uns["cell_type_prediction"]` (JSON text with the method, settings and per-cluster result).
@@ -197,6 +201,33 @@ def predict_cell_types(
         "missing_genes": {ct: list(gs) for ct, gs in missing.items()},
         "notes": notes,
     })
+    return adata, summary
+
+
+def no_reference(adata: ad.AnnData, reason: str) -> tuple[ad.AnnData, AnnotationSummary]:
+    """Every cluster Unresolved with status "no_reference": there is no marker table to compare
+    with (e.g. no Census table for the sample's tissue yet). Same outputs as `predict_cell_types`
+    (obs, record, summary), with `reason` as the note."""
+    groupby, _ = _marker_settings(adata)
+    sizes = adata.obs[groupby].astype(str).value_counts()
+    order = list(adata.obs[groupby].cat.categories) if hasattr(adata.obs[groupby], "cat") else sorted(sizes.index)
+    clusters = pd.DataFrame([{
+        "cluster": str(cluster), "n_cells": int(sizes.get(str(cluster), 0)), "predicted_label": UNRESOLVED,
+        "status": "no_reference", "reasons": "no_reference", "best_candidate": None, "overlap": 0,
+        "n_markers": 0, "adj_p": None, "matching_markers": "", "second_candidate": None,
+        "second_overlap": None, "second_adj_p": None,
+    } for cluster in order])
+    adata = adata.copy()
+    adata.obs[PREDICTION_KEY] = pd.Categorical([UNRESOLVED] * adata.n_obs)
+    summary = AnnotationSummary(
+        groupby=groupby, clusters=clusters,
+        tests=pd.DataFrame(columns=["cluster", "cell_type", "n_markers", "overlap", "matching_markers", "p_value", "adj_p"]),
+        scores=pd.DataFrame(index=clusters["cluster"]), label_counts={UNRESOLVED: int(adata.n_obs)},
+        missing_genes={}, skipped_cell_types=(), notes=(reason,),
+    )
+    adata.uns[RECORD_KEY] = json.dumps({"groupby": groupby, "method": "none (no reference for this tissue)",
+                                        "settings": {}, "clusters": _records(clusters), "missing_genes": {},
+                                        "notes": [reason]})
     return adata, summary
 
 

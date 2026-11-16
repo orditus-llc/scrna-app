@@ -16,7 +16,6 @@ import pytest
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 RAW_DATA = PROJECT_ROOT / "data" / "pbmc3k.h5ad"
 MOUSE_10X = PROJECT_ROOT / "data" / "neuron_1k_v3_filtered_feature_bc_matrix.h5"
-PANGLAODB = PROJECT_ROOT / "data" / "markers" / "PanglaoDB_markers_27_Mar_2020.tsv.gz"
 KANG = PROJECT_ROOT / "data" / "kang_2018.h5ad"
 EXPECTED_DIR = PROJECT_ROOT / "validation" / "expected"
 
@@ -57,14 +56,6 @@ def kang_path() -> Path:
     if not KANG.is_file():
         pytest.fail(f"Missing test data: {KANG}. Run scripts/download_kang_data.py.")
     return KANG
-
-
-@pytest.fixture(scope="session")
-def panglaodb_path() -> Path:
-    """The PanglaoDB marker database (release of 27 March 2020)."""
-    if not PANGLAODB.is_file():
-        pytest.fail(f"Missing marker database: {PANGLAODB}. Run scripts/download_marker_db.py.")
-    return PANGLAODB
 
 
 @pytest.fixture(scope="session")

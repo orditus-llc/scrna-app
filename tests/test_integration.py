@@ -125,7 +125,7 @@ def kang_piece(kang_path, tmp_path_factory):
 
 def analyzed(path, integration_params=None):
     run = AnalysisRun(path, DEFAULT_PARAMS, sample_columns={"sample": "replicate", "condition": "label"},
-                      metadata={"species": "human", "tissues": ["Blood"]})
+                      metadata={"species": "human", "tissue": "blood"})
     for stage in ("load", "compute_qc_metrics", "apply_filter", "preprocess"):
         getattr(run, stage)()
     run.reduce_dimensions(integration_params=integration_params)
@@ -295,3 +295,38 @@ def test_single_dataset_report_has_no_samples_section(raw_data_path):
     for stage in ("load", "compute_qc_metrics", "apply_filter", "preprocess"):
         getattr(run, stage)()
     assert "<h2>Samples</h2>" not in report.run_report_html(run, "test")
+
+
+def test_preprocessing_page_offers_genes_within_each_sample(kang_piece, raw_data_path):
+    """Several samples: the choice is offered, used by default, shown in the results and the Methods;
+    switching it off from the page picks the genes across all cells. A single dataset gets no choice."""
+    import sys
+    from tests.conftest import PROJECT_ROOT
+    sys.path.insert(0, str(PROJECT_ROOT / "app"))
+    import payloads
+    import report
+
+    run = analyzed(kang_piece)
+    page = payloads.preprocess_payload(run)
+    n = len(run.samples)
+    assert page["n_samples"] == n > 1 and page["settings"]["current"]["per_sample"] is True
+    r = page["results"]
+    assert r["per_sample_used"] is True
+    counts = r["genes"]["n_samples_variable"]
+    assert len(counts) == r["n_genes"] and max(counts) <= n
+    steps = {s["key"]: s for s in payloads.workflow_payload(run)["steps"]}
+    assert "picked within each sample" in steps["preprocessing"]["confirmation"]
+    assert "within each sample" in report.methods_text(run)
+
+    boxes = {**payloads.preprocess_settings(run.params), "target_median": True, "per_sample": False}
+    hvg = payloads.preprocess_params_from_browser(boxes, run.params)[1]
+    assert hvg.per_sample is False
+    run.preprocess(hvg=hvg)
+    assert payloads.preprocess_payload(run)["results"]["per_sample_used"] is False
+    assert payloads.preprocess_payload(run)["results"]["genes"]["n_samples_variable"] is None
+
+    single = AnalysisRun(raw_data_path, DEFAULT_PARAMS)
+    for stage in ("load", "compute_qc_metrics", "apply_filter", "preprocess"):
+        getattr(single, stage)()
+    assert payloads.preprocess_payload(single)["n_samples"] == 0
+    assert payloads.preprocess_payload(single)["results"]["per_sample_used"] is False

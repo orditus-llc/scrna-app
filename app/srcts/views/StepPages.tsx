@@ -93,6 +93,20 @@ function PreprocessingContent({ workflow, data, step, onNavigate }: PageProps & 
               onChange={(v) => set({ hvg_method: v as PreprocessBoxes["hvg_method"] })}
               reference={reference.hvg_method}
             />
+            {data.n_samples > 1 && (
+              <RuledSelect
+                id="pp_hvg_per_sample"
+                label="Pick them"
+                help="Within each sample: genes are judged sample by sample and ranked by how many samples find them variable, so genes that only differ between samples aren't picked (recommended by the single-cell best-practices guide). Across all cells: all samples judged together."
+                value={boxes.per_sample ? "per_sample" : "pooled"}
+                options={[
+                  { value: "per_sample", label: `Within each sample (${data.n_samples} samples)` },
+                  { value: "pooled", label: "Across all cells together" },
+                ]}
+                onChange={(v) => set({ per_sample: v === "per_sample" })}
+                reference={reference.per_sample ? "per_sample" : "pooled"}
+              />
+            )}
             {boxes.hvg_method === "top" ? (
               <RuledField
                 id="pp_n_top_genes"
@@ -161,7 +175,7 @@ function PreprocessingContent({ workflow, data, step, onNavigate }: PageProps & 
         results={
           <>
             <SectionTitle>Highly variable genes</SectionTitle>
-            {r ? <HvgPlot results={r} /> : <Empty>Run Preprocessing to see which genes are selected.</Empty>}
+            {r ? <HvgPlot results={r} nSamples={data.n_samples} /> : <Empty>Run Preprocessing to see which genes are selected.</Empty>}
           </>
         }
       />
@@ -185,7 +199,7 @@ function PreprocessingContent({ workflow, data, step, onNavigate }: PageProps & 
   );
 }
 
-function HvgPlot({ results }: { results: NonNullable<PreprocessPayload["results"]> }) {
+function HvgPlot({ results, nSamples }: { results: NonNullable<PreprocessPayload["results"]>; nSamples: number }) {
   const plot = useMemo(() => {
     const { genes, settings } = results;
     const selected: number[] = [];
@@ -201,8 +215,12 @@ function HvgPlot({ results }: { results: NonNullable<PreprocessPayload["results"
       x: idx.map((i) => genes.mean[i]),
       y: idx.map((i) => genes.dispersion_norm[i]),
       text: idx.map((i) => genes.name[i]),
+      customdata: genes.n_samples_variable ? idx.map((i) => genes.n_samples_variable![i]) : undefined,
       marker: { size, color, opacity: 0.7 },
-      hovertemplate: `<b>%{text}</b><br>Mean %{x:.3f}<br>Normalized dispersion %{y:.2f}<extra>${name}</extra>`,
+      hovertemplate:
+        `<b>%{text}</b><br>Mean %{x:.3f}<br>Normalized dispersion %{y:.2f}` +
+        (genes.n_samples_variable ? `<br>Variable in %{customdata} of ${nSamples} samples` : "") +
+        `<extra>${name}</extra>`,
     });
     const vline = (x: number): Partial<Shape> => ({
       type: "line", xref: "x", yref: "paper", x0: x, x1: x, y0: 0, y1: 1, line: { color: TEAL, width: 1.5, dash: "dash" },
@@ -223,10 +241,15 @@ function HvgPlot({ results }: { results: NonNullable<PreprocessPayload["results"
             : [],
       } as Partial<Layout>,
     };
-  }, [results]);
+  }, [results, nSamples]);
   const s = results.settings;
   return (
     <>
+      {results.per_sample_used && (
+        <p className="m-0 text-[13px] text-body">
+          Picked within each of the {nSamples} samples; the dots show each gene's values averaged over the samples.
+        </p>
+      )}
       {s.hvg_method === "cutoffs" ? (
         <p className="m-0 text-[13px] text-body">
           Each dot is a gene: dark = highly variable, grey = not. Teal lines are the cut-offs.{" "}
@@ -268,6 +291,7 @@ function preprocessBoxes(s: PreprocessSettings): PreprocessBoxes {
     min_mean: String(s.min_mean),
     max_mean: String(s.max_mean),
     min_disp: String(s.min_disp),
+    per_sample: s.per_sample,
     max_value: String(s.max_value),
     regress: s.regress,
   };

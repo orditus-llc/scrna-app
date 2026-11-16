@@ -110,6 +110,11 @@ class HVGParams:
     # Set = keep the N most variable genes instead of applying the cut-offs above (same method,
     # ranked by normalized dispersion). None = use the cut-offs (Scanpy's default).
     n_top_genes: int | None = None
+    # With several samples: pick the genes within each sample (Scanpy's `batch_key`), so genes that
+    # differ only between samples aren't picked. Ignored for a single dataset. Source: the
+    # best-practices guide (Heumos et al. 2023) recommends batch-aware selection; default chosen by
+    # the analyst 2026-11-16 from the Kang comparison.
+    per_sample: bool = True
 
 
 # What the app offers when the user picks "Top N most variable genes".
@@ -238,17 +243,11 @@ class MarkerParams:
 
 @dataclass(frozen=True)
 class MarkerDatabaseParams:
-    """Which cell types and marker genes to take from a marker database (PanglaoDB).
-
-    The selection follows decoupler's tutorial "Cell type annotation from marker genes"
-    (scverse; decoupler 1.9, PanglaoDB): canonical markers only, expressed in more than half
-    of that cell type's cells in the chosen species (sensitivity > 0.5).
-    """
+    """The species whose reference cell types are compared, and how many of a cell type's marker
+    genes must be in the data for it to be tested. (Until 2026-11-12 this also chose PanglaoDB's
+    markers; PanglaoDB was removed.)"""
 
     species: str | None = None  # "human" or "mouse"; None = not chosen yet
-    tissues: tuple[str, ...] = ()  # the database's organ names; () = every tissue
-    canonical_only: bool = True  # decoupler tutorial
-    min_sensitivity: float = 0.5  # decoupler tutorial; markers must be above this
     min_markers: int = 3  # the app's own rule: fewer markers in the data -> cell type not tested
 
 
@@ -277,12 +276,12 @@ class CensusMarkerParams:
 
 @dataclass(frozen=True)
 class EnrichmentParams:
-    """Cell types from many marker sets (a marker database): an over-representation test.
+    """Cell types from many marker sets (a marker table): an over-representation test.
 
     For each cluster: are more of a cell type's markers among the cluster's top marker genes
     than chance would give? One-sided Fisher's exact test (the hypergeometric test), as used by
-    decoupler's `run_ora` in its PanglaoDB tutorial. P-values are adjusted across the cell
-    types tested for each cluster (Benjamini-Hochberg).
+    decoupler's `run_ora` (its marker-based annotation tutorial). P-values are adjusted across the
+    cell types tested for each cluster (Benjamini-Hochberg).
     """
 
     top_n_genes: int = 100  # Scanpy's default in sc.tl.marker_gene_overlap (top 100 marker genes)
@@ -294,12 +293,11 @@ class EnrichmentParams:
 
 @dataclass(frozen=True)
 class CensusReferenceParams:
-    """CELLxGENE Census as the first cell-type reference (supervisor's decision, 2026-11-03):
-    its marker table for the species and tissue is tested first; PanglaoDB then runs
-    automatically for the clusters Census leaves Unresolved, and never replaces a confident
-    Census label."""
+    """CELLxGENE Census as the cell-type reference for the marker check (supervisor's decision,
+    2026-11-03): its marker table for the species and tissue. Without a table for that tissue the
+    marker check doesn't run (status "no_reference") and CellTypist's answer is still shown
+    (analyst, 2026-11-12, when PanglaoDB was removed)."""
 
-    use: bool = True  # False = PanglaoDB only (chosen by the user, e.g. when no Census table exists)
     tissue: str | None = None  # the Census tissue (`tissue_general`, e.g. "blood"); None = not chosen
     release: str = CensusMarkerParams.release  # which release's tables to read
 
@@ -314,13 +312,44 @@ class CellTypistParams:
 
 
 @dataclass(frozen=True)
-class AnnotationParams:
-    """Cell Type Annotation: the references (Census, then PanglaoDB) and the test's checks."""
+class ConsensusParams:
+    """Step B: one final label per cluster from the marker check and CellTypist (`consensus.py`).
+    When CellTypist's answer counts as confident; both are the app's own rules (analyst, 2026-11-13).
+    The marker check is confident when it passes its own checks (`EnrichmentParams`)."""
 
-    markers: MarkerDatabaseParams = field(default_factory=MarkerDatabaseParams)  # PanglaoDB
+    min_celltypist_share: float = 0.5  # at least half of the cluster's cells vote for the label
+    min_celltypist_gene_match: float = 0.5  # at least half of the model's genes are in the data
+
+
+@dataclass(frozen=True)
+class AnnotationParams:
+    """Cell Type Annotation: the species, the Census reference, the test's checks, CellTypist and
+    how the two answers are combined."""
+
+    markers: MarkerDatabaseParams = field(default_factory=MarkerDatabaseParams)  # species, min markers
     test: EnrichmentParams = field(default_factory=EnrichmentParams)
     census: CensusReferenceParams = field(default_factory=CensusReferenceParams)
     celltypist: CellTypistParams = field(default_factory=CellTypistParams)
+    consensus: ConsensusParams = field(default_factory=ConsensusParams)
+
+
+@dataclass(frozen=True)
+class ConditionParams:
+    """Compare Conditions (several samples with conditions; analyst + supervisor, 2026-11-16).
+
+    Two tests, each counting every sample once (`conditions.py`): the share of each group of cells
+    between conditions, and each group's genes between conditions (pseudobulk + DESeq2). The
+    conditions are chosen per dataset (None until chosen)."""
+
+    group_by: str = "leiden"  # obs column of the groups: clusters, suggested cell types or your labels
+    reference: str | None = None  # the baseline condition (e.g. untreated)
+    test: str | None = None  # the condition compared with it
+    paired_by: str | None = None  # obs column naming the subject (e.g. donor) with samples in both conditions
+    # The app's own rule: a sample's pseudobulk for a group needs at least this many cells.
+    min_cells: int = 10
+    # DESeq2's vignette pre-filter: genes with fewer counts in total (over the group's samples) are left out.
+    min_gene_counts: int = 10
+    max_adj_p: float = 0.05  # what counts as significant in the summaries (DESeq2's default alpha)
 
 
 @dataclass(frozen=True)
@@ -359,6 +388,7 @@ class AnalysisParams:
     umap: UMAPParams = field(default_factory=UMAPParams)
     markers: MarkerParams = field(default_factory=MarkerParams)
     annotation: AnnotationParams = field(default_factory=AnnotationParams)
+    conditions: ConditionParams = field(default_factory=ConditionParams)
     # None = use the `filter` thresholds as given (the reference analysis). Set = after QC,
     # the filter thresholds are suggested from the data (what the app does for any dataset).
     suggest: SuggestionParams | None = None

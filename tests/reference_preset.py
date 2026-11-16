@@ -10,6 +10,7 @@ thresholds are fixed instead of suggested from the data.
 from scrna_analysis.params import (
     AnalysisParams,
     AnnotationParams,
+    CensusReferenceParams,
     MarkerDatabaseParams,
     FilterParams,
     NeighborsParams,
@@ -26,9 +27,11 @@ REFERENCE_PRESET = AnalysisParams(
     pca=PCAParams(n_comps=40),  # app default: 50
     neighbors=NeighborsParams(n_neighbors=10, n_pcs=40),  # app default: 15 neighbors, 50 PCs
     # Cell Type Annotation: the notebook's own marker-set scoring was retired (2026-10-28); the
-    # app compares clusters with PanglaoDB. Species and tissues are set here only so that whole
-    # analyses can run in the tests; their labels aren't compared with the notebook's.
-    annotation=AnnotationParams(markers=MarkerDatabaseParams(species="human", tissues=("Immune system", "Blood"))),
+    # app compares clusters with the CELLxGENE Census reference. Species and tissue are set here
+    # only so that whole analyses can run in the tests; their labels aren't compared with the
+    # notebook's. (No CellTypist model: the reference analysis had none.)
+    annotation=AnnotationParams(markers=MarkerDatabaseParams(species="human"),
+                                census=CensusReferenceParams(tissue="blood")),
     # Everything else (HVG cut-offs, scaling, Leiden, UMAP, markers, seed) is the same as the
     # app's defaults. suggest=None: thresholds are used as given.
 )

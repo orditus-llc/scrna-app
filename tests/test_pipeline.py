@@ -1,8 +1,8 @@
 """Tests for `scrna_analysis.pipeline`.
 
 - Reference: the whole analysis run through the pipeline reproduces the validated
-  notebook through Marker Genes, and records everything. (Cell types now come from
-  PanglaoDB, so they aren't compared with the notebook's.)
+  notebook through Marker Genes, and records everything. (Cell types now come from the
+  CELLxGENE Census reference, so they aren't compared with the notebook's.)
 - Behavior: fixed stage order, redoing a stage clears later stages, failures change
   nothing, results are repeatable, and the pipeline equals running the modules by hand
   (also on a different input with different settings).
@@ -83,17 +83,17 @@ def test_stage_summaries_match_reference(reference_run, reference_summary):
     assert summary["cluster"]["cluster_sizes"] == reference_summary["cluster_sizes"]
 
 
-def test_annotation_records_the_database_and_choices(reference_run, panglaodb_path):
-    from scrna_analysis.pipeline import file_sha256
+def test_annotation_records_the_reference_and_choices(reference_run):
+    from scrna_analysis import census_markers
     summary = reference_run.stage_result("annotate").summary
-    # No Census tissue in the preset, so PanglaoDB is the only (first) reference.
-    assert summary["database"] == {"name": "PanglaoDB", "version": "27 Mar 2020", "file": panglaodb_path.name,
-                                   "sha256": file_sha256(panglaodb_path), "tissues": ["Immune system", "Blood"],
-                                   "role": "first"}
-    assert summary["references"] == [summary["database"]] and set(summary["by_reference"]) == {"PanglaoDB"}
-    assert {c["label_source"] for c in summary["clusters"] if c["predicted_label"] != "Unresolved"} == {"PanglaoDB"}
+    table = census_markers.table_path("human", "blood", reference_run.params.annotation.census.release)
+    provenance = census_markers.load_marker_table(table)[1]
+    assert summary["database"]["name"] == "CELLxGENE Census" and summary["database"]["file"] == table.name
+    assert summary["database"]["sha256"] == provenance["table_sha256"] and summary["database"]["tissues"] == ["blood"]
+    assert summary["no_reference"] is False
     settings = reference_run.record()["params"]["annotation"]
-    assert settings["markers"]["species"] == "human" and settings["markers"]["tissues"] == ["Immune system", "Blood"]
+    assert settings["markers"] == {"species": "human", "min_markers": 3}  # no PanglaoDB selection any more
+    assert settings["census"] == {"tissue": "blood", "release": "2025-11-08"}
     assert sum(summary["label_counts"].values()) == reference_run.result().n_obs
 
 
@@ -255,10 +255,16 @@ def run_modules_by_hand(path, params):
     a, _ = dim_reduction.run_umap(a, params.umap)
     a, _ = clustering.cluster_leiden(a, params.leiden)
     a, _ = markers.rank_marker_genes(a, params.markers)
-    from scrna_analysis import marker_db
-    sets = marker_db.select_marker_sets(marker_db.load_panglaodb(), params.annotation.markers)
+    from scrna_analysis import census_markers, marker_db
+    from scrna_analysis.pipeline import _cell_ontology
+    census = params.annotation.census
+    sets, provenance = census_markers.load_marker_table(
+        census_markers.table_path(params.annotation.markers.species, census.tissue, census.release))
+    ontology, terms = _cell_ontology(str(census_markers.ONTOLOGY_FILE)), census_markers.cell_type_terms(provenance)
     found = marker_db.match_to_genes(sets, a.raw.var_names, params.annotation.markers.min_markers)
-    a, _ = annotation.predict_cell_types(a, found.sets, params.annotation.test)
+    a, _ = annotation.predict_cell_types(
+        a, found.sets, params.annotation.test,
+        related=lambda x, y: census_markers.related(ontology, terms.get(x, x), terms.get(y, y)))
     return a
 
 
@@ -304,16 +310,19 @@ def test_no_mito_genes_switches_off_the_mito_filter_and_records_it(mouse_10x_pat
 def test_mouse_data_runs_to_the_end_with_the_mouse_pattern(mouse_10x_path):
     """A second dataset (mouse brain, 10x .h5) runs through every stage once the prefix is "mt-"
     and the species and tissue are mouse brain."""
-    from scrna_analysis.params import AnnotationParams, MarkerDatabaseParams
+    from scrna_analysis.params import AnnotationParams, CensusReferenceParams, MarkerDatabaseParams
     params = replace(REFERENCE_PRESET, qc=replace(REFERENCE_PRESET.qc, mito_prefix="mt-"),
-                     annotation=AnnotationParams(markers=MarkerDatabaseParams(species="mouse", tissues=("Brain",))))
+                     annotation=AnnotationParams(markers=MarkerDatabaseParams(species="mouse"),
+                                                 census=CensusReferenceParams(tissue="brain")))
     run = AnalysisRun(mouse_10x_path, params)
     run.run_all()
     qc_summary = run.stage_result("qc_metrics").summary
     assert qc_summary["n_mito_genes"] > 0 and qc_summary["mito_filter_switched_off"] is False
     assert run.result("filter").n_obs < run.result("load").n_obs  # the mito filter did something
     assert run.result("cluster").obs["leiden"].nunique() > 1
-    assert run.stage_result("annotate").summary["markers_matched_ignoring_case"] > 0  # CD3D -> Cd3d style
+    annotated = run.stage_result("annotate").summary
+    assert annotated["database"]["tissues"] == ["brain"] and annotated["no_reference"] is False
+    assert any(c["status"] == "confident" for c in annotated["clusters"])
 
 
 def test_annotation_needs_a_tissue_and_a_failure_changes_nothing(raw_data_path):
@@ -322,19 +331,22 @@ def test_annotation_needs_a_tissue_and_a_failure_changes_nothing(raw_data_path):
     for stage in ("load", "compute_qc_metrics", "apply_filter", "preprocess", "reduce_dimensions", "cluster",
                   "find_markers"):
         getattr(run, stage)()
-    with pytest.raises(annotation.AnnotationError, match="Choose at least one tissue"):
+    with pytest.raises(annotation.AnnotationError, match="Choose the tissue on Data Overview"):
         run.annotate(AnnotationParams(markers=MarkerDatabaseParams(species="human")))
     assert run.status()["annotate"] == "not run" and run.params == REFERENCE_PRESET  # nothing changed
 
 
-def test_a_missing_marker_database_is_explained(raw_data_path, tmp_path):
-    run = AnalysisRun(raw_data_path, REFERENCE_PRESET, marker_db_path=tmp_path / "absent.tsv.gz")
+def test_a_tissue_without_a_census_table_runs_without_the_marker_check(raw_data_path, tmp_path):
+    """No error: every cluster "no_reference", and the note says why (PanglaoDB fallback removed)."""
+    run = AnalysisRun(raw_data_path, REFERENCE_PRESET, census_dir=tmp_path)  # an empty folder: no tables
     for stage in ("load", "compute_qc_metrics", "apply_filter", "preprocess", "reduce_dimensions", "cluster",
-                  "find_markers"):
+                  "find_markers", "annotate"):
         getattr(run, stage)()
-    from scrna_analysis.marker_db import MarkerDatabaseError
-    with pytest.raises(MarkerDatabaseError, match="download_marker_db.py"):
-        run.annotate()
+    summary = run.stage_result("annotate").summary
+    assert summary["no_reference"] is True and summary["database"] is None
+    assert {c["status"] for c in summary["clusters"]} == {"no_reference"}
+    assert summary["notes"] == ["There's no CELLxGENE Census reference for blood yet, so the marker check "
+                                "didn't run. More Census references are being added."]
 
 
 def test_mito_filter_stays_on_when_genes_are_found(raw_data_path):
@@ -377,8 +389,8 @@ def test_reference_preset_keeps_the_notebook_thresholds(raw_data_path):
 
 def test_demo_runs_to_the_end_with_the_general_defaults(raw_data_path):
     """The general defaults, plus the two choices the user makes on Cell Type Annotation."""
-    from scrna_analysis.params import DEFAULT_PARAMS, AnnotationParams, MarkerDatabaseParams
-    chosen = AnnotationParams(markers=MarkerDatabaseParams(species="human", tissues=("Immune system", "Blood")))
+    from scrna_analysis.params import DEFAULT_PARAMS, AnnotationParams, CensusReferenceParams, MarkerDatabaseParams
+    chosen = AnnotationParams(markers=MarkerDatabaseParams(species="human"), census=CensusReferenceParams(tissue="blood"))
     run = AnalysisRun(raw_data_path, replace(DEFAULT_PARAMS, annotation=chosen))
     run.run_all()
     assert set(run.status().values()) == {"done"}
@@ -399,22 +411,29 @@ def test_mouse_runs_through_marker_genes_with_the_general_defaults(mouse_10x_pat
     assert run.result("cluster").obs["leiden"].nunique() > 1
 
 
-def test_nothing_matched_gives_a_tissue_hint(raw_data_path):
-    """Blood cells annotated with brain cell types: every cluster stays Unresolved (nothing is
-    forced), and the run suggests the tissues whose cell types do match. With fitting tissues
-    there is no hint."""
-    run = AnalysisRun(raw_data_path, REFERENCE_PRESET)
+def test_nothing_matched_is_reported(raw_data_path, tmp_path):
+    """A reference whose cell types match none of the clusters: every cluster stays Unresolved
+    (nothing is forced) and the run says nothing matched. The real blood table: it matches."""
+    import pandas as pd
+    from scrna_analysis import census_markers, markers as marker_tools
+    run = AnalysisRun(raw_data_path, REFERENCE_PRESET, census_dir=tmp_path)
     run.load(); run.compute_qc_metrics(); run.apply_filter(); run.preprocess(); run.reduce_dimensions()
     run.cluster(); run.find_markers()
-    markers = run.params.annotation.markers
-    brain = run.annotate(replace(run.params.annotation, markers=replace(markers, tissues=("Brain",))))
-    assert brain.summary["nothing_matched"] is True
-    assert set(brain.summary["label_counts"]) == {annotation.UNRESOLVED}
-    hint = brain.summary["tissue_hint"]
-    assert hint[0]["tissue"] == "Immune system" and 1 <= len(hint) <= 3
-    assert [h["n_clusters"] for h in hint] == sorted((h["n_clusters"] for h in hint), reverse=True)
-    fitting = run.annotate(replace(run.params.annotation, markers=replace(markers, tissues=("Immune system", "Blood"))))
-    assert fitting.summary["nothing_matched"] is False and fitting.summary["tissue_hint"] == []
+    top = set(marker_tools.marker_table(run.result("markers"), n_top=100)["gene"])
+    unused = [g for g in run.result("markers").raw.var_names if g not in top][:60]
+    rows = [{"cell_type": f"made-up type {t}", "ontology_id": f"X:{t}", "rank": i + 1, "gene": g, "score": 1.0,
+             "logfoldchange": 1.0, "pct_in": 0.5, "pct_out": 0.1, "n_cells": 100, "n_compared": 100}
+            for t in range(3) for i, g in enumerate(unused[20 * t:20 * (t + 1)])]
+    provenance = {"census_version": run.params.annotation.census.release, "citation": "test",
+                  "cell_types": [{"cell_type": f"made-up type {t}", "ontology_id": f"X:{t}"} for t in range(3)]}
+    census_markers.save_marker_table(pd.DataFrame(rows), provenance, census_markers.table_path(
+        "human", "blood", run.params.annotation.census.release, tmp_path))
+    nothing = run.annotate()
+    assert nothing.summary["nothing_matched"] is True
+    assert set(nothing.summary["marker_label_counts"]) == {annotation.UNRESOLVED}
+    run.census_dir = census_markers.CENSUS_DIR  # the real blood table
+    fitting = run.annotate()
+    assert fitting.summary["nothing_matched"] is False
 
 
 def test_dataset_metadata_sets_the_annotation_settings(raw_data_path):
@@ -422,19 +441,22 @@ def test_dataset_metadata_sets_the_annotation_settings(raw_data_path):
     tissues, and is recorded as confirmed by the dataset."""
     from scrna_analysis.params import DEFAULT_PARAMS, MarkerDatabaseParams
 
-    about = {"species": "Human", "tissues": ["Immune system", "Blood", "Blood"], "about": " blood   cells "}
+    about = {"species": "Human", "tissue": " Blood ", "about": " blood   cells "}
     run = AnalysisRun(raw_data_path, DEFAULT_PARAMS, metadata=about)
     assert run.metadata_confirmed
-    assert (run.params.annotation.markers.species, run.params.annotation.markers.tissues) == ("human", ("Blood", "Immune system"))
-    assert run.record()["input"]["metadata"] == {"species": "human", "tissue": None, "tissues": ["Blood", "Immune system"],
+    assert (run.params.annotation.markers.species, run.params.annotation.census.tissue) == ("human", "blood")
+    assert run.record()["input"]["metadata"] == {"species": "human", "tissue": "blood", "stage": None,
                                                   "about": "blood cells", "confirmed_by": "dataset", "confirmed_at": None}
     chosen = replace(DEFAULT_PARAMS, annotation=replace(DEFAULT_PARAMS.annotation,
-                                                        markers=MarkerDatabaseParams(species="mouse", tissues=("Brain",))))
-    decided = AnalysisRun(raw_data_path, chosen, metadata=about).params.annotation.markers
-    assert (decided.species, decided.tissues) == ("human", ("Blood", "Immune system"))  # the metadata decides
+                                                        markers=MarkerDatabaseParams(species="mouse")))
+    decided = AnalysisRun(raw_data_path, chosen, metadata=about).params.annotation
+    assert (decided.markers.species, decided.census.tissue) == ("human", "blood")  # the metadata decides
+    # Metadata saved before PanglaoDB was removed may still list its tissues: they are ignored.
+    old = AnalysisRun(raw_data_path, DEFAULT_PARAMS, metadata={**about, "tissues": ["Blood", "Immune system"]})
+    assert "tissues" not in old.metadata
     run.load()
     with pytest.raises(PipelineError, match="come with its metadata and can't be changed"):
-        run.confirm_metadata("mouse", ["Brain"])
+        run.confirm_metadata("mouse", "brain")
     assert run.metadata["species"] == "human"
     no_metadata = AnalysisRun(raw_data_path, DEFAULT_PARAMS)
     assert no_metadata.params == DEFAULT_PARAMS and not no_metadata.metadata_confirmed and no_metadata.metadata == {}
@@ -447,23 +469,23 @@ def test_metadata_must_be_confirmed_before_the_analysis_continues(mouse_10x_path
 
     run = AnalysisRun(mouse_10x_path, DEFAULT_PARAMS, require_metadata=True)
     with pytest.raises(PipelineError, match="Load the data before confirming"):
-        run.confirm_metadata("mouse", ["Brain"])
+        run.confirm_metadata("mouse", "brain")
     run.load()
     with pytest.raises(PipelineError, match="Confirm the species and tissue on Data Overview first"):
         run.compute_qc_metrics()
-    for species, tissues, about, message in [
-        ("", ["Brain"], None, "Choose the species"),
-        ("mouse", [], None, "Choose the tissue"),
-        ("mouse", ["Not a tissue"], None, "Unknown tissue: Not a tissue"),
-        ("mouse", ["Brain"], "x" * 301, "under 300 characters"),
+    for species, tissue, about, message in [
+        ("", "brain", None, "Choose the species"),
+        ("mouse", None, None, "Choose the tissue"),
+        ("mouse", "Not a tissue", None, "Unknown tissue: not a tissue"),
+        ("mouse", "brain", "x" * 301, "under 300 characters"),
     ]:
         with pytest.raises(PipelineError, match=message):
-            run.confirm_metadata(species, tissues, about)
+            run.confirm_metadata(species, tissue, about)
     assert not run.metadata_confirmed and run.history[-1]["stage"] == "load"  # nothing recorded
 
-    run.confirm_metadata("mouse", ["Brain", "Immune system"], "E18 mouse brain")
+    run.confirm_metadata("mouse", "brain", "E18 mouse brain")
     assert run.metadata_confirmed and run.metadata["confirmed_by"] == "user" and run.metadata["confirmed_at"]
-    assert run.params.annotation.markers.tissues == ("Brain", "Immune system")
+    assert run.params.annotation.census.tissue == "brain"
     assert run.history[-1]["stage"] == "metadata" and run.history[-1]["summary"]["about"] == "E18 mouse brain"
     run.compute_qc_metrics()  # now it runs
     assert run.record()["input"]["metadata"]["species"] == "mouse"
@@ -474,7 +496,7 @@ def test_other_species_need_no_tissue_and_skip_cell_types(mouse_10x_path):
 
     run = AnalysisRun(mouse_10x_path, DEFAULT_PARAMS, require_metadata=True)
     run.load()
-    run.confirm_metadata("other", [])
+    run.confirm_metadata("other")
     for stage in ("compute_qc_metrics", "apply_filter", "preprocess", "reduce_dimensions", "cluster", "find_markers"):
         getattr(run, stage)()
     with pytest.raises(annotation.AnnotationError, match="can't be predicted for this species"):
@@ -482,14 +504,13 @@ def test_other_species_need_no_tissue_and_skip_cell_types(mouse_10x_path):
 
 
 def test_changing_the_metadata_only_reruns_cell_type_annotation(raw_data_path):
-    """Species and tissues matter only to Cell Type Annotation: changing them marks it as needing
+    """Species and tissue matter only to Cell Type Annotation: changing them marks it as needing
     re-running and keeps every other step; confirming the same ones changes nothing."""
     run = run_analysis(raw_data_path, REFERENCE_PRESET)
-    markers = run.params.annotation.markers
-    run.confirm_metadata(markers.species, list(markers.tissues))
+    run.confirm_metadata(run.params.annotation.markers.species, run.params.annotation.census.tissue)
     assert set(run.status().values()) == {"done"} and run.history[-1]["cleared_later_stages"] == []
-    run.confirm_metadata("human", ["Immune system"])
+    run.confirm_metadata("human", "spleen")
     assert run.status()["annotate"] == "needs re-running"
     assert all(state == "done" for stage, state in run.status().items() if stage != "annotate")
     assert run.history[-1]["cleared_later_stages"] == ["annotate"]
-    assert run.annotate().settings["annotation"]["markers"]["tissues"] == ["Immune system"]
+    assert run.annotate().settings["annotation"]["census"]["tissue"] == "spleen"

@@ -46,6 +46,8 @@ class HVGSummary:
     n_genes: int
     n_hvg: int
     hvg_genes: tuple[str, ...]  # in the data's gene order
+    batch_key: str | None = None  # the obs column of samples when the genes were picked within each sample
+    n_batches: int = 1
 
 
 @dataclass(frozen=True)
@@ -95,12 +97,16 @@ def normalize_and_log(
     return adata, summary
 
 
-def find_hvgs(adata: ad.AnnData, params: HVGParams) -> tuple[ad.AnnData, HVGSummary]:
+def find_hvgs(adata: ad.AnnData, params: HVGParams, batch_key: str | None = None) -> tuple[ad.AnnData, HVGSummary]:
     """Flag highly variable genes. Adds `var` columns only; no genes are removed.
 
     Adds `highly_variable`, `means`, `dispersions` and `dispersions_norm`.
     With `params.n_top_genes`, the N genes with the highest normalized dispersion are kept
     and the cut-offs are not used.
+    With `batch_key` (an obs column of samples), Scanpy picks the genes within each sample: the
+    cut-offs apply to the mean and normalized dispersion averaged over the samples, and top N ranks
+    genes by how many samples find them variable, then by dispersion. Adds
+    `highly_variable_nbatches` (in how many samples a gene is variable).
     Raises `PreprocessingError` if the data isn't log-normalized, the flavor isn't
     supported, N is not between 1 and the number of genes, or no gene passes the cut-offs.
     """
@@ -121,6 +127,12 @@ def find_hvgs(adata: ad.AnnData, params: HVGParams) -> tuple[ad.AnnData, HVGSumm
             f"{adata.n_vars:,} genes in the data."
         )
 
+    n_batches = 1
+    if batch_key is not None:
+        if batch_key not in adata.obs:
+            raise PreprocessingError(f"There is no '{batch_key}' column to pick genes within each sample.")
+        n_batches = int(adata.obs[batch_key].astype(str).nunique())
+
     adata = adata.copy()
     if n_top is None:
         sc.pp.highly_variable_genes(
@@ -129,16 +141,18 @@ def find_hvgs(adata: ad.AnnData, params: HVGParams) -> tuple[ad.AnnData, HVGSumm
             min_mean=params.min_mean,
             max_mean=params.max_mean,
             min_disp=params.min_disp,
+            batch_key=batch_key,
         )
     else:
-        sc.pp.highly_variable_genes(adata, flavor=params.flavor, n_top_genes=n_top)
+        sc.pp.highly_variable_genes(adata, flavor=params.flavor, n_top_genes=n_top, batch_key=batch_key)
     hvg_genes = tuple(adata.var_names[adata.var["highly_variable"]])
     if not hvg_genes:
         raise PreprocessingError(
             f"No genes pass the highly variable gene cut-offs (min mean {params.min_mean:g}, "
             f"max mean {params.max_mean:g}, min dispersion {params.min_disp:g}). Loosen the cut-offs."
         )
-    return adata, HVGSummary(n_genes=adata.n_vars, n_hvg=len(hvg_genes), hvg_genes=hvg_genes)
+    return adata, HVGSummary(n_genes=adata.n_vars, n_hvg=len(hvg_genes), hvg_genes=hvg_genes,
+                             batch_key=batch_key, n_batches=n_batches)
 
 
 def keep_raw_and_subset(adata: ad.AnnData) -> tuple[ad.AnnData, SubsetSummary]:

@@ -3,7 +3,7 @@ import { Check, ClipboardList } from "lucide-react";
 import { STEP_DESCRIPTIONS } from "../lib/stepDescriptions";
 import { cn } from "../lib/utils";
 import type { Page } from "../navigation";
-import type { Step } from "../types";
+import type { ConditionsAvailability, Step } from "../types";
 import { InfoTip } from "./InfoTip";
 
 const STATUS_TEXT = { done: "Up to date", needs_rerun: "Needs re-running", not_run: "Not run" } as const;
@@ -16,6 +16,7 @@ export function Sidebar({
   nextKey,
   page,
   exploreAvailable,
+  conditions,
   onNavigate,
   onOpenRecord,
   runCount,
@@ -24,6 +25,7 @@ export function Sidebar({
   nextKey: string | null;
   page: Page;
   exploreAvailable: boolean; // clustering is done
+  conditions: ConditionsAvailability; // Compare Conditions: listed only with several samples
   onNavigate: (page: Page) => void;
   onOpenRecord: () => void;
   runCount: number;
@@ -126,6 +128,37 @@ export function Sidebar({
             {exploreAvailable ? "Clusters, cell types and genes on one UMAP" : "Opens after Clustering"}
           </span>
         </button>
+        {conditions.visible && (
+          <div className="relative mt-1">
+            <span className="absolute top-[8px] right-1">
+              <InfoTip label="About Compare Conditions" onDark>
+                {STEP_DESCRIPTIONS.compare_conditions}
+              </InfoTip>
+            </span>
+            <button
+              type="button"
+              aria-current={page === "compare_conditions" ? "page" : undefined}
+              disabled={!conditions.enabled}
+              onClick={() => onNavigate("compare_conditions")}
+              className={cn(
+                "flex w-full flex-col gap-[2px] rounded-[4px] py-2 pr-7 pl-3 text-left disabled:cursor-not-allowed",
+                page === "compare_conditions" ? "bg-side-raised" : "enabled:hover:bg-side-raised",
+              )}
+            >
+              <span className={cn("text-[14px] font-bold", conditions.enabled ? "text-side-text" : "text-side-off")}>
+                Compare Conditions
+              </span>
+              <span className={cn("text-[12px]", conditions.status === "needs_rerun" ? "font-bold text-side-accent" : "text-side-muted")}>
+                {conditions.reason ??
+                  (conditions.status === "done"
+                    ? "Up to date"
+                    : conditions.status === "needs_rerun"
+                      ? "▲ Needs re-running"
+                      : "Shares and genes between conditions")}
+              </span>
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="border-t border-side-line pt-4">

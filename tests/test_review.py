@@ -80,7 +80,8 @@ def test_review_is_recorded_and_never_changes_the_computed_results(annotated):
 
     run.review_cluster(first, "confirm", note="markers agree")
     run.review_cluster(second, "rename", label="My own label")
-    assert run.review[first].label == table["predicted_label"].iloc[0]
+    final = run.stage_result("annotate").details["final"]
+    assert run.review[first].label == final["final_label"].iloc[0]  # confirming keeps the final label
     assert run.review[second].label == "My own label"
 
     # Predictions and clusters are untouched; reviewed labels are built separately.

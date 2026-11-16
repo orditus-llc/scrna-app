@@ -3,8 +3,9 @@
 - Known answers on a tiny dataset, unresolved outcomes, settings and edge cases.
 - The calculation against independent implementations: the p-value against SciPy's Fisher's
   exact test, the overlap counts against Scanpy's `sc.tl.marker_gene_overlap`.
-- PanglaoDB on PBMC3k and the mouse brain data: the rules are applied (no expected labels;
-  the app's predictions are never tuned to the analyst-reviewed PBMC3k labels).
+- The CELLxGENE Census marker tables on PBMC3k and the mouse brain data: the rules are applied (no
+  expected labels; the app's predictions are never tuned to the analyst-reviewed PBMC3k labels).
+- No reference for a tissue: every cluster Unresolved with status "no_reference".
 - The analyst-reviewed PBMC3k labels stay a consistent record (`validation/`), checked here.
 
 None of this is a claim of biological correctness.
@@ -154,7 +155,15 @@ def test_enrichment_input_is_not_modified_and_record_is_h5ad_safe(tmp_path):
     assert json.loads(ad.read_h5ad(tmp_path / "x.h5ad").uns[RECORD_KEY]) == record
 
 
-# --- Real data with PanglaoDB -------------------------------------------------------------
+# --- Real data with the Census marker tables ------------------------------------------------
+
+def _census_sets(species: str, tissue: str) -> dict[str, tuple[str, ...]]:
+    from scrna_analysis import census_markers
+    path = census_markers.table_path(species, tissue, census_markers.CensusMarkerParams.release)
+    if not path.is_file():
+        pytest.fail(f"Missing Census marker table: {path}. Build it with scripts/build_census_markers.py.")
+    return census_markers.load_marker_table(path)[0]
+
 
 def _rules_hold(summary, params: EnrichmentParams) -> None:
     for row in summary.clusters.itertuples():
@@ -167,46 +176,54 @@ def _rules_hold(summary, params: EnrichmentParams) -> None:
             assert row.predicted_label == UNRESOLVED
 
 
-def test_enrichment_overlap_equals_scanpys_marker_gene_overlap(marked_pbmc3k, panglaodb_path):
+def test_enrichment_overlap_equals_scanpys_marker_gene_overlap(marked_pbmc3k):
     """Scanpy's own overlap count (top 100 marker genes, its default) gives the same numbers."""
     import scanpy as sc
-    from scrna_analysis.marker_db import read_panglaodb, select_marker_sets
-    from scrna_analysis.params import MarkerDatabaseParams
-    sets = select_marker_sets(read_panglaodb(panglaodb_path),
-                              MarkerDatabaseParams(species="human", tissues=("Immune system", "Blood")))
+    from scrna_analysis.marker_db import match_to_genes
+    sets = match_to_genes(_census_sets("human", "blood"), marked_pbmc3k.raw.var_names, 3).sets
     table, _, _ = enrichment_table(marked_pbmc3k, sets, EnrichmentParams())
     scanpy_counts = sc.tl.marker_gene_overlap(marked_pbmc3k, {ct: set(gs) for ct, gs in sets.items()})
     for row in table.itertuples():
         assert row.overlap == scanpy_counts.loc[row.cell_type, row.cluster], (row.cluster, row.cell_type)
 
 
-def test_enrichment_on_human_blood_with_panglaodb(marked_pbmc3k, panglaodb_path):
-    from scrna_analysis.marker_db import match_to_genes, read_panglaodb, select_marker_sets
-    from scrna_analysis.params import MarkerDatabaseParams
-    selection = MarkerDatabaseParams(species="human", tissues=("Immune system", "Blood"))
-    sets = select_marker_sets(read_panglaodb(panglaodb_path), selection)
-    matched = match_to_genes(sets, marked_pbmc3k.raw.var_names, selection.min_markers)
+def test_enrichment_on_human_blood_with_the_census_table(marked_pbmc3k):
+    from scrna_analysis.marker_db import match_to_genes
+    matched = match_to_genes(_census_sets("human", "blood"), marked_pbmc3k.raw.var_names, 3)
     adata, summary = predict_cell_types(marked_pbmc3k, matched.sets, EnrichmentParams())
     _rules_hold(summary, EnrichmentParams())
     assert (summary.clusters.status == "confident").any()
     assert adata.obs[PREDICTION_KEY].notna().all()
 
 
-def test_enrichment_on_mouse_brain_with_panglaodb(mouse_10x_path, panglaodb_path):
-    from scrna_analysis.marker_db import match_to_genes, read_panglaodb, select_marker_sets
-    from scrna_analysis.params import DEFAULT_PARAMS, MarkerDatabaseParams, QCParams
+def test_enrichment_on_mouse_brain_with_the_census_table(mouse_10x_path):
+    from scrna_analysis.marker_db import match_to_genes
+    from scrna_analysis.params import DEFAULT_PARAMS, QCParams
     from scrna_analysis.pipeline import AnalysisRun
     run = AnalysisRun(mouse_10x_path, DEFAULT_PARAMS)
     run.load()
     run.compute_qc_metrics(QCParams(mito_prefix="mt-"), DEFAULT_PARAMS.suggest)
     run.apply_filter(); run.preprocess(); run.reduce_dimensions(); run.cluster(); run.find_markers()
     marked = run.result("markers")
-    selection = MarkerDatabaseParams(species="mouse", tissues=("Brain", "Immune system", "Vasculature"))
-    sets = select_marker_sets(read_panglaodb(panglaodb_path), selection)
-    matched = match_to_genes(sets, marked.raw.var_names, selection.min_markers)
+    matched = match_to_genes(_census_sets("mouse", "brain"), marked.raw.var_names, 3)
     _, summary = predict_cell_types(marked, matched.sets, EnrichmentParams())
     _rules_hold(summary, EnrichmentParams())
     assert (summary.clusters.status == "confident").any()
+
+
+def test_no_reference_leaves_every_cluster_unresolved(marked_pbmc3k):
+    """Without a marker table for the tissue: the same outputs, every cluster "no_reference"."""
+    from scrna_analysis.annotation import RECORD_KEY, no_reference
+    adata, summary = no_reference(marked_pbmc3k, "No reference for this tissue.")
+    groups = marked_pbmc3k.obs["leiden"].astype(str)
+    assert list(summary.clusters["cluster"]) == list(marked_pbmc3k.obs["leiden"].cat.categories)
+    assert set(summary.clusters["status"]) == {"no_reference"}
+    assert set(summary.clusters["predicted_label"]) == {UNRESOLVED}
+    assert dict(zip(summary.clusters["cluster"], summary.clusters["n_cells"])) == groups.value_counts().to_dict()
+    assert (adata.obs[PREDICTION_KEY] == UNRESOLVED).all() and summary.tests.empty
+    assert summary.notes == ("No reference for this tissue.",)
+    assert json.loads(adata.uns[RECORD_KEY])["clusters"][0]["status"] == "no_reference"
+    assert PREDICTION_KEY not in marked_pbmc3k.obs  # the input is unchanged
 
 
 # --- The analyst-reviewed PBMC3k labels (validation record) ------------------------------

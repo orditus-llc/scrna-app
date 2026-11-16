@@ -119,7 +119,7 @@ def test_full_run_summaries_come_from_results(full_run, reference_summary):
     assert step(payload, "preprocessing")["summary"].startswith(f"{reference_summary['n_hvg']:,} highly variable genes")
     assert step(payload, "clustering")["summary"].startswith(f"{reference_summary['n_clusters']} clusters")
     n = reference_summary["n_clusters"]
-    assert re.match(rf"\d+ of {n} clusters confident · \d+ Unresolved$", step(payload, "cell_type_annotation")["summary"])
+    assert re.match(rf"\d+ of {n} clusters named · \d+ Unknown$", step(payload, "cell_type_annotation")["summary"])
     assert [e["label"] for e in payload["run_log"]] == [payloads.STAGE_LABELS[s] for s in
                                                        ("load", "qc_metrics", "filter", "preprocess",
                                                         "reduce_dimensions", "cluster", "markers", "annotate")]
@@ -165,7 +165,7 @@ def test_load_confirmation_uses_the_loaded_numbers(raw_data_path, reference_summ
     n_cells, n_genes = reference_summary["raw_shape"]
     assert step(payloads.workflow_payload(run), "data_overview")["confirmation"] == (
         f"Data loaded: {n_cells:,} cells × {n_genes:,} genes of raw counts. Ready for Quality Control.")
-    with_metadata = AnalysisRun(raw_data_path, REFERENCE_PRESET, metadata={"species": "human", "tissues": ["Blood"]})
+    with_metadata = AnalysisRun(raw_data_path, REFERENCE_PRESET, metadata={"species": "human", "tissue": "blood"})
     with_metadata.load()
     assert "genes of raw counts (Human · Blood)." in step(payloads.workflow_payload(with_metadata), "data_overview")["confirmation"]
 
@@ -553,18 +553,13 @@ def test_marker_test_choice():
 def test_annotation_page_shows_the_evidence(full_run, reference_results):
     payload = payloads.annotation_payload(full_run)
     json.dumps(payload, allow_nan=False)
-    assert payload["database"]["available"] and payload["database"]["name"] == "PanglaoDB"
-    assert {"Immune system", "Blood", "Brain"} <= set(payload["database"]["tissues"])
-    # Each tissue's cell types per species: the same cell types the selection would take.
-    by_tissue = payload["database"]["cell_types"]
-    assert set(by_tissue) == {"human", "mouse"}
-    db = marker_db.load_panglaodb()
-    chosen = full_run.params.annotation.markers
-    from_page = {ct for t in chosen.tissues for ct in by_tissue[chosen.species][t]}
-    assert from_page == set(marker_db.select_marker_sets(db, chosen))
-    assert payload["metadata"] == {"species": "Human", "tissues": list(chosen.tissues), "tissue": None,
-                                   "confirmed_by": None, "has_markers": True}
+    assert "database" not in payload and payload["selection"] == {"min_markers": 3}  # no PanglaoDB
+    assert payload["census"] == {"tissue": "Blood", "release": "2025-11-08", "has_table": True, "available": True}
+    assert payload["metadata"] == {"species": "Human", "tissue": "Blood", "confirmed_by": None, "has_markers": True}
     r = payload["results"]
+    assert r["database"]["name"] == "CELLxGENE Census" and r["database"]["tissue"] == "Blood"
+    assert r["no_reference"] is False
+    assert not {"references", "first_reference", "answers", "candidates_by_reference"} & set(r)
     assert r["cells"]["barcode"] == reference_results.obs_names.tolist()
     assert len(r["cell_label"]) == len(r["cell_cluster"]) == len(r["umap"]["x"])
     assert sum(r["label_counts"].values()) == len(r["cell_label"])
@@ -581,18 +576,18 @@ def test_annotation_page_shows_the_evidence(full_run, reference_results):
     assert {g["gene"] for g in r["dotplot"]["genes"]} <= matching
     assert len(r["dotplot"]["values"]) == len(r["dotplot"]["genes"]) * len(clusters)
     confirmation = step(payloads.workflow_payload(full_run), "cell_type_annotation")["confirmation"]
-    assert "PanglaoDB" in confirmation and "predictions for you to review" in confirmation
+    assert "CELLxGENE Census" in confirmation and "predictions for you to review" in confirmation
 
 
 def test_annotation_settings_from_the_page():
-    """The page sends only the checks; species and tissues come from the dataset's metadata, so
-    any the browser sends are ignored."""
+    """The page sends only the checks (and the CellTypist model); species and tissue come from the
+    dataset's metadata, so any the browser sends are ignored."""
     P = REFERENCE_PRESET
     boxes = {"top_n_genes": "100", "max_adj_p": "0.05", "min_overlap": "3", "ambiguity_fold": "10"}
     assert payloads.annotation_params_from_browser(boxes, P) == (P.annotation,)
-    (a,) = payloads.annotation_params_from_browser({**boxes, "species": "mouse", "tissues": ["Brain"],
-                                                    "min_overlap": "4"}, P)
-    assert (a.markers, a.test.min_overlap) == (P.annotation.markers, 4)
+    (a,) = payloads.annotation_params_from_browser({**boxes, "species": "mouse", "tissue": "brain",
+                                                    "use_census": False, "min_overlap": "4"}, P)
+    assert (a.markers, a.census, a.test.min_overlap) == (P.annotation.markers, P.annotation.census, 4)
     for change, message in [({"top_n_genes": "0"}, "must be at least 1"), ({"max_adj_p": "2"}, "can't be more than 1"),
                             ({"max_adj_p": "0"}, "must be greater than 0"), ({"ambiguity_fold": "0.5"}, "at least 1")]:
         with pytest.raises(payloads.InputError, match=message):
@@ -612,36 +607,40 @@ def test_stricter_checks_can_leave_clusters_unresolved(spare_run):
     run.annotate(replace(run.params.annotation, test=replace(run.params.annotation.test, max_adj_p=1e-300)))
     r = payloads.annotation_payload(run)["results"]
     assert all(c["predicted_label"] == "Unresolved" and "not_significant" in c["reasons"] for c in r["clusters"])
-    assert set(r["cell_label"]) == {"Unresolved"}
+    assert set(r["cell_label"]) == {"Unknown"}  # the final label: no CellTypist model in this preset either
     assert "0 of" in step(payloads.workflow_payload(run), "cell_type_annotation")["confirmation"]
 
 
-def test_missing_marker_database_is_shown_on_the_page(raw_data_path, tmp_path):
+def test_a_tissue_without_a_census_reference_is_shown_on_the_page(raw_data_path, tmp_path):
+    """No Census table for the tissue: the page says the marker check won't run, before and after."""
     from scrna_analysis.pipeline import AnalysisRun
-    run = AnalysisRun(raw_data_path, REFERENCE_PRESET, marker_db_path=tmp_path / "absent.tsv.gz")
-    database = payloads.annotation_payload(run)["database"]
-    assert database["available"] is False and "download_marker_db.py" in database["problem"]
+    run = AnalysisRun(raw_data_path, REFERENCE_PRESET, census_dir=tmp_path)  # no tables in this folder
+    assert payloads.annotation_payload(run)["census"]["has_table"] is False
+    for stage in payloads.remaining_stages(run):
+        payloads.run_stage(run, stage)
+    r = payloads.annotation_payload(run)["results"]
+    assert r["database"] is None and r["no_reference"] is True and r["candidates"] == {}
+    assert {c["status"] for c in r["clusters"]} == {"no_reference"} and r["unresolved_note"] is None
+    assert all("no CELLxGENE Census reference for blood yet" in g for g in r["guidance"].values())
+    assert "Review the clusters with their marker genes" in r["guidance"]["0"] or "top marker genes" in r["guidance"]["0"]
+    confirmation = step(payloads.workflow_payload(run), "cell_type_annotation")["confirmation"]
+    assert confirmation.startswith("Cell Type Annotation done: there's no CELLxGENE Census reference for blood yet")
+    assert "predictions for you to review" not in confirmation  # nothing was predicted
 
 
 def test_annotation_page_has_no_marker_list_upload(full_run):
-    """The user's own marker list was removed (supervisor, 2026-11-03): PanglaoDB is the only
-    source, so the page data has no upload, template or "Markers from" setting."""
+    """The user's own marker list was removed (supervisor, 2026-11-03), so the page data has no
+    upload, template or "Markers from" setting."""
     page = payloads.annotation_payload(full_run)
     assert not {"marker_list", "marker_list_template"} & set(page)
     assert "source" not in page["settings"]["current"] and "source" not in page["results"]["settings"]
 
 
 def test_nothing_matched_message():
-    from scrna_analysis.params import MarkerDatabaseParams
-    db = {"name": "PanglaoDB"}
-    brain = MarkerDatabaseParams(species="human", tissues=("Brain",))
-    assert payloads.nothing_matched_text({"nothing_matched": False}, brain) is None
-    hint = [{"tissue": "Immune system", "n_clusters": 7}, {"tissue": "Blood", "n_clusters": 1}]
-    assert payloads.nothing_matched_text({"nothing_matched": True, "tissue_hint": hint, "database": db}, brain) == (
-        "No cluster matched the cell types of the ticked tissues (Brain). Check that the tissues fit your data: "
-        "the closest matches come from Immune system (7 clusters) and Blood (1 cluster).")
-    assert "no other tissue in PanglaoDB fits clearly" in payloads.nothing_matched_text(
-        {"nothing_matched": True, "tissue_hint": [], "database": db}, brain)
+    assert payloads.nothing_matched_text({"nothing_matched": False}, "brain") is None
+    assert payloads.nothing_matched_text({"nothing_matched": True}, "skin of body") == (
+        "No cluster matched the cell types in the Census reference for skin of body. Check that the species and "
+        "tissue on Data Overview fit your sample, compare with CellTypist's answer, or review the clusters yourself.")
 
 
 def test_label_review_on_the_pages(spare_run):
@@ -657,14 +656,15 @@ def test_label_review_on_the_pages(spare_run):
 
     review = payloads.annotation_payload(run)["results"]["review"]
     json.dumps(review, allow_nan=False)
-    assert review["clusters"][first["cluster"]]["label"] == first["predicted_label"]
+    final = {f["cluster"]: f["final_label"] for f in payloads.annotation_payload(run)["results"]["final"]}
+    assert review["clusters"][first["cluster"]]["label"] == final[first["cluster"]]
     assert review["clusters"][first["cluster"]]["prediction_changed"] is False
     assert review["clusters"][second["cluster"]] | {"reviewed_at": None} == {
         "cluster": second["cluster"], "decision": "renamed", "label": "CD14+ monocytes", "note": "LYZ high",
         "reviewed_at": None, "prediction_changed": False}
     assert (review["n_confirmed"], review["n_renamed"], review["n_not_reviewed"]) == (1, 1, len(clusters) - 2)
     assert payloads.explore_payload(run)["results"]["reviewed"] == {
-        first["cluster"]: first["predicted_label"], second["cluster"]: "CD14+ monocytes"}
+        first["cluster"]: final[first["cluster"]], second["cluster"]: "CD14+ monocytes"}
     log = payloads.run_log(run)[-1]
     assert log["label"] == "Label review"
     assert log["text"].startswith(f"Cluster {second['cluster']}: renamed to CD14+ monocytes · 1 confirmed, 1 renamed")
@@ -673,7 +673,7 @@ def test_label_review_on_the_pages(spare_run):
     # Annotation re-run with other settings: a confirmed label whose prediction changed is flagged.
     run.annotate(replace(run.params.annotation, test=replace(run.params.annotation.test, max_adj_p=1e-300)))
     again = payloads.annotation_payload(run)["results"]["review"]["clusters"]
-    assert again[first["cluster"]]["prediction_changed"] is (first["predicted_label"] != "Unresolved")
+    assert again[first["cluster"]]["prediction_changed"] is (final[first["cluster"]] != "Unknown")
 
     for bad, message in [(None, "Choose a cluster"), ({"cluster": "0", "decision": "approve"}, "confirm the prediction")]:
         with pytest.raises(payloads.InputError, match=message):
@@ -696,7 +696,7 @@ def test_explore_shows_what_the_steps_computed(full_run, reference_results, refe
     assert r["cell_cluster"] == clusters["labels"] and r["umap"] == clusters["umap"]
     annotated = payloads.annotation_payload(full_run)["results"]
     assert r["predictions"]["cell_label"] == annotated["cell_label"]
-    assert r["predictions"]["label_order"] == list(dict.fromkeys(c["predicted_label"] for c in annotated["clusters"]))
+    assert r["predictions"]["label_order"] == list(dict.fromkeys(c["final_label"] for c in annotated["final"]))
     for cluster, genes in reference_summary["top25_markers"].items():
         assert r["top_markers"][cluster] == genes[:payloads.EXPLORE_TOP_MARKERS]
     assert len(r["genes"]) == reference_summary["filtered_shape"][1] and r["genes"] == sorted(r["genes"])
@@ -796,7 +796,8 @@ def test_run_remaining_stops_where_a_choice_is_needed(raw_data_path):
     assert payloads.choice_needed(other, "annotate").startswith("Cell types can't be predicted for this species")
     assert all(payloads.choice_needed(run, stage) is None for stage in payloads.STAGES_IN_ORDER if stage != "annotate")
     chosen = replace(DEFAULT_PARAMS, annotation=replace(
-        DEFAULT_PARAMS.annotation, markers=replace(DEFAULT_PARAMS.annotation.markers, species="human", tissues=("Blood",))))
+        DEFAULT_PARAMS.annotation, markers=replace(DEFAULT_PARAMS.annotation.markers, species="human"),
+        census=replace(DEFAULT_PARAMS.annotation.census, tissue="blood")))
     assert payloads.choice_needed(AnalysisRun(raw_data_path, chosen), "annotate") is None
     job = {"stages": ("qc_metrics", "filter", "preprocess", "markers", "annotate")}
     assert payloads.steps_done_before(job, "annotate") == 3  # Quality Control, Preprocessing, Marker Genes
@@ -909,9 +910,13 @@ def test_later_steps_are_locked_until_species_and_tissue_are_confirmed(mouse_10x
     meta = payload["dataset"]["metadata"]
     assert (meta["confirmed"], meta["suggested_species"], meta["mito_prefix"]) == (False, "mouse", "mt-")
     assert meta["species_options"][-1] == {"value": "other", "label": "Other species"}
-    assert meta["tissue_cell_types"]["mouse"]["Brain"] > 0 and all(n > 0 for n in meta["tissue_cell_types"]["mouse"].values())
+    # Census's mouse tissues, those with a marker reference marked (brain), each with its CellTypist model.
+    brain = next(t for t in meta["census_tissues"]["mouse"] if t["tissue"] == "brain")
+    assert brain == {"tissue": "brain", "label": "Brain", "n_cells": brain["n_cells"], "has_table": True,
+                     "celltypist_model": "Mouse_Whole_Brain.pkl"}
+    assert not {"tissues", "tissue_cell_types", "tissues_available", "tissue_problem"} & set(meta)  # no PanglaoDB
 
-    run.confirm_metadata("mouse", ["Brain"])
+    run.confirm_metadata("mouse", "brain")
     payload = payloads.workflow_payload(run)
     assert step(payload, "data_overview")["status"] == "done" and step(payload, "data_overview")["waiting"] is None
     assert not any(s["locked"] for s in payload["steps"]) and payloads.qc_payload(run)["can_run"] is True
@@ -926,11 +931,11 @@ def test_species_that_disagrees_with_the_gene_names_is_flagged(mouse_10x_path):
     meta = payloads.metadata_payload(run)
     assert meta["suggested_species"] == "mouse" and meta["suggestion_reason"] == (
         "Mouse: Ensembl IDs start with ENSMUSG, gene names are written like Cd3d and mitochondrial genes are named mt-…")
-    run.confirm_metadata("human", ["Brain"])
+    run.confirm_metadata("human", "brain")
     assert payloads.metadata_payload(run)["mismatch"] == (
         "Check the species: you chose Human, but Ensembl IDs start with ENSMUSG (as in mouse data), gene names are "
         "written like Cd3d (as in mouse data) and mitochondrial genes are named mt-… (as in mouse data).")
-    run.confirm_metadata("mouse", ["Brain"])
+    run.confirm_metadata("mouse", "brain")
     assert payloads.metadata_payload(run)["mismatch"] is None
     run.confirm_metadata("other")
     assert payloads.metadata_payload(run)["mismatch"].startswith("The gene names look like mouse data")
@@ -944,13 +949,15 @@ def test_species_suggestion_for_species_the_app_does_not_list():
 
 
 def test_metadata_from_the_browser():
-    assert payloads.metadata_from_browser({"species": "human", "tissues": ["Blood"], "about": "x"}) == ("human", None, ["Blood"], "x")
-    assert payloads.metadata_from_browser({"species": "human", "tissue": "blood"}) == ("human", "blood", [], None)
-    assert payloads.metadata_from_browser({"species": "other"}) == ("other", None, [], None)
+    assert payloads.metadata_from_browser({"species": "human", "tissue": "blood", "about": "x"}) == (
+        "human", "blood", "x", None)
+    assert payloads.metadata_from_browser({"species": "human", "tissue": "blood", "tissues": ["Blood"]}) == (
+        "human", "blood", None, None)  # PanglaoDB tissues sent by an old page are ignored
+    assert payloads.metadata_from_browser({"species": "other"}) == ("other", None, None, None)
     for values, message in [({}, "Choose the species"), ({"species": "zebrafish"}, "Choose the species"),
-                            ({"species": "mouse", "tissues": []}, "Choose the tissue"),
+                            ({"species": "mouse"}, "Choose the tissue"),
+                            ({"species": "mouse", "tissues": ["Brain"]}, "Choose the tissue"),
                             ({"species": "mouse", "tissue": 3}, "Choose the tissue"),
-                            ({"species": "mouse", "tissues": "Brain"}, "list of names"),
                             ({"species": "other", "about": 3}, "must be text")]:
         with pytest.raises(payloads.InputError, match=message):
             payloads.metadata_from_browser(values)
@@ -958,11 +965,11 @@ def test_metadata_from_the_browser():
 
 def test_changed_tissue_explains_why_annotation_needs_rerunning(raw_data_path):
     run = run_analysis(raw_data_path, REFERENCE_PRESET)
-    run.confirm_metadata("human", ["Immune system"])
+    run.confirm_metadata("human", "spleen")
     annotation = step(payloads.workflow_payload(run), "cell_type_annotation")
     assert annotation["status"] == "needs_rerun"
     assert annotation["reason"] == "The species or tissue changed on Data Overview, so run this step again."
-    assert payloads.annotation_payload(run)["metadata"]["tissues"] == ["Immune system"]
+    assert payloads.annotation_payload(run)["metadata"]["tissue"] == "Spleen"
 
 
 
@@ -970,50 +977,49 @@ def test_changed_tissue_explains_why_annotation_needs_rerunning(raw_data_path):
 
 def test_unresolved_note_mentions_species_and_tissue_only_when_most_clusters_fail():
     def summary(labels, nothing=False):
-        return {"nothing_matched": nothing, "clusters": [{"predicted_label": label} for label in labels]}
+        return {"nothing_matched": nothing, "final": [{"final_label": label} for label in labels]}
     assert payloads.unresolved_note(summary(["B cells", "T cells"])) is None
-    assert payloads.unresolved_note(summary(["Unresolved"] * 2, nothing=True)) is None  # the other box says it
-    some = payloads.unresolved_note(summary(["Unresolved", "B cells", "T cells"]))
-    assert some.startswith("1 cluster is Unresolved. This often means") and "species" not in some
-    assert "Open the Clusters tab and click a cluster to see why it is Unresolved" in some
-    most = payloads.unresolved_note(summary(["Unresolved", "Unresolved", "B cells"]))
-    assert most.startswith("2 of 3 clusters are Unresolved. When most clusters fail, check that the species")
+    assert payloads.unresolved_note(summary(["Unknown"] * 2, nothing=True)) is None  # the other box says it
+    some = payloads.unresolved_note(summary(["Unknown", "B cells", "T cells"]))
+    assert some.startswith("1 cluster is Unknown: the checks disagree or neither is confident") and "species" not in some
+    assert "Open the To review tab and click a cluster to see why" in some
+    most = payloads.unresolved_note(summary(["Unknown", "Unknown", "B cells"]))
+    assert most.startswith("2 of 3 clusters are Unknown. When most clusters fail, check that the species")
 
 
 def test_unresolved_guidance_follows_the_reason():
     from types import SimpleNamespace
-    from scrna_analysis.params import MarkerDatabaseParams
-    markers = MarkerDatabaseParams(species="mouse", tissues=("Brain",))
-    row = lambda status: SimpleNamespace(cluster=3, status=status, best_candidate="Astrocytes",  # noqa: E731
-                                         second_candidate="Radial glia cells")
-    assert payloads.unresolved_guidance(row("ambiguous"), {}, markers).startswith(
-        "Two cell types fit almost equally: Astrocytes and Radial glia cells.")
-    assert "rule out chance" in payloads.unresolved_guidance(row("not_significant"), {}, markers)
-    assert "listed for Brain" in payloads.unresolved_guidance(row("too_few_markers"), {}, markers)
-    elsewhere = {"best_anywhere": {"3": {"cell_type": "Müller cells", "tissues": ["Eye"], "overlap": 4, "n_markers": 14,
-                                         "adj_p": 1e-4}}}
-    assert payloads.unresolved_guidance(row("ambiguous"), elsewhere, markers).endswith(
-        "Closest match in another tissue: Müller cells (Eye), 4 of 14 markers. A hint to check, not a prediction.")
+    row = lambda status: SimpleNamespace(cluster=3, status=status, best_candidate="astrocyte",  # noqa: E731
+                                         second_candidate="glioblast")
+    assert payloads.unresolved_guidance(row("ambiguous"), "brain").startswith(
+        "Two unrelated cell types fit almost equally: astrocyte and glioblast.")
+    assert "rule out chance" in payloads.unresolved_guidance(row("not_significant"), "brain")
+    assert "Census reference for brain" in payloads.unresolved_guidance(row("too_few_markers"), "brain")
+    assert payloads.unresolved_guidance(row("no_reference"), "lung") == (
+        "There's no CELLxGENE Census reference for lung yet, so the marker check didn't run. Use CellTypist's "
+        "answer and the cluster's top marker genes in your review.")
+    # Without CellTypist's answer the sentences don't point to it.
+    assert all("CellTypist" not in payloads.unresolved_guidance(row(status), "lung", celltypist=False)
+               for status in ("no_reference", "ambiguous", "not_significant", "too_few_markers"))
+    assert "Closest match in another tissue" not in payloads.unresolved_guidance(row("ambiguous"), "brain")  # hints gone
 
 
-def test_every_unresolved_cluster_gets_guidance_and_hints_stay_outside_the_tested_cell_types(mouse_10x_path):
-    """Mouse brain with Brain only: many clusters are Unresolved; each gets a reason sentence, and a
-    closest match elsewhere only when it is a clear match to a cell type that wasn't tested."""
-    run = AnalysisRun(mouse_10x_path, DEFAULT_PARAMS, metadata={"species": "mouse", "tissues": ["Brain"]})
-    for stage in payloads.STAGE_METHODS.values():
-        getattr(run, stage)()
-    details = run.stage_result("annotate").details
-    summary, match = details["summary"], details["match"]
+def test_every_unresolved_cluster_gets_guidance(mouse_10x_path):
+    """Mouse brain with the Census brain reference: each Unresolved cluster gets a reason sentence."""
+    run = AnalysisRun(mouse_10x_path, DEFAULT_PARAMS, metadata={"species": "mouse", "tissue": "brain"})
+    run.load()
+    for stage in payloads.remaining_stages(run):
+        payloads.run_stage(run, stage)
     s = run.stage_result("annotate").summary
     unresolved = {str(c["cluster"]) for c in s["clusters"] if c["predicted_label"] == "Unresolved"}
     results = payloads.annotation_payload(run)["results"]
     assert unresolved and set(results["guidance"]) == unresolved
-    assert set(s["best_anywhere"]) <= unresolved
-    test = run.params.annotation.test
-    for hint in s["best_anywhere"].values():
-        assert hint["adj_p"] < test.max_adj_p and hint["overlap"] >= test.min_overlap
-        assert hint["cell_type"] not in match.sets
-    assert results["unresolved_note"].startswith(f"{len(unresolved)} of {len(s['clusters'])} clusters are Unresolved")
+    assert not {"best_anywhere", "tissue_hint"} & set(s)
+    unknown = sum(f["final_label"] == "Unknown" for f in s["final"])
+    if unknown:  # the note is about the final labels (CellTypist may name clusters the marker check couldn't)
+        assert results["unresolved_note"].startswith(
+            f"{unknown} of {len(s['final'])} clusters are Unknown" if unknown > len(s["final"]) / 2
+            else f"{unknown} cluster" + ("s are" if unknown > 1 else " is") + " Unknown")
 
 
 def test_batch_correction_from_the_page():

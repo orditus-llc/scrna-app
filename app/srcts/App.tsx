@@ -10,9 +10,10 @@ import { RunLog, SettingsRecord } from "./components/SidePanels";
 import { Sidebar } from "./components/Sidebar";
 import { Toast } from "./components/Toast";
 import { BUILT_STEPS, pageFromHash, type Page, type StepKey } from "./navigation";
-import type { AnnotationPayload, MitoCheck, QcSuggestion, ClusterPayload, ExplorePayload, GenePayload, MarkersPayload, PreprocessPayload, PreviewPayload, QcPayload, ReductionPayload, WorkflowPayload } from "./types";
+import type { AnnotationPayload, ConditionsPayload, MitoCheck, QcSuggestion, ClusterPayload, ExplorePayload, GenePayload, MarkersPayload, PreprocessPayload, PreviewPayload, QcPayload, ReductionPayload, WorkflowPayload } from "./types";
 import { AnnotationPage } from "./views/AnnotationPage";
 import { ClusteringPage } from "./views/ClusteringPage";
+import { ConditionsPage } from "./views/ConditionsPage";
 import { DataOverview } from "./views/DataOverview";
 import { ExplorePage } from "./views/ExplorePage";
 import { MarkersPage } from "./views/MarkersPage";
@@ -35,6 +36,7 @@ export function App() {
   const annotation = useShinyOutputValue<AnnotationPayload>("annotation");
   const explore = useShinyOutputValue<ExplorePayload>("explore");
   const exploreGene = useShinyOutputValue<GenePayload | null>("explore_gene_values");
+  const conditions = useShinyOutputValue<ConditionsPayload>("conditions");
   // The app always opens on the first step: a new browser session starts a new, empty
   // analysis on the server, so a later page would have nothing to show.
   const [page, setPage] = useState<Page>("data_overview");
@@ -100,6 +102,8 @@ export function App() {
         return <AnnotationPage workflow={data} data={annotation} onNavigate={navigate} />;
       case "explorer":
         return <ExplorePage data={explore} gene={exploreGene} exportInfo={data?.export} onNavigate={navigate} />;
+      case "compare_conditions":
+        return <ConditionsPage workflow={data} data={conditions} onNavigate={navigate} />;
       default:
         return BUILT_STEPS[page as StepKey] === false ? (
           <ComingSoonPage workflow={data} stepKey={page as StepKey} onNavigate={navigate} />
@@ -126,6 +130,7 @@ export function App() {
                   nextKey={data.next_step?.key ?? null}
                   page={page}
                   exploreAvailable={explore?.available ?? false}
+                  conditions={data.conditions}
                   onNavigate={navigate}
                   onOpenRecord={() => setRecordOpen(true)}
                   runCount={data.run_log.length}

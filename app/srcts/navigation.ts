@@ -12,7 +12,7 @@ export const STEP_KEYS = [
 ] as const;
 
 export type StepKey = (typeof STEP_KEYS)[number];
-export type Page = StepKey | "explorer";
+export type Page = StepKey | "explorer" | "compare_conditions";
 
 /** Step pages whose controls are built. The others open with a "Coming soon" note. */
 export const BUILT_STEPS: Record<StepKey, boolean> = {
@@ -31,7 +31,7 @@ export function nextStepKey(key: StepKey): StepKey | undefined {
 }
 
 /** Every page, for reading one from the address. */
-export const PAGES: readonly Page[] = [...STEP_KEYS, "explorer"];
+export const PAGES: readonly Page[] = [...STEP_KEYS, "explorer", "compare_conditions"];
 
 /** The page named in the address ("#clustering" -> "clustering"), or null if there is none.
  * Each page has its own address, so the browser's Back and Forward buttons move between

@@ -253,6 +253,7 @@ dependencies:
       - certifi==2026.10.23
       - charset-normalizer==3.5.2
       - et-xmlfile==2.0.0
+      - formulaic-contrasts==1.0.0
       - frozenlist==1.8.0
       - fsspec==2026.9.0
       - harmonypy==2.1.0
@@ -263,11 +264,14 @@ dependencies:
       - propcache==0.5.4
       - pyarrow==26.0.1
       - pyarrow-hotfix==0.7
+      - pydeseq2==0.5.4
       - requests==2.34.2
       - s3fs==2026.9.0
+      - session-info==1.0.1
       - shapely==2.2.0
       - shinyreact==0.1.0
       - somacore==1.0.29
+      - stdlib-list==0.12.0
       - tiledbsoma==2.3.0
       - urllib3==2.8.0
       - yarl==1.25.1

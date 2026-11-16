@@ -13,9 +13,9 @@
   history of every stage run (with time and a short summary) in `uns["orditus"]`.
 - It keeps the analyst's label review (`review_cluster`) apart from the computed results. The
   review belongs to one clustering: recomputing the clusters clears it.
-- It keeps the dataset's metadata: what is known about the sample (species, tissues, a short
+- It keeps the dataset's metadata: what is known about the sample (species, tissue, a short
   description), either supplied with the dataset or confirmed by the user (`confirm_metadata`).
-  Species and tissues decide which cell types Cell Type Annotation compares. An app can require
+  Species and tissue decide which cell types Cell Type Annotation compares. An app can require
   the metadata to be confirmed before anything after loading runs (`require_metadata`).
 
 `run_analysis(path)` runs all eight stages with the reference settings in one call.
@@ -38,12 +38,14 @@ from typing import Any, Callable
 import anndata as ad
 import pandas as pd
 
-from scrna_analysis import (annotation, celltypist_models, census_markers, clustering, dim_reduction, integration, load_data, marker_db,
-                            markers, preprocessing, qc, review)
+from scrna_analysis import (annotation, broad_types, celltypist_models, census_markers, clustering, conditions,
+                            consensus, dim_reduction, integration, load_data, marker_db, markers, preprocessing, qc,
+                            review)
 from scrna_analysis.params import (
     DEFAULT_PARAMS,
     AnalysisParams,
     AnnotationParams,
+    ConditionParams,
     FilterParams,
     HVGParams,
     IntegrationParams,
@@ -57,6 +59,7 @@ from scrna_analysis.params import (
     ScaleParams,
     SuggestionParams,
     UMAPParams,
+    _to_plain,
 )
 
 # The eight stages, in the only order they can run.
@@ -82,12 +85,16 @@ RECORD_KEY = "orditus"  # adata.uns entry holding the record (JSON text, h5ad-sa
 # 4: input "metadata" replaces "description", with who confirmed it and when, 2026-11-03;
 # 5: input "samples" (and "sample_column") when there are several samples, 2026-11-09;
 # 6: metadata "tissue" and annotation "census", 2026-11-09; 7: "integration" settings, 2026-11-10;
-# 8: annotation "celltypist", 2026-11-12).
-RECORD_FORMAT = 8
+# 8: annotation "celltypist", 2026-11-12; 9: PanglaoDB removed: metadata has no "tissues", annotation
+# settings have no PanglaoDB selection or census "use", 2026-11-12; 10: annotation "consensus" settings
+# and the final label per cluster (Step B); metadata "stage" (adult / developing), 2026-11-13; 11: "conditions"
+# settings and "comparison" (Compare Conditions), 2026-11-16).
+RECORD_FORMAT = 11
 MAX_ABOUT_LENGTH = 300  # the metadata's free-text description of the sample
 PACKAGES = (
     "scanpy", "anndata", "numpy", "scipy", "pandas", "scikit-learn", "statsmodels",
     "umap-learn", "pynndescent", "leidenalg", "igraph", "h5py", "matplotlib", "harmonypy", "celltypist",
+    "pydeseq2",
 )
 
 
@@ -121,7 +128,7 @@ class AnalysisRun:
     """
 
     def __init__(self, data_path: str | Path | None, params: AnalysisParams = DEFAULT_PARAMS,
-                 file_name: str | None = None, marker_db_path: str | Path = marker_db.PANGLAODB_FILE,
+                 file_name: str | None = None,
                  metadata: dict[str, Any] | None = None, require_metadata: bool = False,
                  sample_files: list[load_data.SampleFile] | None = None,
                  sample_columns: dict[str, str | None] | None = None,
@@ -139,13 +146,12 @@ class AnalysisRun:
         self.file_name = file_name or (self.data_path.name if self.data_path else None)
         if self.sample_files and not self.file_name:
             self.file_name = f"{len(self.sample_files)} samples"
-        self.marker_db_path = Path(marker_db_path)  # the cell-type marker database (PanglaoDB)
         self.census_dir = Path(census_dir)  # the Census marker tables (built ahead of time)
         self.ontology_path = Path(ontology_path)  # the Cell Ontology (which Census types are related)
         self.celltypist_dir = Path(celltypist_dir)  # CellTypist's downloaded models
-        # What is known about the sample: {"species": "human", "tissues": [...], "about": "..."}.
+        # What is known about the sample: {"species": "human", "tissue": "blood", "about": "..."}.
         # Supplied with the dataset (e.g. demo data: confirmed by the dataset) or confirmed later by
-        # the user (`confirm_metadata`). Input, not a result: species and tissues set Cell Type
+        # the user (`confirm_metadata`). Input, not a result: species and tissue set Cell Type
         # Annotation's settings, and the metadata is recorded with the run.
         self.metadata: dict[str, Any] = _clean_metadata(metadata) if metadata else {}
         if self.metadata:
@@ -158,12 +164,14 @@ class AnalysisRun:
         # The analyst's review: cluster -> decision (never mixed into the computed results).
         self.review: dict[str, review.ClusterReview] = {}
         self.review_cleared: str | None = None  # why an earlier review was cleared, if it was
+        # Compare Conditions (several samples with conditions): the latest comparison, or None.
+        self.comparison: dict[str, Any] | None = None
 
     # --- Where things stand ---------------------------------------------------------------
 
     @property
     def metadata_confirmed(self) -> bool:
-        """Whether the species (and tissues) are known: supplied with the dataset or confirmed."""
+        """Whether the species (and tissue) are known: supplied with the dataset or confirmed."""
         return bool(self.metadata.get("confirmed_by"))
 
     def status(self) -> dict[str, str]:
@@ -220,6 +228,10 @@ class AnalysisRun:
             "stages": self.status(),
             "history": self.history,
             "review": [asdict(r) for r in self.review.values()],
+            **({"comparison": {"status": self.comparison_status(), "settings": self.comparison["settings"],
+                               "groups_to_test": self.comparison["groups_to_test"], "ran_at": self.comparison["ran_at"],
+                               **conditions.record_summary(self.comparison["summary"], self.params.conditions.max_adj_p)}}
+               if self.comparison else {}),
         }
 
     # --- The routine every stage goes through ----------------------------------------------
@@ -396,7 +408,10 @@ class AnalysisRun:
         """Stage 4: normalize, log1p, HVGs, keep raw + subset, optional regression, scale."""
         def compute(adata, params):
             a, norm = preprocessing.normalize_and_log(adata, params.normalize)
-            a, hvgs = preprocessing.find_hvgs(a, params.hvg)
+            # With several samples (and the setting on), the genes are picked within each sample.
+            several = load_data.SAMPLE_KEY in a.obs and a.obs[load_data.SAMPLE_KEY].astype(str).nunique() > 1
+            batch_key = load_data.SAMPLE_KEY if params.hvg.per_sample and several else None
+            a, hvgs = preprocessing.find_hvgs(a, params.hvg, batch_key=batch_key)
             a, subset = preprocessing.keep_raw_and_subset(a)
             a, scaled = preprocessing.regress_and_scale(a, params.regress_out, params.scale)
             summary = {
@@ -404,6 +419,7 @@ class AnalysisRun:
                 "target_sum": norm.target_sum,  # counts per cell after normalization (the value used)
                 "target_is_median": norm.target_is_median,
                 "n_hvg": hvgs.n_hvg,
+                "hvg_per_sample": hvgs.batch_key is not None,  # picked within each sample (several samples only)
                 "raw_shape": list(subset.raw_shape),
                 "working_shape": list(subset.working_shape),
                 "regressed": scaled.regressed,
@@ -495,34 +511,28 @@ class AnalysisRun:
         return self._run("markers", {"markers": marker_params}, compute)
 
     def annotate(self, annotation_params: AnnotationParams | None = None) -> StageResult:
-        """Stage 8: predict cell types by comparing each cluster's top marker genes with reference
-        cell types. CELLxGENE Census first (its marker table for the species and Census tissue);
-        PanglaoDB (the species and its tissues) for the clusters Census leaves Unresolved. A
-        confident Census label is never replaced. Without a Census tissue, or with Census switched
-        off, PanglaoDB alone. Every reference's answer is kept for every cluster."""
+        """Stage 8: predict cell types. The marker check compares each cluster's top marker genes
+        with the CELLxGENE Census marker table for the sample's species and tissue (over-representation
+        test). Without a table for that tissue the marker check doesn't run: every cluster is
+        Unresolved with status "no_reference", and a note says so. CellTypist's answer (a second,
+        independent opinion) is added either way when a model is chosen. The two answers are then
+        combined per cluster (`consensus.py`, Step B): `obs["cell_type_predicted"]` holds the final
+        label (or "Unknown"), `obs["cell_type_marker_check"]` the marker check's own label."""
         def compute(adata, params):
             chosen = params.annotation.markers
             census = params.annotation.census
             test = params.annotation.test
             if chosen.species is not None and chosen.species not in marker_db.SPECIES:
                 raise annotation.AnnotationError(
-                    f"The marker references have cell types for {' and '.join(marker_db.SPECIES)} only, so cell "
+                    f"The cell-type references cover {' and '.join(marker_db.SPECIES)} only, so cell "
                     "types can't be predicted for this species. Review the clusters with their marker genes.")
-            use_census = bool(census.use and census.tissue)
-            if not use_census and not chosen.tissues:
-                raise annotation.AnnotationError("Choose at least one tissue, so that only cell types "
+            if not census.tissue:
+                raise annotation.AnnotationError("Choose the tissue on Data Overview, so that only cell types "
                                                  "from that tissue are compared.")
             genes = (adata.raw if params.markers.use_raw and adata.raw is not None else adata).var_names
-            notes: list[str] = []
-            results: dict[str, tuple] = {}  # reference -> (adata out, summary, match, source)
+            path = census_markers.table_path(chosen.species, census.tissue, census.release, self.census_dir)
 
-            if use_census:
-                path = census_markers.table_path(chosen.species, census.tissue, census.release, self.census_dir)
-                if not path.is_file():
-                    raise annotation.AnnotationError(
-                        f"There is no CELLxGENE Census marker table for {chosen.species} {census.tissue} yet, so "
-                        "Census can't be used. Choose \"PanglaoDB only\" in the settings, or build the table "
-                        "(scripts/build_census_markers.py).")
+            if path.is_file():
                 try:
                     sets, provenance = census_markers.load_marker_table(path)
                     ontology = _cell_ontology(str(self.ontology_path))
@@ -535,81 +545,34 @@ class AnalysisRun:
 
                 match = marker_db.match_to_genes(sets, genes, chosen.min_markers)
                 out, s = annotation.predict_cell_types(adata, match.sets, test, related=related)
+                marker_broad = broad_types.census_broad_types(terms, ontology)
                 source = {"name": "CELLxGENE Census", "version": provenance["census_version"],
                           "file": path.name, "sha256": provenance["table_sha256"], "tissues": [census.tissue],
                           "cell_ontology_version": provenance.get("cell_ontology_version"),
-                          "citation": provenance.get("citation"), "role": "first"}
-                results["Census"] = (out, s, match, source)
+                          "citation": provenance.get("citation")}
+                record = json.loads(out.uns[annotation.RECORD_KEY])
+                record["reference"] = source
+                out.uns[annotation.RECORD_KEY] = json.dumps(record)
+            else:
+                match, source, marker_broad = None, None, {}
+                out, s = annotation.no_reference(
+                    adata, f"There's no CELLxGENE Census reference for {census.tissue} yet, so the marker "
+                           "check didn't run. More Census references are being added.")
 
-            # PanglaoDB: on its own, or the automatic second check for Census's Unresolved clusters.
-            db = None
-            if chosen.tissues:
-                try:
-                    db = marker_db.load_panglaodb(self.marker_db_path)
-                except marker_db.MarkerDatabaseError:
-                    if not use_census:
-                        raise
-                    notes.append("PanglaoDB isn't available, so Census's Unresolved clusters weren't checked again.")
-            elif use_census:
-                notes.append(f"No PanglaoDB tissue matches {census.tissue}, so Census's Unresolved clusters "
-                             "weren't checked again.")
-            if db is not None:
-                match = marker_db.match_to_genes(marker_db.select_marker_sets(db, chosen), genes, chosen.min_markers)
-                out, s = annotation.predict_cell_types(adata, match.sets, test)
-                source = {"name": db.name, "version": db.version, "file": db.file_name, "sha256": db.sha256,
-                          "tissues": list(chosen.tissues), "role": "second" if use_census else "first"}
-                results["PanglaoDB"] = (out, s, match, source)
-
-            first = "Census" if use_census else "PanglaoDB"
-            out, s, match, source = results[first]
-            clusters = s.clusters.copy()
-            clusters["label_source"] = [first if label != annotation.UNRESOLVED else None
-                                        for label in clusters["predicted_label"]]
-            if first == "Census" and "PanglaoDB" in results:
-                second = results["PanglaoDB"][1].clusters.set_index("cluster")
-                for i, row in clusters.iterrows():
-                    other = second.loc[row["cluster"]]
-                    if row["predicted_label"] == annotation.UNRESOLVED and other["predicted_label"] != annotation.UNRESOLVED:
-                        for column in second.columns:
-                            if column in clusters.columns:
-                                clusters.at[i, column] = other[column]
-                        clusters.at[i, "label_source"] = "PanglaoDB"
-            label_of = dict(zip(clusters["cluster"], clusters["predicted_label"]))
-            out = out.copy()
-            out.obs[annotation.PREDICTION_KEY] = pd.Categorical(out.obs[s.groupby].astype(str).map(label_of))
-            label_counts = {str(k): int(v) for k, v in out.obs[annotation.PREDICTION_KEY].value_counts().items()}
-            combined = replace(s, clusters=clusters, label_counts=label_counts, notes=tuple(s.notes) + tuple(notes))
-            record = json.loads(out.uns[annotation.RECORD_KEY])
-            record.update(clusters=records(clusters), references={name: r[3] for name, r in results.items()},
-                          by_reference={name: records(r[1].clusters) for name, r in results.items()})
-            out.uns[annotation.RECORD_KEY] = json.dumps(record)
-
-            unresolved = clusters["predicted_label"] == annotation.UNRESOLVED
-            nothing_matched = bool(unresolved.all())
-            # Unresolved clusters are also tested against every PanglaoDB tissue's cell types (a hint only).
-            anywhere = (_test_all_tissues(adata, db, chosen, genes, test)
-                        if db is not None and unresolved.any() else None)
-            tested = set(results["PanglaoDB"][2].sets) if "PanglaoDB" in results else set()
+            clusters = s.clusters
             columns = ["cluster", "n_cells", "predicted_label", "status", "best_candidate", "overlap",
-                       "n_markers", "adj_p", "label_source"]
-            by_columns = ["cluster", "predicted_label", "status", "best_candidate", "overlap", "n_markers", "adj_p"]
+                       "n_markers", "adj_p"]
             summary = {
-                "database": source,  # the first reference
-                "references": [r[3] for r in results.values()],
-                "n_cell_types_tested": len(s.tests["cell_type"].unique()),
-                "markers_matched_ignoring_case": match.case_matched,
-                "label_counts": label_counts,
+                "database": source,  # None: no Census reference for this tissue yet
+                "no_reference": source is None,
+                "n_cell_types_tested": int(s.tests["cell_type"].nunique()),
+                "markers_matched_ignoring_case": match.case_matched if match else 0,
+                "label_counts": dict(s.label_counts),
                 "clusters": records(clusters[columns]),
-                "by_reference": {name: records(r[1].clusters[by_columns]) for name, r in results.items()},
-                "notes": list(combined.notes),
-                "nothing_matched": nothing_matched,
-                # Only a hint for the user; it never changes a label.
-                "tissue_hint": _tissue_hint(anywhere, test) if nothing_matched else [],
-                # Unresolved cluster -> its best match among every PanglaoDB tissue's cell types, when that is
-                # a clear match to a cell type outside the chosen tissues. Never changes a label.
-                "best_anywhere": _best_anywhere(anywhere, clusters[unresolved], tested, test),
+                "notes": list(s.notes),
+                "nothing_matched": bool(source is not None and (clusters["predicted_label"] == annotation.UNRESOLVED).all()),
             }
-            # CellTypist's second opinion (Step A: shown next to the marker check, never changes its labels).
+            # CellTypist's second opinion (shown next to the marker check, never changes its labels).
             ct = None
             model_name = params.annotation.celltypist.model
             if model_name:
@@ -623,8 +586,25 @@ class AnalysisRun:
                                              "clusters": records(ct.clusters)}
                 except celltypist_models.CellTypistError as problem:
                     summary["celltypist"] = {"model": model_name, "error": str(problem)}
-            details = {"summary": combined, "match": match, "celltypist": ct,
-                       "references": {name: {"summary": r[1], "match": r[2], "source": r[3]} for name, r in results.items()}}
+
+            # Step B: one final label per cluster from both answers, compared as broad cell types.
+            final = consensus.combine(
+                clusters, marker_broad, ct.clusters if ct else None,
+                broad_types.celltypist_broad_types(model_name) if ct else None,
+                ct.gene_match if ct else None, params.annotation.consensus,
+                celltypist_problem=None if ct else (consensus.CT_ERROR if model_name else consensus.CT_NOT_RUN))
+            final_of = dict(zip(final["cluster"], final["final_label"]))
+            out.obs[consensus.MARKER_CHECK_KEY] = out.obs[annotation.PREDICTION_KEY].astype(str).astype("category")
+            out.obs[annotation.PREDICTION_KEY] = pd.Categorical(
+                out.obs[s.groupby].astype(str).map(final_of), categories=list(dict.fromkeys(final["final_label"])))
+            record = json.loads(out.uns[annotation.RECORD_KEY])
+            record["consensus"] = {"settings": asdict(params.annotation.consensus), "clusters": records(final)}
+            out.uns[annotation.RECORD_KEY] = json.dumps(record)
+            summary["final"] = records(final)
+            summary["marker_label_counts"] = summary["label_counts"]
+            summary["label_counts"] = consensus.label_counts(final)
+            summary["agreement_counts"] = {a: int((final["agreement"] == a).sum()) for a in consensus.AGREEMENTS}
+            details = {"summary": s, "match": match, "celltypist": ct, "final": final}
             return out, summary, details
         return self._run("annotate", {"annotation": annotation_params}, compute)
 
@@ -649,43 +629,37 @@ class AnalysisRun:
 
     # --- The dataset's metadata (what is known about the sample; not a stage) ---------------
 
-    def confirm_metadata(self, species: str, tissues: tuple[str, ...] | list[str] = (),
-                         about: str | None = None, tissue: str | None = None) -> dict[str, Any]:
+    def confirm_metadata(self, species: str, tissue: str | None = None,
+                         about: str | None = None, stage: str | None = None) -> dict[str, Any]:
         """Record the species and tissue of the sample (and an optional short description), as
-        confirmed by the user. `tissue` is the Census tissue (e.g. "blood"); `tissues` the PanglaoDB
-        tissues (filled in from the Census tissue when not given). They set Cell Type Annotation's
-        settings; if it had already run with others, it needs re-running (nothing else depends on
-        them). Recorded in the history. Raises `PipelineError` with a plain-language message."""
+        confirmed by the user. `tissue` is a CELLxGENE Census tissue name (e.g. "blood"); `stage` is
+        optional ("adult" or "developing"; it picks the suggested CellTypist model). They set
+        Cell Type Annotation's settings; if it had already run with others, it needs re-running
+        (nothing else depends on them). Recorded in the history. Raises `PipelineError` with a
+        plain-language message."""
         if "load" not in self._results:
             raise PipelineError("Load the data before confirming its species and tissue.")
         if self.metadata.get("confirmed_by") == "dataset":
             raise PipelineError("This dataset's species and tissue come with its metadata and can't be changed.")
-        metadata = _clean_metadata({"species": species, "tissue": tissue, "tissues": tissues, "about": about})
+        metadata = _clean_metadata({"species": species, "tissue": tissue, "about": about, "stage": stage})
+        if stage and metadata["stage"] is None:
+            raise PipelineError("Choose adult or developing for the stage, or leave it empty.")
         if not metadata["species"]:
             raise PipelineError("Choose the species of your sample.")
-        has_markers = metadata["species"] in marker_db.SPECIES
-        if has_markers and not (metadata["tissue"] or metadata["tissues"]):
+        if metadata["species"] in marker_db.SPECIES and not metadata["tissue"]:
             raise PipelineError("Choose the tissue.")
         listed = census_markers.census_tissues(metadata["species"], self.params.annotation.census.release,
                                                self.census_dir) if metadata["tissue"] else []
         if listed and metadata["tissue"] not in {t["tissue"] for t in listed}:
             raise PipelineError(f"Unknown tissue: {metadata['tissue']}.")
-        if has_markers:
-            try:
-                known = marker_db.tissues(marker_db.load_panglaodb(self.marker_db_path))
-            except marker_db.MarkerDatabaseError:
-                known = None  # without the database the names can't be checked; annotation explains
-            unknown = [t for t in metadata["tissues"] if known is not None and t not in known]
-            if unknown:
-                raise PipelineError(f"Unknown tissue: {', '.join(unknown)}.")
         if len(metadata["about"] or "") > MAX_ABOUT_LENGTH:
             raise PipelineError(f"Keep the description under {MAX_ABOUT_LENGTH} characters.")
 
         now = datetime.now(timezone.utc).isoformat(timespec="seconds")
-        # Compared with the settings in use (tissues in any order): the same choice clears nothing.
-        markers = self.params.annotation.markers
-        changed = ((metadata["species"], metadata["tissue"], set(metadata["tissues"]))
-                   != (markers.species, self.params.annotation.census.tissue, set(markers.tissues)))
+        # Compared with the settings in use: the same choice clears nothing.
+        changed = ((metadata["species"], metadata["tissue"], metadata["stage"])
+                   != (self.params.annotation.markers.species, self.params.annotation.census.tissue,
+                       self.metadata.get("stage")))
         cleared = ["annotate"] if changed and "annotate" in self._results else []
         for stage in cleared:
             del self._results[stage]
@@ -696,7 +670,7 @@ class AnalysisRun:
             "stage": "metadata",
             "ran_at": now,
             "settings": {},
-            "summary": {k: metadata[k] for k in ("species", "tissue", "tissues", "about")},
+            "summary": {k: metadata[k] for k in ("species", "tissue", "stage", "about")},
             "cleared_later_stages": cleared,
         })
         return self.metadata
@@ -710,8 +684,8 @@ class AnalysisRun:
         `review.ReviewError` or `PipelineError` with a plain-language message."""
         if "annotate" not in self._results:
             raise PipelineError("Run Cell Type Annotation before reviewing the labels.")
-        predictions = self._results["annotate"].details["summary"].clusters
-        predicted = dict(zip(predictions["cluster"].astype(str), predictions["predicted_label"]))
+        predictions = self._results["annotate"].details["final"]
+        predicted = dict(zip(predictions["cluster"].astype(str), predictions["final_label"]))
         cluster = str(cluster)
         if cluster not in predicted:
             raise review.ReviewError(f"There is no cluster '{cluster}'.")
@@ -744,6 +718,75 @@ class AnalysisRun:
         groupby = self.params.leiden.key_added
         return review.reviewed_labels(self._results["cluster"].adata.obs[groupby], self.review)
 
+    # --- Compare Conditions (several samples with conditions; not one of the eight stages) ----
+
+    # How the cells can be grouped: obs column -> the stage it needs.
+    CONDITION_GROUPINGS = {"leiden": "cluster", annotation.PREDICTION_KEY: "annotate", review.REVIEWED_KEY: "annotate"}
+
+    def condition_groups(self, group_by: str) -> pd.Series:
+        """Each clustered cell's group for Compare Conditions: its cluster, its suggested cell type, or
+        your label ("Not reviewed" for clusters without a decision). Raises `PipelineError`."""
+        if group_by not in self.CONDITION_GROUPINGS:
+            raise PipelineError("Group the cells by clusters, suggested cell types or your labels.")
+        needed = self.CONDITION_GROUPINGS[group_by]
+        if needed not in self._results:
+            raise PipelineError("Run Clustering first." if needed == "cluster" else "Run Cell Type Annotation first.")
+        obs = self._results["cluster"].adata.obs
+        if group_by == "leiden":
+            values = obs[self.params.leiden.key_added]
+        elif group_by == annotation.PREDICTION_KEY:
+            values = self._results["annotate"].adata.obs[annotation.PREDICTION_KEY].reindex(obs.index)
+        else:
+            values = pd.Series(self.reviewed_labels(), index=obs.index)
+        return values.astype(str).rename(group_by)
+
+    def _comparison_fingerprint(self, group_by: str) -> str:
+        """What a comparison depends on: the counts (the Filter checkpoint) and each cell's group."""
+        groups = self.condition_groups(group_by)
+        text = self._results["filter"].ran_at + "\n" + "\n".join(groups.index.astype(str) + "\t" + groups.to_numpy())
+        return hashlib.sha256(text.encode()).hexdigest()
+
+    def compare_conditions(self, params: ConditionParams | None = None,
+                           groups: list[str] | None = None) -> conditions.ComparisonSummary:
+        """Compare two conditions across samples: each group's share of the cells, and (for `groups`,
+        None = all) each group's genes, by pseudobulk (`conditions.py`). Needs several samples with
+        conditions and Clustering (Cell Type Annotation when grouping by cell types). Recorded in the
+        history; never changes any other result. Raises `PipelineError` / `ConditionError`."""
+        params = params or self.params.conditions
+        if "cluster" not in self._results:
+            raise PipelineError("Run Clustering first.")
+        obs = self._results["cluster"].adata.obs.copy()
+        if load_data.CONDITION_KEY not in obs or obs[load_data.SAMPLE_KEY].astype(str).nunique() < 2:
+            raise PipelineError("Compare Conditions needs several samples, each with a condition (set on Data Overview).")
+        obs[params.group_by] = self.condition_groups(params.group_by)
+        counts = self._results["filter"].adata[obs.index]
+        summary = conditions.compare_conditions(counts, obs, load_data.SAMPLE_KEY, load_data.CONDITION_KEY,
+                                                params, groups)
+        now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+        self.params = replace(self.params, conditions=params)
+        settings = _to_plain(params)
+        self.comparison = {"settings": settings, "groups_to_test": list(groups) if groups is not None else None,
+                           "ran_at": now, "summary": summary, "fingerprint": self._comparison_fingerprint(params.group_by)}
+        self.history.append({
+            "stage": "compare_conditions",
+            "ran_at": now,
+            "settings": {"conditions": settings},
+            "summary": conditions.short_summary(summary, params.max_adj_p),
+            "cleared_later_stages": [],
+        })
+        return summary
+
+    def comparison_status(self) -> str:
+        """Compare Conditions: "done", "needs re-running" (the cells, counts or groups changed since)
+        or "not run"."""
+        if self.comparison is None:
+            return "not run"
+        try:
+            current = self._comparison_fingerprint(self.comparison["settings"]["group_by"])
+        except PipelineError:
+            return "needs re-running"
+        return "done" if current == self.comparison["fingerprint"] else "needs re-running"
+
     def run_all(self) -> AnalysisRun:
         """Run every stage in order with the current settings."""
         self.load()
@@ -764,7 +807,6 @@ def run_analysis(data_path: str | Path, params: AnalysisParams = DEFAULT_PARAMS)
 
 # --- Small helpers ------------------------------------------------------------------------
 
-TISSUE_HINTS = 3  # tissues suggested when no cluster matched the chosen ones
 
 
 @lru_cache(maxsize=2)
@@ -774,79 +816,31 @@ def _cell_ontology(path: str) -> dict[str, dict]:
 
 
 def _clean_metadata(metadata: dict[str, Any]) -> dict[str, Any]:
-    """Species, the Census tissue (or None), PanglaoDB tissues (a sorted list of unique names) and
-    "about" (or None), tidied. Without PanglaoDB tissues, those matching the Census tissue are used."""
+    """Species, the Census tissue (or None), the stage ("adult", "developing" or None) and "about"
+    (or None), tidied. (Metadata recorded before 2026-11-12 may also hold PanglaoDB "tissues"; they
+    are no longer used.)"""
     species = str(metadata.get("species") or "").strip().lower() or None
     tissue = str(metadata.get("tissue") or "").strip().lower() or None
-    tissues = sorted({str(t).strip() for t in (metadata.get("tissues") or ()) if str(t).strip()})
-    if tissue and not tissues:
-        tissues = sorted(census_markers.panglaodb_tissues_for(tissue))
+    stage = str(metadata.get("stage") or "").strip().lower() or None
     about = " ".join(str(metadata.get("about") or "").split()) or None
-    return {"species": species, "tissue": tissue, "tissues": tissues, "about": about}
+    return {"species": species, "tissue": tissue,
+            "stage": stage if stage in celltypist_models.STAGES else None, "about": about}
 
 
 def _with_metadata(params: AnalysisParams, metadata: dict[str, Any]) -> AnalysisParams:
-    """Settings with the sample's species and tissues as Cell Type Annotation's (the metadata
+    """Settings with the sample's species and tissue as Cell Type Annotation's (the metadata
     decides them). Without metadata, the settings are kept as they are."""
     if not metadata.get("species"):
         return params
-    markers = replace(params.annotation.markers, species=metadata["species"], tissues=tuple(metadata["tissues"]))
+    markers = replace(params.annotation.markers, species=metadata["species"])
     census = replace(params.annotation.census, tissue=metadata.get("tissue"))
     # CellTypist's model follows the species and tissue (suggested; the user can change it afterwards).
     celltypist = replace(params.annotation.celltypist,
-                         model=celltypist_models.suggest_model(metadata["species"], metadata.get("tissue")))
+                         model=celltypist_models.suggest_model(metadata["species"], metadata.get("tissue"),
+                                                               metadata.get("stage")))
     return replace(params, annotation=replace(params.annotation, markers=markers, census=census, celltypist=celltypist))
 
 
-def _test_all_tissues(adata: ad.AnnData, db: marker_db.MarkerDatabase, chosen, genes, test):
-    """Every cluster tested against every tissue's cell types (same species, selection rule and
-    test). Returns (summary, cell type -> its tissues), or None if no cell type can be tested."""
-    every = replace(chosen, tissues=())
-    match = marker_db.match_to_genes(marker_db.select_marker_sets(db, every), genes, chosen.min_markers)
-    try:
-        _, s = annotation.predict_cell_types(adata, match.sets, test)
-    except annotation.AnnotationError:  # no cell type has enough markers in this dataset
-        return None
-    return s, marker_db.tissues_of_cell_types(db, every)
-
-
-def _clear_match(row, test) -> bool:
-    """The best candidate is significant and has enough matching markers (ambiguity aside)."""
-    return row.adj_p < test.max_adj_p and row.overlap >= test.min_overlap
-
-
-def _tissue_hint(anywhere, test) -> list[dict[str, Any]]:
-    """When no cluster matched the chosen tissues: which tissues would fit better? A tissue counts
-    the clusters whose best candidate (tested against every tissue) is a clear match listed under
-    it. The top tissues, most clusters first; empty if nothing fits anywhere. Only a hint."""
-    if anywhere is None:
-        return []
-    s, tissue_of = anywhere
-    counts: dict[str, int] = {}
-    for row in s.clusters.itertuples():
-        if _clear_match(row, test):
-            for tissue in tissue_of.get(row.best_candidate, ()):
-                counts[tissue] = counts.get(tissue, 0) + 1
-    ranked = sorted(counts.items(), key=lambda item: (-item[1], item[0]))[:TISSUE_HINTS]
-    return [{"tissue": tissue, "n_clusters": n} for tissue, n in ranked]
-
-
-def _best_anywhere(anywhere, unresolved: pd.DataFrame, tested: set[str], test) -> dict[str, dict[str, Any]]:
-    """For each Unresolved cluster: its best candidate among every tissue's cell types, when that is
-    a clear match and a cell type that wasn't tested (outside the chosen tissues). Only a hint."""
-    if anywhere is None:
-        return {}
-    s, tissue_of = anywhere
-    rows = s.clusters.set_index(s.clusters["cluster"].astype(str))
-    found = {}
-    for cluster in unresolved["cluster"].astype(str):
-        row = rows.loc[cluster]
-        if _clear_match(row, test) and row.best_candidate not in tested:
-            found[cluster] = {"cell_type": row.best_candidate, "tissues": list(tissue_of.get(row.best_candidate, ())),
-                              "overlap": int(row.overlap), "n_markers": int(row.n_markers), "adj_p": float(row.adj_p)}
-    return found
-
-@lru_cache(maxsize=1)
 def package_versions() -> dict[str, str]:
     """Python, platform and the versions of the analysis packages (looked up once)."""
     versions = {"python": sys.version.split()[0], "platform": platform.platform()}

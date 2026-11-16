@@ -11,4 +11,6 @@ export const STEP_DESCRIPTIONS: Record<string, string> = {
   cell_type_annotation:
     "Proposes a cell type for each cluster: which cell type's known markers are over-represented among the cluster's top marker genes. These are predictions to review; unclear clusters stay Unresolved.",
   explorer: "Color the UMAP by cluster, cell type, a QC value or any gene. Nothing is run here.",
+  compare_conditions:
+    "Tests what changed between two conditions, counting each sample once: each group's share of the cells, and each group's genes (pseudobulk).",
 };

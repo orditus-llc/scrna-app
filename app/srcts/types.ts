@@ -29,27 +29,25 @@ export interface SamplesInfo {
   max_samples: number;
 }
 
-/** What is known about the sample (app/payloads.py, metadata_payload): species and tissues,
+/** What is known about the sample (app/payloads.py, metadata_payload): species and tissue,
  * supplied with the dataset (demo) or confirmed by the user on Data Overview. */
 export interface MetadataInfo {
   confirmed: boolean;
   confirmed_by: "dataset" | "user" | null;
   species: string | null;
-  tissue: string | null; // the Census tissue ("blood"); null = PanglaoDB tissues only
-  tissues: string[]; // PanglaoDB's tissues (follow the Census tissue unless changed)
+  tissue: string | null; // the Census tissue ("blood")
   about: string | null;
   text: string | null; // "Human · Blood"
   species_options: { value: string; label: string }[];
-  marker_species: string[]; // species with cell types in the marker database (a tissue is required)
+  marker_species: string[]; // species with cell-type references (a tissue is required)
   suggested_species: string | null; // from the gene names ("other" for species the app doesn't list)
   suggestion_reason: string | null; // "Mouse: Ensembl IDs start with ENSMUSG and gene names are written like Cd3d"
   species_clues: { species: string; clue: string }[];
   mito_prefix: string | null;
-  tissues_available: boolean; // the marker database could be read
-  tissue_problem: string | null;
-  tissue_cell_types: Record<string, Record<string, number>>; // species -> tissue -> number of cell types
   mismatch: string | null; // warning: species and gene names disagree
   max_about_length: number;
+  stage: "adult" | "developing" | null; // optional developmental stage (picks the CellTypist model)
+  stage_options: { value: string; label: string }[];
   // species -> Census tissues (most cells first); empty when Census's tissue list isn't saved
   census_tissues: Record<string, CensusTissue[]>;
   census_version: string;
@@ -59,8 +57,8 @@ export interface CensusTissue {
   tissue: string; // Census name, e.g. "skin of body"
   label: string; // "Skin of body"
   n_cells: number;
-  has_table: boolean; // its marker table is built (otherwise PanglaoDB only)
-  panglaodb: string[]; // the matching PanglaoDB tissues (may be empty)
+  has_table: boolean; // its Census marker table is built (otherwise no marker check yet)
+  celltypist_model: string | null; // the CellTypist model suggested for it, if any
 }
 
 export interface NextStep {
@@ -236,6 +234,7 @@ export interface WorkflowPayload {
   remaining_steps: number; // steps not up to date
   run_remaining: RunRemainingJob | null; // the latest "Run the remaining steps" job
   export: ExportInfo; // whether the analysis can be downloaded yet (app/payloads.py, export_payload)
+  conditions: ConditionsAvailability; // Compare Conditions (several samples only)
 }
 
 /** A "Run the remaining steps" job (app/payloads.py, run_remaining_payload). */
@@ -267,6 +266,7 @@ export interface PreprocessSettings {
   min_mean: number;
   max_mean: number;
   min_disp: number;
+  per_sample: boolean; // with several samples: pick the genes within each sample
   max_value: number;
   regress: boolean;
 }
@@ -280,6 +280,7 @@ export interface PreprocessBoxes {
   min_mean: string;
   max_mean: string;
   min_disp: string;
+  per_sample: boolean;
   max_value: string;
   regress: boolean;
 }
@@ -288,13 +289,21 @@ export interface PreprocessPayload {
   status: StepStatus;
   settings: { current: PreprocessSettings; reference: PreprocessSettings };
   fixed: { hvg_flavor: string; regress_keys: string[] };
+  n_samples: number; // 0 for a single dataset
   will_clear: string[]; // later steps that re-running would clear
   results: {
     n_hvg: number;
     n_genes: number;
     target_sum_used: number | null; // counts per cell actually used (the median when the setting is null)
     settings: PreprocessSettings; // the settings these results were computed with
-    genes: { name: string[]; mean: (number | null)[]; dispersion_norm: (number | null)[]; hvg: boolean[] };
+    per_sample_used: boolean; // the genes were picked within each sample
+    genes: {
+      name: string[];
+      mean: (number | null)[];
+      dispersion_norm: (number | null)[];
+      hvg: boolean[];
+      n_samples_variable: number[] | null; // in how many samples each gene is variable (per sample only)
+    };
   } | null;
 }
 
@@ -449,9 +458,7 @@ export interface MarkersPayload {
 
 export interface AnnotationSettings {
   species: string | null; // "human" | "mouse"; null = not chosen yet
-  tissues: string[]; // PanglaoDB's tissue names
   census_tissue: string | null;
-  use_census: boolean; // false = PanglaoDB only
   celltypist_model: string | null; // e.g. "Immune_All_Low.pkl"; null = not used
   top_n_genes: number;
   max_adj_p: number;
@@ -460,7 +467,6 @@ export interface AnnotationSettings {
 }
 
 export interface AnnotationBoxes {
-  use_census: boolean; // false = PanglaoDB only
   celltypist_model: string; // "" = none
   top_n_genes: string;
   max_adj_p: string;
@@ -468,7 +474,7 @@ export interface AnnotationBoxes {
   ambiguity_fold: string;
 }
 
-export type AnnotationStatus = "confident" | "too_few_markers" | "not_significant" | "ambiguous";
+export type AnnotationStatus = "confident" | "too_few_markers" | "not_significant" | "ambiguous" | "no_reference";
 
 export interface ClusterPrediction {
   cluster: string;
@@ -476,18 +482,15 @@ export interface ClusterPrediction {
   predicted_label: string;
   status: AnnotationStatus;
   reasons: string; // every check that failed, e.g. "not_significant, ambiguous"
-  best_candidate: string;
+  best_candidate: string | null; // null when there's no reference ("no_reference")
   overlap: number; // the best candidate's markers among the cluster's top marker genes
   n_markers: number; // the best candidate's markers among the genes tested
-  adj_p: number;
+  adj_p: number | null; // null when there's no reference
   matching_markers: string; // comma-separated, in marker-gene order
   second_candidate: string | null;
   second_overlap: number | null;
   second_adj_p: number | null;
-  label_source: ReferenceKey | null; // which reference gave the label (null = Unresolved)
 }
-
-export type ReferenceKey = "Census" | "PanglaoDB";
 
 /** CellTypist's answer per cluster (app/payloads.py; Step A: shown beside the marker check). */
 export interface CellTypistCluster {
@@ -498,6 +501,38 @@ export interface CellTypistCluster {
   mean_probability: number;
   runner_up: string | null;
   runner_up_share: number | null;
+}
+
+/** Step B: how the two answers compare for a cluster (scrna_analysis/consensus.py). */
+export type Agreement = "agree" | "marker_check_only" | "celltypist_only" | "disagree" | "neither";
+
+/** The final label of one cluster (app/payloads.py final_rows). */
+export interface FinalCluster {
+  cluster: string;
+  n_cells: number;
+  final_label: string; // "Unknown" when the checks disagree or neither is confident
+  final_broad_type: string | null;
+  agreement: Agreement;
+  agreement_text: string; // the badge, e.g. "Both checks agree"
+  reason: string; // one or two sentences: why this label
+  marker_label: string | null; // null unless the marker check is confident
+  marker_broad_type: string | null;
+  marker_status: AnnotationStatus;
+  celltypist_label: string | null;
+  celltypist_share: number | null;
+  celltypist_broad_type: string | null;
+  celltypist_confident: boolean;
+  celltypist_issue: string | null;
+  confidence: "high" | "medium" | "low"; // from how the checks compare; orders the review only
+  confidence_text: string; // "High", "Medium", "Low"
+  review_group: string; // its group in the "To review" tab (a key of review_groups)
+}
+
+/** A group in the "To review" tab, in the order shown. */
+export interface ReviewGroup {
+  key: string;
+  label: string;
+  description: string;
 }
 
 export type CellTypistResult =
@@ -513,17 +548,6 @@ export type CellTypistResult =
       clusters: CellTypistCluster[];
     }
   | { model: string; error: string };
-
-/** One reference's answer for one cluster. */
-export interface ReferenceAnswer {
-  predicted_label: string;
-  status: AnnotationStatus;
-  best_candidate: string;
-  overlap: number;
-  n_markers: number;
-  adj_p: number;
-  second_candidate: string | null;
-}
 
 export interface Candidate {
   cell_type: string;
@@ -558,12 +582,11 @@ export interface AnnotationPayload {
   settings: { current: AnnotationSettings; reference: AnnotationSettings };
   metadata: {
     species: string | null;
-    tissues: string[];
     tissue: string | null; // the Census tissue, as shown
     confirmed_by: "dataset" | "user" | null;
     has_markers: boolean;
   };
-  census: { tissue: string | null; use: boolean; release: string; has_table: boolean; available: boolean };
+  census: { tissue: string | null; release: string; has_table: boolean; available: boolean };
   celltypist: {
     choices: { model: string; details: string | null; version: string | null; downloaded: boolean }[];
     suggested: string | null;
@@ -571,39 +594,32 @@ export interface AnnotationPayload {
     low_gene_match: number;
     citation: string;
   };
-  database: {
-    available: boolean;
-    problem: string | null;
-    name: string | null;
-    version: string | null;
-    tissues: string[];
-    cell_types: Record<string, Record<string, string[]>>; // species -> tissue -> cell types passing the selection rule
-  };
-  selection: { canonical_only: boolean; min_sensitivity: number; min_markers: number };
+  selection: { min_markers: number };
   unresolved_label: string;
   will_clear: string[];
   review_cleared: string | null; // why an earlier label review was cleared (clusters recomputed)
   results: {
     settings: AnnotationSettings;
-    database: { name: string; version: string };
-    references: { key: ReferenceKey; name: string; version: string; tissues: string[]; role: "first" | "second"; citation: string | null }[];
-    first_reference: ReferenceKey;
-    answers: Partial<Record<ReferenceKey, Record<string, ReferenceAnswer>>>; // reference -> cluster -> answer
-    candidates_by_reference: Partial<Record<ReferenceKey, Record<string, Candidate[]>>>;
+    // The marker check's reference (CELLxGENE Census), or null when there's none for this tissue yet.
+    database: { name: string; version: string; tissue: string | null; citation: string | null } | null;
+    no_reference: boolean;
     celltypist: CellTypistResult | null; // null when no model was chosen
     n_cell_types_tested: number;
     n_cell_types_not_tested: number;
     n_markers_not_found: number;
-    clusters: ClusterPrediction[];
+    clusters: ClusterPrediction[]; // the marker check's answer per cluster
+    final: FinalCluster[]; // the final label per cluster (Step B), same order
+    unknown_label: string; // "Unknown"
+    review_groups: ReviewGroup[];
     candidates: Record<string, Candidate[]>; // cluster -> best candidates first
     dotplot: {
       genes: { gene: string; cell_type: string | null }[]; // the cell type it is a marker of
       values: { group: string; gene: string; mean_expr: number; frac_expressing: number }[];
     };
-    label_counts: Record<string, number>;
-    nothing_matched: string | null; // every cluster Unresolved: what to check, with a tissue hint
+    label_counts: Record<string, number>; // final label -> cells
+    nothing_matched: string | null; // every cluster Unresolved although a reference was used: what to check
     unresolved_note: string | null; // some clusters Unresolved: the usual causes (species/tissue only if most fail)
-    guidance: Record<string, string>; // Unresolved cluster -> its likely cause (+ closest match in another tissue)
+    guidance: Record<string, string>; // Unresolved cluster -> its likely cause
     review: ReviewInfo;
     notes: string[];
     cell_cluster: string[]; // per cell, same order as umap and cells
@@ -644,7 +660,7 @@ export interface ExplorePayload {
     top_markers: Record<string, string[]> | null; // cluster -> top genes (null if markers aren't up to date)
     predictions: {
       unresolved_label: string;
-      clusters: { cluster: string; predicted_label: string; status: string }[];
+      clusters: { cluster: string; predicted_label: string; agreement: Agreement; agreement_text: string }[];
       cell_label: string[];
       label_order: string[]; // cell types in the order of their first cluster
     } | null;
@@ -674,4 +690,84 @@ export interface ExportInfo {
   reviewed: boolean; // the analyst's reviewed labels are included
   h5ad_name: string;
   report_name: string;
+}
+
+
+// --- Compare Conditions (app/payloads.py, conditions_payload) ------------------------------------------
+
+export interface ConditionsAvailability {
+  visible: boolean; // several samples: the page is listed in the sidebar
+  enabled: boolean; // it can open (conditions given, Clustering done)
+  reason: string | null; // why not, e.g. "Opens after Clustering"
+  status: "done" | "needs_rerun" | "not_run";
+}
+
+export interface ConditionSettings {
+  reference: string | null; // the baseline condition
+  test: string | null; // the condition compared with it
+  group_by: string; // "leiden", "cell_type_predicted" or "cell_type_reviewed"
+  paired_by: string | null; // the column naming the subject (e.g. donor), or null
+  min_cells: number;
+  min_gene_counts: number;
+  max_adj_p: number;
+}
+
+export interface CompositionRow {
+  group: string;
+  mean_share_reference: number;
+  mean_share_test: number;
+  log2_ratio: number;
+  t: number | null;
+  p: number | null;
+  adj_p: number | null;
+  cells_reference: number;
+  cells_test: number;
+}
+
+export interface ConditionGroupResult {
+  group: string;
+  status: "tested" | "too_few_samples";
+  reason: string | null;
+  n_samples_used: number;
+  samples_left_out: string[];
+  n_genes_tested: number;
+  n_up: number;
+  n_down: number;
+}
+
+export interface GeneChange {
+  gene: string;
+  base_mean: number | null;
+  log2_fold_change: number | null;
+  lfc_se: number | null;
+  stat: number | null;
+  p: number | null;
+  adj_p: number | null; // null when DESeq2's filtering left the gene out of the adjustment
+}
+
+export interface ConditionsPayload extends ConditionsAvailability {
+  options: {
+    conditions: { name: string; n_samples: number }[];
+    pairing: string[]; // columns that can pair samples (first = suggested)
+    groupings: { value: string; label: string; groups: { group: string; n_cells: number }[] }[];
+    min_samples: number;
+  } | null;
+  settings: { current: ConditionSettings; default: ConditionSettings; groups: string[] | null } | null;
+  confirmation?: string | null;
+  results: {
+    settings: ConditionSettings;
+    ran_at: string;
+    grouping_label: string;
+    design: {
+      reference: string;
+      test: string;
+      paired_by: string | null;
+      samples: { sample: string; condition: string; pair?: string; side: "reference" | "test" }[];
+      excluded: string[];
+    };
+    composition: CompositionRow[];
+    groups: ConditionGroupResult[];
+    selected: string | null; // the group whose genes are sent
+    genes: GeneChange[];
+  } | null;
 }

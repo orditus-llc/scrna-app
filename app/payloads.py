@@ -22,6 +22,7 @@ from scrna_analysis.params import (
     MITO_PATTERNS,
     AnalysisParams,
     AnnotationParams,
+    ConditionParams,
     FilterParams,
     HVGParams,
     IntegrationParams,
@@ -41,6 +42,8 @@ from scrna_analysis.params import (
 from scrna_analysis import annotation as annotation_tools
 from scrna_analysis import celltypist_models as celltypist_tools
 from scrna_analysis import census_markers as census_tools
+from scrna_analysis import conditions as condition_tools
+from scrna_analysis import consensus as consensus_tools
 from scrna_analysis import integration as integration_tools
 from scrna_analysis import load_data as load_tools
 from scrna_analysis import marker_db as marker_db_tools
@@ -77,6 +80,7 @@ STAGE_LABELS = {
     "load": "Data Overview", "qc_metrics": "QC metrics", "filter": "Filtering", "preprocess": "Preprocessing",
     "reduce_dimensions": "Dimensionality Reduction", "cluster": "Clustering", "markers": "Marker Genes",
     "annotate": "Cell Type Annotation", "review": "Label review", "metadata": "Data Overview",
+    "compare_conditions": "Compare Conditions",
 }
 # The marker tests offered on the Marker Genes page: (Scanpy name, label shown).
 MARKER_METHODS = [("wilcoxon", "Wilcoxon rank-sum"), ("t-test", "t-test"),
@@ -115,6 +119,7 @@ def workflow_payload(run: AnalysisRun, notice: dict[str, Any] | None = None,
         "remaining_steps": sum(step["status"] != "done" for step in steps),
         "run_remaining": run_remaining_payload(job),
         "export": export_payload(run),
+        "conditions": conditions_available(run),
     }
 
 
@@ -198,7 +203,7 @@ NEXT_STEP_TEXT = {
                    "then click Run Clustering."),
     "marker_genes": ("Open Marker Genes, keep the Wilcoxon test (the default) or choose another, "
                      "then click Run Marker Genes."),
-    "cell_type_annotation": ("Open Cell Type Annotation, check the species, choose the tissues, "
+    "cell_type_annotation": ("Open Cell Type Annotation, check the settings if you like, "
                              "then click Run Cell Type Annotation."),
 }
 
@@ -227,15 +232,21 @@ def _confirmation(run: AnalysisRun, key: str) -> str | None:
         return _reduction_confirmation(run.stage_result("reduce_dimensions"))
     if key == "cell_type_annotation":
         s = run.stage_result("annotate").summary
-        clusters = s["clusters"]
-        unresolved = sum(1 for c in clusters if c["predicted_label"] == annotation_tools.UNRESOLVED)
+        clusters = s["final"]
+        unknown = sum(1 for c in clusters if c["final_label"] == consensus_tools.UNKNOWN)
         reviewed = sum(1 for c in clusters if str(c["cluster"]) in run.review)
         review_text = (f"You reviewed {reviewed} of {len(clusters)} clusters." if reviewed
                        else "These are predictions for you to review.")
-        n_second = sum(1 for c in clusters if c.get("label_source") == "PanglaoDB" and s["database"]["name"] != "PanglaoDB")
-        second = f" ({n_second} from PanglaoDB, where Census was Unresolved)" if n_second else ""
-        return (f"Cell types predicted from {s['database']['name']} markers: {len(clusters) - unresolved} of "
-                f"{len(clusters)} clusters confident{second}, {unresolved} Unresolved. {review_text}")
+        if s.get("no_reference") or not s.get("database"):
+            tissue = tissue_label(run.params.annotation.census.tissue) or "this tissue"
+            ct = s.get("celltypist") or {}
+            opinion = (" CellTypist's answer is shown for each cluster for you to review." if ct.get("clusters")
+                       else " Review the clusters with their marker genes.")
+            return (f"Cell Type Annotation done: there's no CELLxGENE Census reference for {tissue.lower()} yet, "
+                    f"so the marker check didn't run.{opinion}")
+        sources = s["database"]["name"] + (" and CellTypist" if (s.get("celltypist") or {}).get("clusters") else "")
+        return (f"Cell types predicted from {sources}: {len(clusters) - unknown} of {len(clusters)} clusters named, "
+                f"{unknown} {consensus_tools.UNKNOWN}. {review_text}")
     if key == "marker_genes":
         s, p = run.stage_result("markers").summary, run.stage_result("markers").settings
         test = TEST_NAMES.get(p["markers"]["method"], p["markers"]["method"])
@@ -291,9 +302,9 @@ def _summary(run: AnalysisRun, key: str) -> str:
         test = TEST_NAMES.get(p["markers"]["method"], p["markers"]["method"])
         return f"{s['n_genes_tested']:,} genes ranked per cluster · {test}"
     if key == "cell_type_annotation":
-        clusters = result("annotate").summary["clusters"]
-        unresolved = sum(1 for c in clusters if c["predicted_label"] == "Unresolved")
-        return f"{len(clusters) - unresolved} of {len(clusters)} clusters confident · {unresolved} Unresolved"
+        clusters = result("annotate").summary["final"]
+        unknown = sum(1 for c in clusters if c["final_label"] == consensus_tools.UNKNOWN)
+        return f"{len(clusters) - unknown} of {len(clusters)} clusters named · {unknown} {consensus_tools.UNKNOWN}"
     raise ValueError(f"Unknown step '{key}'")
 
 
@@ -376,10 +387,18 @@ def _log_text(stage: str, s: dict) -> str:
     if stage == "markers":
         return f"{s['n_genes_tested']:,} genes ranked per cluster"
     if stage == "annotate":
-        names = " + ".join(r["name"] for r in s.get("references") or [s["database"]])
-        return f"{sum(s['label_counts'].values()):,} cells annotated · {names}"
+        source = s["database"]["name"] if s.get("database") else "no Census reference for this tissue"
+        if (s.get("celltypist") or {}).get("clusters"):
+            source += " + CellTypist"
+        named = sum(1 for c in s.get("final", []) if c["final_label"] != consensus_tools.UNKNOWN)
+        final = f" · {named} of {len(s['final'])} clusters named" if s.get("final") else ""
+        return f"{sum(s['label_counts'].values()):,} cells annotated · {source}{final}"
     if stage == "metadata":
         return f"Species and tissue confirmed: {metadata_text(s)}"
+    if stage == "compare_conditions":
+        paired = f", paired by {s['paired_by']}" if s.get("paired_by") else ""
+        return (f"{s['test']} vs {s['reference']}{paired} · {s['n_groups_changed']} of {s['n_groups']} groups changed in "
+                f"share · {s['n_genes_changed']:,} gene changes in {s['n_groups_tested']} groups")
     if stage == "review":
         did = {"confirmed": f"confirmed {s['label']}", "renamed": f"renamed to {s['label']}",
                "cleared": "review cleared"}[s["decision"]]
@@ -662,9 +681,9 @@ def choice_needed(run: AnalysisRun, stage: str) -> str | None:
     stops there (a planned stop, not a failure): Cell Type Annotation has no default tissue."""
     markers = run.params.annotation.markers
     if stage == "annotate" and markers.species is not None and markers.species not in marker_db_tools.SPECIES:
-        return ("Cell types can't be predicted for this species (the marker database covers human and mouse), so "
+        return ("Cell types can't be predicted for this species (the references cover human and mouse), so "
                 "Cell Type Annotation was left out. Review the clusters with their marker genes.")
-    if stage == "annotate" and not markers.tissues:
+    if stage == "annotate" and not run.params.annotation.census.tissue:
         return "Confirm the species and tissue on Data Overview, then run Cell Type Annotation."
     return None
 
@@ -708,6 +727,7 @@ def preprocess_settings(params: AnalysisParams) -> dict[str, Any]:
         "min_mean": params.hvg.min_mean,
         "max_mean": params.hvg.max_mean,
         "min_disp": params.hvg.min_disp,
+        "per_sample": params.hvg.per_sample,  # with several samples: pick the genes within each sample
         "max_value": params.scale.max_value,
         "regress": params.regress_out.enabled,
     }
@@ -732,6 +752,8 @@ def preprocess_params_from_browser(
             raise InputError("'Min mean expression' must be smaller than 'Max mean expression'.")
         min_disp = _number(values, "min_disp", "Min normalized dispersion", whole=False, minimum=-np.inf)
         hvg = replace(current.hvg, min_mean=min_mean, max_mean=max_mean, min_disp=min_disp, n_top_genes=None)
+    if "per_sample" in values:
+        hvg = replace(hvg, per_sample=bool(values["per_sample"]))
     max_value = _number(values, "max_value", "Clip scaled values at", whole=False, above=True)
     return (
         replace(current.normalize, target_sum=target_sum),
@@ -747,6 +769,7 @@ def preprocess_payload(run: AnalysisRun) -> dict[str, Any]:
         "status": _stage_status(run, "preprocess"),
         "settings": {"current": preprocess_settings(run.params), "reference": preprocess_settings(DEFAULT_PARAMS)},
         "fixed": {"hvg_flavor": run.params.hvg.flavor, "regress_keys": list(run.params.regress_out.keys)},
+        "n_samples": len(run.samples),  # 0 for a single dataset: the per-sample choice isn't shown
         "will_clear": _will_clear(run, "preprocess"),
         "results": None,
     }
@@ -759,11 +782,15 @@ def preprocess_payload(run: AnalysisRun) -> dict[str, Any]:
         "n_genes": int(genes.shape[0]),
         "target_sum_used": result.summary.get("target_sum"),  # the counts per cell actually used (exact)
         "settings": preprocess_settings(run.params),
+        "per_sample_used": bool(result.summary.get("hvg_per_sample")),  # picked within each sample
         "genes": {
             "name": genes.index.astype(str).tolist(),
             "mean": _floats(genes["means"]),
             "dispersion_norm": _floats(genes["dispersions_norm"]),
             "hvg": genes["highly_variable"].astype(bool).tolist(),
+            # In how many samples each gene is variable (only when picked within each sample).
+            "n_samples_variable": (genes["highly_variable_nbatches"].astype(int).tolist()
+                                   if "highly_variable_nbatches" in genes else None),
         },
     }
     return payload
@@ -776,6 +803,8 @@ def _preprocess_confirmation(result) -> str:
     norm = (f"normalized to {_whole(target):,} counts per cell" + (" (the median)" if s.get("target_is_median") else "")
             if target is not None else "normalized")
     how = "the most variable" if p["hvg"].get("n_top_genes") is not None else "by the cut-offs"
+    if s.get("hvg_per_sample"):
+        how += ", picked within each sample"
     return (f"Preprocessing done: {norm}; {s['n_hvg']:,} of {s['raw_shape'][1]:,} genes selected as highly "
             f"variable ({how}); {regression}; values scaled and capped at ±{p['scale']['max_value']:g}.")
 
@@ -1065,10 +1094,10 @@ DOTPLOT_MARKERS_PER_CLUSTER = 3  # matching markers of each cluster's best candi
 
 
 def annotation_settings(params: AnalysisParams) -> dict[str, Any]:
-    """The Cell Type Annotation settings: species, the Census tissue and PanglaoDB tissues (which
-    cell types are compared), whether Census is used, and the test's checks."""
+    """The Cell Type Annotation settings: species and Census tissue (which cell types are compared),
+    the CellTypist model, and the test's checks."""
     m, t, c = params.annotation.markers, params.annotation.test, params.annotation.census
-    return {"species": m.species, "tissues": list(m.tissues), "census_tissue": c.tissue, "use_census": c.use,
+    return {"species": m.species, "census_tissue": c.tissue,
             "celltypist_model": params.annotation.celltypist.model,
             "top_n_genes": t.top_n_genes, "max_adj_p": t.max_adj_p, "min_overlap": t.min_overlap,
             "ambiguity_fold": t.ambiguity_fold}
@@ -1086,37 +1115,35 @@ def _annotation_checks(values: dict[str, Any]) -> dict[str, Any]:
 
 
 def annotation_params_from_browser(values: dict[str, Any] | None, current: AnalysisParams) -> tuple[AnnotationParams]:
-    """The page's checks and reference choice ("PanglaoDB only" = `use_census` False) -> backend
-    settings. Species and tissues aren't set here: they come from the dataset's metadata (Data
-    Overview). Raises `InputError`."""
+    """The page's checks and CellTypist model -> backend settings. Species and tissue aren't set
+    here: they come from the dataset's metadata (Data Overview). Raises `InputError`."""
     if not values:
         return (current.annotation,)
     a = current.annotation
-    use_census = values.get("use_census", a.census.use)
-    if not isinstance(use_census, bool):
-        raise InputError("Choose which references to use.")
     model = values.get("celltypist_model", a.celltypist.model) or None
     if model is not None:
         offered = {c["model"] for c in celltypist_tools.model_choices(a.markers.species)}
         if model not in offered:
             raise InputError("Choose one of the CellTypist models offered, or none.")
-    return (replace(a, test=replace(a.test, **_annotation_checks(values)), census=replace(a.census, use=use_census),
+    return (replace(a, test=replace(a.test, **_annotation_checks(values)),
                     celltypist=replace(a.celltypist, model=model)),)
 
 
 # --- Dataset metadata (Data Overview) ---------------------------------------------------------
 
-# Species offered on Data Overview. Cell types can be predicted for those in the marker database
+# Species offered on Data Overview. Cell types can be predicted for those with references
 # (marker_db.SPECIES); any other species still runs every other step.
 SPECIES_LABELS = {"human": "Human", "mouse": "Mouse", "other": "Other species"}
 
 
+DEV_STAGE_LABELS = {"adult": "Adult", "developing": "Developing (embryo or fetus)"}
+
+
 def metadata_text(m: dict[str, Any]) -> str:
-    """"Human · Blood and Immune system", in words."""
+    """"Human · Blood" (+ " · Developing (embryo or fetus)" when a stage is given), in words."""
     species = SPECIES_LABELS.get(m.get("species"), m.get("species") or "species not set")
-    if m.get("tissue"):
-        return f"{species} · {tissue_label(m['tissue'])}"
-    return f"{species} · {_join(list(m['tissues']))}" if m.get("tissues") else species
+    text = f"{species} · {tissue_label(m['tissue'])}" if m.get("tissue") else species
+    return f"{text} · {DEV_STAGE_LABELS[m['stage']]}" if m.get("stage") in DEV_STAGE_LABELS else text
 
 
 def tissue_label(tissue: str | None) -> str | None:
@@ -1161,9 +1188,8 @@ def sample_files_from_browser(values: dict[str, Any] | None, files: list[dict] |
     return out
 
 
-def metadata_from_browser(values: dict[str, Any] | None) -> tuple[str, str | None, list[str], str | None]:
-    """The Confirm section's values -> (species, Census tissue, PanglaoDB tissues, about). The
-    PanglaoDB tissues may be empty (then they follow the Census tissue). Raises `InputError`."""
+def metadata_from_browser(values: dict[str, Any] | None) -> tuple[str, str | None, str | None, str | None]:
+    """The Confirm section's values -> (species, Census tissue, about, stage). Raises `InputError`."""
     values = values or {}
     species = values.get("species")
     if species not in SPECIES_LABELS:
@@ -1171,15 +1197,15 @@ def metadata_from_browser(values: dict[str, Any] | None) -> tuple[str, str | Non
     tissue = values.get("tissue") or None
     if tissue is not None and not isinstance(tissue, str):
         raise InputError("Choose the tissue.")
-    tissues = values.get("tissues") or []
-    if not isinstance(tissues, (list, tuple)) or not all(isinstance(x, str) for x in tissues):
-        raise InputError("The tissues must be a list of names.")
-    if species in marker_db_tools.SPECIES and not (tissue or tissues):
+    if species in marker_db_tools.SPECIES and not tissue:
         raise InputError("Choose the tissue.")
     about = values.get("about")
     if about is not None and not isinstance(about, str):
         raise InputError("The description must be text.")
-    return species, tissue, list(tissues), about
+    stage = values.get("stage") or None
+    if stage is not None and stage not in DEV_STAGE_LABELS:
+        raise InputError("Choose adult or developing for the stage, or leave it empty.")
+    return species, tissue, about, stage
 
 
 def _species_label(species: str) -> str:
@@ -1224,18 +1250,17 @@ def metadata_payload(run: AnalysisRun) -> dict[str, Any]:
     clues = marker_db_tools.species_clues(loaded.var_names, ids, top)
     suggested, reason = _species_suggestion(clues)
     m = run.metadata
-    db = _database_info(run)
     return {
         "confirmed": run.metadata_confirmed,
         "confirmed_by": m.get("confirmed_by"),  # "dataset" (e.g. demo data), "user" or None
         "species": m.get("species"),
         "tissue": m.get("tissue"),  # the Census tissue
-        "tissues": list(m.get("tissues") or []),  # PanglaoDB's tissues
         "about": m.get("about"),
+        "stage": m.get("stage"),  # "adult", "developing" or None (optional; picks the CellTypist model)
+        "stage_options": [{"value": v, "label": label} for v, label in DEV_STAGE_LABELS.items()],
         "text": metadata_text(m) if m else None,
         # species -> Census tissues (most cells first): name, label, cells, whether its marker table is
-        # built, and the matching PanglaoDB tissues. Empty when Census's tissue list isn't saved; the
-        # page then offers PanglaoDB's tissues only.
+        # built. Empty when Census's tissue list isn't saved (scripts/build_census_markers.py).
         "census_tissues": census_tissue_options(run),
         "census_version": run.params.annotation.census.release,
         "species_options": [{"value": v, "label": label} for v, label in SPECIES_LABELS.items()],
@@ -1244,11 +1269,6 @@ def metadata_payload(run: AnalysisRun) -> dict[str, Any]:
         "suggestion_reason": reason,  # e.g. "Mouse: Ensembl IDs start with ENSMUSG and gene names …"
         "species_clues": clues,
         "mito_prefix": top,
-        "tissues_available": db["available"],
-        "tissue_problem": db["problem"],
-        # species -> tissue -> number of cell types (tissues with none for a species are left out)
-        "tissue_cell_types": {sp: {tissue: len(types) for tissue, types in by_tissue.items() if types}
-                              for sp, by_tissue in db["cell_types"].items()},
         "mismatch": _species_mismatch(m.get("species"), clues),
         "max_about_length": MAX_ABOUT_LENGTH,
     }
@@ -1258,25 +1278,10 @@ def census_tissue_options(run: AnalysisRun) -> dict[str, list[dict[str, Any]]]:
     """Per species with cell types: Census's tissues for the tissue picker (see `metadata_payload`)."""
     release = run.params.annotation.census.release
     return {species: [{"tissue": t["tissue"], "label": tissue_label(t["tissue"]), "n_cells": t["n_cells"],
-                       "has_table": t["has_table"], "panglaodb": list(census_tools.panglaodb_tissues_for(t["tissue"]))}
+                       "has_table": t["has_table"],
+                       "celltypist_model": celltypist_tools.suggest_model(species, t["tissue"])}
                       for t in census_tools.census_tissues(species, release, run.census_dir)]
             for species in marker_db_tools.SPECIES}
-
-
-def _database_info(run: AnalysisRun) -> dict[str, Any]:
-    """The marker database: name, version, tissues and, per species, each tissue's cell types
-    (those whose markers pass the selection rule), or why the database can't be read."""
-    try:
-        db = marker_db_tools.load_panglaodb(run.marker_db_path)
-    except marker_db_tools.MarkerDatabaseError as problem:
-        return {"available": False, "problem": str(problem), "name": None, "version": None, "tissues": [],
-                "cell_types": {}}
-    rule = run.params.annotation.markers
-    return {"available": True, "problem": None, "name": db.name, "version": db.version,
-            "tissues": list(marker_db_tools.tissues(db)),
-            "cell_types": {species: {tissue: list(types) for tissue, types in
-                                     marker_db_tools.cell_types_by_tissue(db, replace(rule, species=species)).items()}
-                           for species in marker_db_tools.SPECIES}}
 
 
 def annotation_payload(run: AnalysisRun) -> dict[str, Any]:
@@ -1287,15 +1292,13 @@ def annotation_payload(run: AnalysisRun) -> dict[str, Any]:
     payload: dict[str, Any] = {
         "status": _stage_status(run, "annotate"),
         "settings": {"current": annotation_settings(run.params), "reference": annotation_settings(DEFAULT_PARAMS)},
-        "metadata": {"species": SPECIES_LABELS.get(m.species, m.species), "tissues": list(m.tissues),
+        "metadata": {"species": SPECIES_LABELS.get(m.species, m.species),
                      "tissue": tissue_label(run.params.annotation.census.tissue),
                      "confirmed_by": run.metadata.get("confirmed_by"),
                      "has_markers": m.species in marker_db_tools.SPECIES},
-        "database": _database_info(run),
         "census": census_reference_info(run),
         "celltypist": celltypist_info(run),
-        "selection": {"canonical_only": m.canonical_only, "min_sensitivity": m.min_sensitivity,
-                      "min_markers": m.min_markers},
+        "selection": {"min_markers": m.min_markers},
         "unresolved_label": annotation_tools.UNRESOLVED,
         "will_clear": _will_clear(run, "annotate"),
         "review_cleared": run.review_cleared,  # why an earlier review was cleared, if it was
@@ -1306,14 +1309,7 @@ def annotation_payload(run: AnalysisRun) -> dict[str, Any]:
     result = run.stage_result("annotate")
     adata = result.adata
     summary, match = result.details["summary"], result.details["match"]
-    by_reference = result.details["references"]
-    candidates = {name: _candidates(ref["summary"]) for name, ref in by_reference.items()}
-    answers = {name: {str(r.cluster): {"predicted_label": r.predicted_label, "status": r.status,
-                                       "best_candidate": r.best_candidate, "overlap": int(r.overlap),
-                                       "n_markers": int(r.n_markers), "adj_p": float(r.adj_p),
-                                       "second_candidate": r.second_candidate}
-                      for r in ref["summary"].clusters.itertuples()}
-               for name, ref in by_reference.items()}
+    tissue = run.params.annotation.census.tissue
     # Dot plot: each cluster's first matching markers of its best candidate, once each.
     dot_genes: list[str] = []
     for row in summary.clusters.itertuples():
@@ -1327,42 +1323,38 @@ def annotation_payload(run: AnalysisRun) -> dict[str, Any]:
              for g in str(row.matching_markers or "").split(", ") if g in dot_genes}
     obs, umap = adata.obs, adata.obsm["X_umap"]
     columns = ["cluster", "n_cells", "predicted_label", "status", "reasons", "best_candidate", "overlap",
-               "n_markers", "adj_p", "matching_markers", "second_candidate", "second_overlap", "second_adj_p",
-               "label_source"]
+               "n_markers", "adj_p", "matching_markers", "second_candidate", "second_overlap", "second_adj_p"]
     db = result.summary["database"]
-    first = "Census" if db["name"] == "CELLxGENE Census" else "PanglaoDB"
     payload["results"] = {
         "settings": annotation_settings(run.params),
-        "database": {"name": db["name"], "version": db["version"]},
-        # Each reference used: name, version, tissues, role ("first" / "second"), citation.
-        "references": [{"key": name, "name": ref["source"]["name"], "version": ref["source"]["version"],
-                        "tissues": [tissue_label(t) if name == "Census" else t for t in ref["source"]["tissues"]],
-                        "role": ref["source"]["role"], "citation": ref["source"].get("citation")}
-                       for name, ref in by_reference.items()],
-        "first_reference": first,
-        # reference -> cluster -> its answer (label, status, best candidate, …): for "How was this identified?"
-        "answers": answers,
+        # The marker check's reference (CELLxGENE Census), or None when there's none for this tissue yet.
+        "database": ({"name": db["name"], "version": db["version"], "tissue": tissue_label(tissue),
+                      "citation": db.get("citation")} if db else None),
+        "no_reference": bool(result.summary.get("no_reference")),
         "n_cell_types_tested": result.summary["n_cell_types_tested"],
         "n_cell_types_not_tested": len(summary.skipped_cell_types),
-        "n_markers_not_found": len({g for gs in match.missing.values() for g in gs}),
+        "n_markers_not_found": len({g for gs in match.missing.values() for g in gs}) if match else 0,
         "clusters": records(summary.clusters[columns]),
         # CellTypist's answer per cluster (Step A: shown beside the marker check), or why it didn't run.
         "celltypist": result.summary.get("celltypist"),
-        "candidates": candidates[first],  # the first reference's best candidates per cluster
-        "candidates_by_reference": candidates,
+        "candidates": _candidates(summary),  # the best candidates per cluster
         "dotplot": {
             "genes": [{"gene": g, "cell_type": owner.get(g)} for g in dot_genes],
             "values": [] if expr is None else [
                 {"group": r.group, "gene": r.gene, "mean_expr": r.mean_expr, "frac_expressing": r.frac_expressing}
                 for r in expr.itertuples(index=False)],
         },
-        "label_counts": summary.label_counts,
-        "nothing_matched": nothing_matched_text(result.summary, run.params.annotation.markers),
+        # Step B: the final label per cluster from both answers, with how they compare and why.
+        "final": final_rows(result.details["final"], summary.clusters),
+        "unknown_label": consensus_tools.UNKNOWN,
+        "review_groups": [{k: g[k] for k in ("key", "label", "description")} for g in REVIEW_GROUPS],
+        "label_counts": result.summary["label_counts"],  # final label -> cells
+        "nothing_matched": nothing_matched_text(result.summary, tissue),
         # Why some clusters are Unresolved: a note for the page, and one per Unresolved cluster.
         "unresolved_note": unresolved_note(result.summary),
-        "guidance": {str(row.cluster): unresolved_guidance(row, result.summary, run.params.annotation.markers)
+        "guidance": {str(row.cluster): unresolved_guidance(row, tissue, _celltypist_ran(result.summary))
                      for row in summary.clusters.itertuples() if row.predicted_label == annotation_tools.UNRESOLVED},
-        "review": _review_payload(run, summary.clusters),
+        "review": _review_payload(run, result.details["final"]),
         "notes": list(summary.notes),
         # One entry per cell, in the same order as `umap` and `cells`.
         "cell_cluster": obs[summary.groupby].astype(str).tolist(),
@@ -1379,7 +1371,9 @@ def annotation_payload(run: AnalysisRun) -> dict[str, Any]:
 
 
 def _candidates(summary) -> dict[str, list[dict[str, Any]]]:
-    """Cluster -> its best candidates (most significant first) in one reference's test."""
+    """Cluster -> its best candidates (most significant first) in the marker check."""
+    if summary.tests.empty:
+        return {}
     tests = summary.tests.assign(score=-np.log10(summary.tests["adj_p"].clip(lower=np.finfo(float).tiny)))
     return {str(c): records(rows.sort_values(["adj_p", "overlap", "cell_type"], ascending=[True, False, True])
                             .head(CANDIDATES_SHOWN)[["cell_type", "overlap", "n_markers", "adj_p", "score",
@@ -1399,12 +1393,12 @@ def celltypist_info(run: AnalysisRun) -> dict[str, Any]:
 
 
 def census_reference_info(run: AnalysisRun) -> dict[str, Any]:
-    """Census for this dataset: its tissue, whether it is used, and whether its marker table exists
-    (if not, the page offers "PanglaoDB only")."""
+    """Census for this dataset: its tissue and whether its marker table exists (if not, the marker
+    check doesn't run and CellTypist's answer is the only one)."""
     c, species = run.params.annotation.census, run.params.annotation.markers.species
     has_table = bool(c.tissue and species in census_tools.CENSUS_SPECIES
                      and census_tools.table_path(species, c.tissue, c.release, run.census_dir).is_file())
-    return {"tissue": tissue_label(c.tissue), "use": c.use, "release": c.release, "has_table": has_table,
+    return {"tissue": tissue_label(c.tissue), "release": c.release, "has_table": has_table,
             "available": bool(c.tissue)}
 
 
@@ -1412,67 +1406,143 @@ MOSTLY_UNRESOLVED = 0.5  # the app's own rule: above this share, the species/tis
 
 
 def unresolved_note(summary: dict[str, Any]) -> str | None:
-    """A note when some (not all) clusters are Unresolved. A wrong species or tissue shows as most
-    clusters failing at once, so it is mentioned only then; otherwise the usual causes are listed."""
-    if summary.get("nothing_matched"):
-        return None  # the "No cell type matched" box says it
-    clusters = summary["clusters"]
-    n = sum(c["predicted_label"] == annotation_tools.UNRESOLVED for c in clusters)
+    """A note when some (not all) clusters are Unknown. A wrong species or tissue shows as most
+    clusters failing at once, so it is mentioned only then."""
+    if summary.get("nothing_matched") or summary.get("no_reference"):
+        return None  # the "No cell type matched" box, or the "no reference" note, says it
+    clusters = summary["final"]
+    n = sum(c["final_label"] == consensus_tools.UNKNOWN for c in clusters)
     if n == 0:
         return None
     if n / len(clusters) > MOSTLY_UNRESOLVED:
-        return (f"{n} of {len(clusters)} clusters are Unresolved. When most clusters fail, check that the species "
-                "and tissue on Data Overview fit your sample; otherwise the marker database may not list these cell "
-                "types for these tissues. Open the Clusters tab and click a cluster to see why it is Unresolved.")
+        return (f"{n} of {len(clusters)} clusters are {consensus_tools.UNKNOWN}. When most clusters fail, check that the "
+                "species and tissue on Data Overview fit your sample. Open the To review tab and click a cluster to see why.")
     are = "cluster is" if n == 1 else "clusters are"
-    return (f"{n} {are} Unresolved. This often means a cell type the marker database doesn't list for these "
-            "tissues, a rare or mixed population, or two similar cell types. Open the Clusters tab and click a "
-            "cluster to see why it is Unresolved, then review it yourself.")
+    return (f"{n} {are} {consensus_tools.UNKNOWN}: the checks disagree or neither is confident. Open the To review "
+            "tab and click a cluster to see why, then review it yourself.")
 
 
-def unresolved_guidance(row, summary: dict[str, Any], markers) -> str:
-    """One Unresolved cluster's likely cause, from the first check it failed, plus its closest
-    match among other tissues' cell types when there is a clear one (a hint to check)."""
-    tissues = _join(list(markers.tissues))
+# Step B's wording in one place (analyst, 2026-11-13: "One check only" for now; whether to show the two
+# checks at all is still to be decided with the supervisor).
+AGREEMENT_TEXT = {
+    consensus_tools.AGREE: "Both checks agree",
+    consensus_tools.MARKER_CHECK_ONLY: "One check only",
+    consensus_tools.CELLTYPIST_ONLY: "One check only",
+    consensus_tools.DISAGREE: "Checks disagree",
+    consensus_tools.NEITHER: "No confident answer",
+}
+CELLTYPIST_ISSUE_TEXT = {
+    consensus_tools.CT_NOT_RUN: "wasn't run (no model for this tissue)",
+    consensus_tools.CT_ERROR: "couldn't run",
+    consensus_tools.CT_NO_TABLE: "can't be compared (its labels have no broad cell types yet)",
+    consensus_tools.CT_LOW_GENE_MATCH: "isn't reliable here (too few of its genes are in your data)",
+}
+
+
+def final_reason(row, marker_row=None) -> str:
+    """Why a cluster got its final label, in one or two sentences."""
+    a = row.agreement
+    pct = f"{round(100 * row.celltypist_share)}%" if row.celltypist_share is not None else None
+    ct = f"CellTypist ({row.celltypist_label}, {pct} of the cells)" if row.celltypist_label else "CellTypist"
+    if a == consensus_tools.AGREE:
+        return f"The marker check and {ct} both point to the same broad type: {row.final_broad_type or row.final_label}."
+    if a == consensus_tools.DISAGREE:
+        return (f"The marker check says {row.marker_label} ({_broad(row.marker_broad_type)}), but {ct} says "
+                f"{_broad(row.celltypist_broad_type)}. Review this cluster yourself.")
+    if a == consensus_tools.MARKER_CHECK_ONLY:
+        return f"Only the marker check is confident. CellTypist {_celltypist_why(row, pct)}."
+    marker = STATUS_WORDS.get(row.marker_status, row.marker_status)
+    if a == consensus_tools.CELLTYPIST_ONLY:
+        return f"Only {ct} is confident. The marker check: {marker}."
+    return f"Neither check is confident. The marker check: {marker}; CellTypist {_celltypist_why(row, pct)}."
+
+
+STATUS_WORDS = {"too_few_markers": "too few matching markers", "not_significant": "not significant",
+                "ambiguous": "ambiguous", "no_reference": "no reference for this tissue yet", "confident": "confident"}
+
+
+def _broad(broad: str | None) -> str:
+    return broad if broad and broad not in ("own label", "none") else "another cell type"
+
+
+def _celltypist_why(row, pct: str | None) -> str:
+    if row.celltypist_issue == consensus_tools.CT_LOW_SHARE:
+        return f"is split: {row.celltypist_label} has only {pct} of the cells"
+    if row.celltypist_issue == consensus_tools.CT_NO_BROAD_TYPE:
+        return f"gave a label too vague to compare ({row.celltypist_label})"
+    return CELLTYPIST_ISSUE_TEXT.get(row.celltypist_issue, "gave no usable answer")
+
+
+CONFIDENCE_TEXT = {consensus_tools.HIGH: "High", consensus_tools.MEDIUM: "Medium", consensus_tools.LOW: "Low"}
+
+# The "To review" tab's groups, in order (analyst, 2026-11-13): where the checks disagree first, then
+# one check only, then both agree, then no suggestion. Every cluster is confirmed by the user.
+REVIEW_GROUPS = [
+    {"key": "disagree", "label": "Checks disagree", "agreements": [consensus_tools.DISAGREE],
+     "description": "The two checks point to different cell types. Look at the evidence and give your own label."},
+    {"key": "one_check", "label": "One check only",
+     "agreements": [consensus_tools.MARKER_CHECK_ONLY, consensus_tools.CELLTYPIST_ONLY],
+     "description": "Only one check is confident. Check its evidence before you confirm."},
+    {"key": "agree", "label": "Both checks agree", "agreements": [consensus_tools.AGREE],
+     "description": "Both checks point to the same broad cell type. Confirm it or give your own label."},
+    {"key": "no_suggestion", "label": "No suggestion", "agreements": [consensus_tools.NEITHER],
+     "description": "Neither check is confident. Give your own label (it can be Unresolved)."},
+]
+_GROUP_OF = {a: g["key"] for g in REVIEW_GROUPS for a in g["agreements"]}
+
+
+def final_rows(final, marker_clusters=None) -> list[dict[str, Any]]:
+    """The final label per cluster for the page: the consensus table plus the badge text, the reason,
+    the confidence and the "To review" group it belongs to."""
+    return [{**row, "agreement_text": AGREEMENT_TEXT[r.agreement], "reason": final_reason(r),
+             "confidence": consensus_tools.CONFIDENCE[r.agreement],
+             "confidence_text": CONFIDENCE_TEXT[consensus_tools.CONFIDENCE[r.agreement]],
+             "review_group": _GROUP_OF[r.agreement]}
+            for row, r in zip(records(final), final.itertuples())]
+
+
+def _celltypist_ran(summary: dict[str, Any]) -> bool:
+    return bool((summary.get("celltypist") or {}).get("clusters"))
+
+
+def unresolved_guidance(row, tissue: str | None, celltypist: bool = True) -> str:
+    """One Unresolved cluster's likely cause, from the first check it failed. `celltypist`: whether
+    CellTypist's answer is there to compare with."""
+    where = (tissue_label(tissue) or "this tissue").lower()
+    if row.status == "no_reference":
+        use = "CellTypist's answer and the cluster's top marker genes" if celltypist else "the cluster's top marker genes"
+        return (f"There's no CELLxGENE Census reference for {where} yet, so the marker check didn't run. Use "
+                f"{use} in your review.")
+    also = " and CellTypist's answer" if celltypist else ""
     if row.status == "ambiguous":
-        text = (f"Two cell types fit almost equally: {row.best_candidate} and {row.second_candidate}. They are often "
-                "closely related; decide between them in your review, or name the type they share.")
-    elif row.status == "not_significant":
-        text = ("Some of its top genes match a cell type, but too few to rule out chance. It may be a rare or mixed "
-                "population (for example doublets), or a cell type the database describes only weakly. Check its "
-                "top marker genes.")
-    else:
-        text = (f"Too few of its top genes are markers of any cell type listed for {tissues}. It may be a cell type "
-                "the database doesn't list there (a rare one, or one from another tissue), or lower-quality cells. "
-                "Check its top marker genes.")
-    elsewhere = (summary.get("best_anywhere") or {}).get(str(row.cluster))
-    if elsewhere:
-        where = _join(elsewhere["tissues"]) or "another tissue"
-        text += (f" Closest match in another tissue: {elsewhere['cell_type']} ({where}), {elsewhere['overlap']} of "
-                 f"{elsewhere['n_markers']} markers. A hint to check, not a prediction.")
-    return text
+        return (f"Two unrelated cell types fit almost equally: {row.best_candidate} and {row.second_candidate}. "
+                f"Compare with the cluster's top marker genes{also}, and decide in your review.")
+    if row.status == "not_significant":
+        return ("Some of its top genes match a cell type, but too few to rule out chance. It may be a rare or mixed "
+                "population (for example doublets), or a cell type the reference describes only weakly. Check its "
+                f"top marker genes{also}.")
+    return (f"Too few of its top genes are markers of any cell type in the Census reference for {where}. It may be "
+            "a cell type the reference doesn't have (a rare one, or one from another tissue or stage), or "
+            f"lower-quality cells. Check its top marker genes{also}.")
 
 
-def nothing_matched_text(summary: dict[str, Any], markers) -> str | None:
-    """When every cluster is Unresolved: say so, and point to tissues that would fit better (the
-    run's hint: tissues whose cell types matched clusters when all tissues were tried)."""
+def nothing_matched_text(summary: dict[str, Any], tissue: str | None) -> str | None:
+    """When the marker check matched no cluster although a reference was used, and no cluster got a
+    final label from CellTypist either: say so."""
     if not summary.get("nothing_matched"):
         return None
-    ticked = _join(list(markers.tissues))
-    hint = summary.get("tissue_hint") or []
-    if not hint:
-        return (f"No cluster matched the cell types of the ticked tissues ({ticked}), and no other tissue in "
-                f"{summary['database']['name']} fits clearly. Check the species, or review the clusters yourself.")
-    closest = _join([f"{h['tissue']} ({h['n_clusters']} {'cluster' if h['n_clusters'] == 1 else 'clusters'})"
-                     for h in hint])
-    return (f"No cluster matched the cell types of the ticked tissues ({ticked}). Check that the tissues fit "
-            f"your data: the closest matches come from {closest}.")
+    if any(c["final_label"] != consensus_tools.UNKNOWN for c in summary.get("final", [])):
+        return None  # CellTypist named some clusters: the Unknown note covers the rest
+    where = (tissue_label(tissue) or "the chosen tissue").lower()
+    return (f"No cluster matched the cell types in the Census reference for {where}. Check that the species and "
+            "tissue on Data Overview fit your sample, compare with CellTypist's answer, or review the clusters "
+            "yourself.")
 
 
 def _review_payload(run: AnalysisRun, clusters) -> dict[str, Any]:
     """The analyst's decision for each cluster, and how many are reviewed. A confirmed label
     whose prediction has changed since (annotation re-run with other settings) is flagged."""
-    predicted = dict(zip(clusters["cluster"].astype(str), clusters["predicted_label"]))
+    predicted = dict(zip(clusters["cluster"].astype(str), clusters["final_label"]))
     decisions = {
         c: {**asdict(r), "prediction_changed": r.decision == "confirmed" and r.label != predicted.get(c)}
         for c, r in run.review.items() if c in predicted
@@ -1538,13 +1608,14 @@ def explore_payload(run: AnalysisRun) -> dict[str, Any]:
         results["unavailable"].append("Marker Genes " + ("needs re-running" if status["markers"] == "needs re-running" else "hasn't been run"))
     if status["annotate"] == "done":
         result = run.stage_result("annotate")
-        clusters = result.details["summary"].clusters
+        final = result.details["final"]
         results["predictions"] = {
-            "unresolved_label": annotation_tools.UNRESOLVED,
-            "clusters": json.loads(clusters[["cluster", "predicted_label", "status"]].to_json(orient="records")),
+            "unresolved_label": consensus_tools.UNKNOWN,
+            "clusters": [{"cluster": r.cluster, "predicted_label": r.final_label, "agreement": r.agreement,
+                          "agreement_text": AGREEMENT_TEXT[r.agreement]} for r in final.itertuples()],
             "cell_label": result.adata.obs[annotation_tools.PREDICTION_KEY].astype(str).tolist(),
             # Cell types in the order of their first cluster.
-            "label_order": list(dict.fromkeys(clusters["predicted_label"])),
+            "label_order": list(dict.fromkeys(final["final_label"])),
         }
         if results["samples"]:  # composition by predicted cell type too
             results["samples"]["composition"]["cell_type"] = records(integration_tools.composition(
@@ -1667,3 +1738,157 @@ def _decimal(value: float) -> str:
 
 def _join(items: list[str]) -> str:
     return items[0] if len(items) == 1 else ", ".join(items[:-1]) + " and " + items[-1]
+
+
+# --- Compare Conditions (several samples with conditions) ----------------------------------------------
+
+# How the cells can be grouped (obs column, label shown). Each needs its step (see AnalysisRun.condition_groups).
+CONDITION_GROUPINGS = [("leiden", "Clusters"), (annotation_tools.PREDICTION_KEY, "Suggested cell types"),
+                       (review_tools.REVIEWED_KEY, "Your labels")]
+# The app's own rule: a condition named like one of these is suggested as the reference (the baseline).
+REFERENCE_HINTS = ("ctrl", "control", "untreated", "unstim", "unstimulated", "baseline", "healthy", "wt",
+                   "wild type", "wildtype", "vehicle", "mock", "normal", "pre", "before", "day 0", "d0")
+
+
+def conditions_available(run: AnalysisRun) -> dict[str, Any]:
+    """For the sidebar: whether Compare Conditions is shown (several samples), whether it can open,
+    and why not."""
+    samples = run.samples
+    visible = len(samples) > 1
+    named = {s["condition"] for s in samples if s.get("condition")}
+    if not visible:
+        reason = None
+    elif len(named) < 2:
+        reason = "Give each sample a condition on Data Overview to compare conditions."
+    elif run.status()["cluster"] != "done":
+        reason = "Opens after Clustering"
+    else:
+        reason = None
+    return {"visible": visible, "enabled": visible and reason is None, "reason": reason,
+            "status": run.comparison_status().replace(" ", "_").replace("-", "_")}
+
+
+def suggest_conditions(names: list[str]) -> tuple[str | None, str | None]:
+    """The suggested reference and test: a condition named like a control is the reference
+    (`REFERENCE_HINTS`), otherwise the first; the test is the first other condition."""
+    if len(names) < 2:
+        return None, None
+    reference = next((n for n in names if n.strip().lower() in REFERENCE_HINTS), names[0])
+    return reference, next(n for n in names if n != reference)
+
+
+def condition_settings(params: ConditionParams) -> dict[str, Any]:
+    return {"reference": params.reference, "test": params.test, "group_by": params.group_by,
+            "paired_by": params.paired_by, "min_cells": params.min_cells,
+            "min_gene_counts": params.min_gene_counts, "max_adj_p": params.max_adj_p}
+
+
+def condition_params_from_browser(values: dict[str, Any] | None,
+                                  current: AnalysisParams) -> tuple[ConditionParams, list[str] | None]:
+    """The Compare Conditions boxes -> settings and the groups to test (None = all). Raises `InputError`."""
+    if not values:
+        return current.conditions, None
+    p = current.conditions
+    reference, test = values.get("reference") or None, values.get("test") or None
+    if reference is None or test is None:
+        raise InputError("Choose the two conditions to compare.")
+    group_by = values.get("group_by") or p.group_by
+    if group_by not in dict(CONDITION_GROUPINGS):
+        raise InputError("Group the cells by clusters, suggested cell types or your labels.")
+    max_adj_p = _number(values, "max_adj_p", "Max adjusted p-value", whole=False, above=True)
+    if max_adj_p >= 1:
+        raise InputError("'Max adjusted p-value' must be smaller than 1.")
+    params = replace(p, reference=str(reference), test=str(test), group_by=group_by,
+                     paired_by=values.get("paired_by") or None,
+                     min_cells=_number(values, "min_cells", "Min cells per sample", whole=True, minimum=1),
+                     min_gene_counts=_number(values, "min_gene_counts", "Min counts per gene", whole=True),
+                     max_adj_p=max_adj_p)
+    groups = values.get("groups")
+    if groups is None or groups == "all":
+        return params, None
+    groups = [str(g) for g in groups]
+    return params, groups
+
+
+def conditions_payload(run: AnalysisRun, group: str | None = None) -> dict[str, Any]:
+    """Everything the Compare Conditions page shows: the choices, the settings and, once it has run,
+    the results (the full gene table only for `group`, the group chosen on the page)."""
+    available = conditions_available(run)
+    payload: dict[str, Any] = {**available, "options": None, "settings": None, "results": None}
+    if not available["visible"]:
+        return payload
+    names = list(dict.fromkeys(s["condition"] for s in run.samples if s.get("condition")))
+    per_condition = {n: sum(1 for s in run.samples if s.get("condition") == n) for n in names}
+    obs = run.result("load").obs
+    pairing = (condition_tools.pairing_choices(obs, load_tools.SAMPLE_KEY, load_tools.CONDITION_KEY)
+               if load_tools.CONDITION_KEY in obs else [])
+    groupings = []
+    for key, label in CONDITION_GROUPINGS:
+        try:
+            values = run.condition_groups(key)
+        except Exception:
+            continue
+        counts = values.value_counts()
+        order = (sorted(counts.index, key=lambda g: (not str(g).isdigit(), int(g) if str(g).isdigit() else 0, str(g)))
+                 if key == "leiden" else list(counts.index))
+        groupings.append({"value": key, "label": label,
+                          "groups": [{"group": str(g), "n_cells": int(counts[g])} for g in order]})
+    reference, test = suggest_conditions(names)
+    current = run.params.conditions
+    shown = replace(current, reference=current.reference if current.reference in names else reference,
+                    test=current.test if current.test in names else test,
+                    paired_by=current.paired_by if current.paired_by in pairing else (pairing[0] if pairing else None),
+                    group_by=current.group_by if current.group_by in {g["value"] for g in groupings} else "leiden")
+    payload["options"] = {
+        "conditions": [{"name": n, "n_samples": per_condition[n]} for n in names],
+        "pairing": pairing,
+        "groupings": groupings,
+        "min_samples": condition_tools.MIN_SAMPLES_PER_CONDITION,
+    }
+    payload["settings"] = {"current": condition_settings(shown),
+                           "default": condition_settings(replace(ConditionParams(), reference=reference, test=test,
+                                                                 paired_by=pairing[0] if pairing else None)),
+                           "groups": run.comparison["groups_to_test"] if run.comparison else None}
+    payload["confirmation"] = None
+    if run.comparison is None or run.comparison_status() != "done":
+        return payload
+    c = run.comparison
+    summary: condition_tools.ComparisonSummary = c["summary"]
+    max_adj_p = c["settings"]["max_adj_p"]
+    d = summary.design
+    tested = {g: t for g, t in summary.expression.items() if t.status == condition_tools.TESTED}
+    chosen = group if group in tested else next(iter(tested), None)
+    groups = []
+    for g, t in summary.expression.items():
+        up, down = condition_tools.significant_counts(t.results, max_adj_p)
+        groups.append({"group": g, "status": t.status, "reason": t.reason, "n_samples_used": len(t.samples_used),
+                       "samples_left_out": list(t.samples_left_out), "n_genes_tested": t.n_genes_tested,
+                       "n_up": up, "n_down": down})
+    samples = d.samples.reset_index()
+    payload["results"] = {
+        "settings": c["settings"],
+        "ran_at": c["ran_at"],
+        "grouping_label": dict(CONDITION_GROUPINGS)[c["settings"]["group_by"]],
+        "design": {"reference": d.reference, "test": d.test, "paired_by": d.paired_by,
+                   "samples": records(samples.rename(columns={samples.columns[0]: "sample"})),
+                   "excluded": list(d.excluded)},
+        "composition": records(summary.composition),
+        "groups": groups,
+        "selected": chosen,
+        "genes": records(tested[chosen].results) if chosen else [],
+    }
+    payload["confirmation"] = conditions_confirmation(run)
+    return payload
+
+
+def conditions_confirmation(run: AnalysisRun) -> str | None:
+    """One sentence for the bottom bar once the comparison has run."""
+    if run.comparison is None:
+        return None
+    s = condition_tools.short_summary(run.comparison["summary"], run.comparison["settings"]["max_adj_p"])
+    n = s["n_samples"]
+    paired = f", paired by {s['paired_by']}" if s["paired_by"] else ""
+    skipped = f" ({s['n_groups_skipped']} skipped: too few samples)" if s["n_groups_skipped"] else ""
+    return (f"Compared {s['test']} ({n[s['test']]} samples) with {s['reference']} ({n[s['reference']]} samples){paired}: "
+            f"{s['n_groups_changed']} of {s['n_groups']} groups changed in share; {s['n_genes_changed']:,} significant "
+            f"gene changes across {s['n_groups_tested']} groups{skipped}.")

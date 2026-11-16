@@ -284,3 +284,46 @@ def test_top_n_genes_must_fit_the_data(steps):
         find_hvgs(normalized, HVGParams(n_top_genes=normalized.n_vars + 1))
     with pytest.raises(PreprocessingError, match="must be between 1"):
         find_hvgs(normalized, HVGParams(n_top_genes=0))
+
+
+# --- Highly variable genes within each sample (several samples) ------------------------------------
+
+def test_genes_within_each_sample_match_scanpy(steps):
+    """Not PBMC3k-specific: PBMC3k's cells split at random into three made-up samples. With a batch
+    column the genes equal Scanpy's own per-batch selection, for the cut-offs and for top N."""
+    normalized = steps["normalized"].copy()
+    rng = np.random.default_rng(1)
+    normalized.obs["sample"] = pd.Categorical(rng.choice(["s1", "s2", "s3"], normalized.n_obs))
+    for params in (HVGParams(), HVGParams(n_top_genes=1000)):
+        ours, summary = find_hvgs(normalized, params, batch_key="sample")
+        direct = normalized.copy()
+        kwargs = ({"n_top_genes": 1000} if params.n_top_genes else
+                  {"min_mean": params.min_mean, "max_mean": params.max_mean, "min_disp": params.min_disp})
+        sc.pp.highly_variable_genes(direct, flavor="seurat", batch_key="sample", **kwargs)
+        assert summary.hvg_genes == tuple(direct.var_names[direct.var["highly_variable"]])
+        assert (summary.batch_key, summary.n_batches) == ("sample", 3)
+        assert ours.var["highly_variable_nbatches"].between(0, 3).all()
+    pooled, summary = find_hvgs(normalized, HVGParams())
+    assert summary.batch_key is None and summary.n_batches == 1
+    assert "highly_variable_nbatches" not in pooled.var
+
+
+def test_genes_within_each_sample_need_the_sample_column(steps):
+    with pytest.raises(PreprocessingError, match="no 'sample' column"):
+        find_hvgs(steps["normalized"], HVGParams(), batch_key="sample")
+
+
+def test_a_single_dataset_ignores_the_per_sample_setting(raw_data_path):
+    """The default (per_sample on) changes nothing without samples: same genes as switched off."""
+    from scrna_analysis.params import DEFAULT_PARAMS
+    from scrna_analysis.pipeline import AnalysisRun
+
+    genes = {}
+    for per_sample in (True, False):
+        params = replace(DEFAULT_PARAMS, hvg=replace(DEFAULT_PARAMS.hvg, per_sample=per_sample))
+        run = AnalysisRun(raw_data_path, params)
+        for stage in ("load", "compute_qc_metrics", "apply_filter", "preprocess"):
+            getattr(run, stage)()
+        assert run.stage_result("preprocess").summary["hvg_per_sample"] is False
+        genes[per_sample] = list(run.result("preprocess").var_names)
+    assert genes[True] == genes[False]

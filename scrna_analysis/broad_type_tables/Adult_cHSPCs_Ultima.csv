@@ -1,0 +1,21 @@
+label,broad_type,how
+B,B cell,ontology
+BEMP,blood stem/progenitor cell,hand
+CLP,blood stem/progenitor cell,pattern
+DC,dendritic cell,pattern
+Doublet,none,pattern
+ERYP,erythroid cell,hand
+Endothel,endothelial cell,pattern
+GMP-L,blood stem/progenitor cell,pattern
+HSC_MPP,blood stem/progenitor cell,pattern
+MEBEMP-L,blood stem/progenitor cell,hand
+MKP,blood stem/progenitor cell,ontology
+Monocyte,monocyte,ontology
+NK/T,none,hand
+NKTDP,blood stem/progenitor cell,hand
+high_MPP_sig_ERYP,erythroid cell,hand
+mregDC,dendritic cell,hand
+plasmablast,plasma cell,ontology
+pre-B?,B cell,hand
+pro-B?,blood stem/progenitor cell,hand
+unassigned,none,pattern

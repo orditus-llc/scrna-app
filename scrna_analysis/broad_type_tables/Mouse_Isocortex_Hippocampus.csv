@@ -1,0 +1,43 @@
+label,broad_type,how
+Astro,astrocyte,pattern
+CA1-ProS,neuron,hand
+CA2-IG-FC,neuron,hand
+CA3,neuron,hand
+CR,neuron,ontology
+CT SUB,neuron,hand
+Car3,neuron,hand
+DG,neuron,hand
+Endo,endothelial cell,pattern
+L2 IT ENTl,neuron,pattern
+L2 IT ENTm,neuron,pattern
+L2/3 IT CTX,neuron,pattern
+L2/3 IT ENTl,neuron,pattern
+L2/3 IT PPP,neuron,pattern
+L2/3 IT RHP,neuron,pattern
+L3 IT ENT,neuron,pattern
+L4 RSP-ACA,neuron,pattern
+L4/5 IT CTX,neuron,pattern
+L5 IT CTX,neuron,pattern
+L5 PPP,neuron,pattern
+L5 PT CTX,neuron,pattern
+L5/6 IT TPE-ENT,neuron,pattern
+L5/6 NP CTX,neuron,pattern
+L6 CT CTX,neuron,pattern
+L6 IT CTX,neuron,pattern
+L6 IT ENTl,neuron,pattern
+L6b CTX,neuron,pattern
+L6b/CT ENT,neuron,pattern
+Lamp5,neuron,ontology
+Meis2,neuron,hand
+Micro-PVM,microglia,pattern
+NP PPP,neuron,hand
+NP SUB,neuron,hand
+Oligo,oligodendrocyte,pattern
+Pvalb,neuron,pattern
+SMC-Peri,smooth muscle cell,hand
+SUB-ProS,neuron,hand
+Sncg,neuron,pattern
+Sst,neuron,pattern
+Sst Chodl,neuron,ontology
+VLMC,fibroblast,ontology
+Vip,neuron,ontology

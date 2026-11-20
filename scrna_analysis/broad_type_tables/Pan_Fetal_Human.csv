@@ -1,0 +1,139 @@
+label,broad_type,how
+ABT(ENTRY),T cell,hand
+AS_DC,dendritic cell,pattern
+B1,B cell,ontology
+CD4+T,T cell,pattern
+CD8+T,T cell,pattern
+CD8AA,T cell,pattern
+CHONDROCYTE,own label,ontology
+CMP,blood stem/progenitor cell,pattern
+CYCLING_B,B cell,ontology
+CYCLING_DC,dendritic cell,pattern
+CYCLING_EPITHELIUM,epithelial cell,pattern
+CYCLING_FIBROBLAST_I,fibroblast,pattern
+CYCLING_FIBROBLAST_II,fibroblast,pattern
+CYCLING_ILC,own label,hand
+CYCLING_MEMP,blood stem/progenitor cell,hand
+CYCLING_MPP,blood stem/progenitor cell,pattern
+CYCLING_NK,NK cell,pattern
+CYCLING_PDC,dendritic cell,pattern
+CYCLING_T,T cell,ontology
+CYCLING_YS_ERY,erythroid cell,hand
+DC1,dendritic cell,ontology
+DC2,dendritic cell,ontology
+DC_PROGENITOR,dendritic cell,pattern
+DEVELOPING_NEPHRON_I,own label,hand
+DEVELOPING_NEPHRON_II,own label,hand
+DN(P)_T,T cell,pattern
+DN(Q)_T,T cell,pattern
+DN(early)_T,T cell,pattern
+DOUBLET,none,pattern
+DOUBLETS_FIBRO_ERY,none,pattern
+DOUBLET_ENDOTHELIUM_ERYTHROCYTE,none,pattern
+DOUBLET_ERY_B,none,pattern
+DOUBLET_IMMUNE_FIBROBLAST,none,pattern
+DOUBLET_LYMPHOID_MACROPHAGE,none,pattern
+DOUBLET_VSMC_ERYTHROCYTE,none,pattern
+DP(P)_T,T cell,pattern
+DP(Q)_T,T cell,pattern
+EARLY_ERY,erythroid cell,hand
+EARLY_MK,megakaryocyte/platelet,pattern
+ENDOTHELIUM_I,endothelial cell,pattern
+ENDOTHELIUM_II,endothelial cell,pattern
+ENDOTHELIUM_III,endothelial cell,pattern
+ENDOTHELIUM_IV,endothelial cell,pattern
+ENDOTHELIUM_V,endothelial cell,pattern
+ENTEROENDOCRINE_I,epithelial cell,hand
+ENTEROENDOCRINE_II,epithelial cell,hand
+EOSINOPHIL_BASOPHIL,granulocyte,pattern
+EPITHELIUM_I,epithelial cell,pattern
+EPITHELIUM_II,epithelial cell,pattern
+FIBROBLAST_I,fibroblast,pattern
+FIBROBLAST_II,fibroblast,pattern
+FIBROBLAST_III,fibroblast,pattern
+FIBROBLAST_IV,fibroblast,pattern
+FIBROBLAST_IX,fibroblast,pattern
+FIBROBLAST_V,fibroblast,pattern
+FIBROBLAST_VI,fibroblast,pattern
+FIBROBLAST_VII,fibroblast,pattern
+FIBROBLAST_VIII,fibroblast,pattern
+FIBROBLAST_X,fibroblast,pattern
+FIBROBLAST_XI,fibroblast,pattern
+FIBROBLAST_XII,fibroblast,pattern
+FIBROBLAST_XIII,fibroblast,pattern
+FIBROBLAST_XIV,fibroblast,pattern
+FIBROBLAST_XV,fibroblast,pattern
+FIBROBLAST_XVI,fibroblast,pattern
+FIBROBLAST_XVII,fibroblast,pattern
+GLIAL,own label,ontology
+GMP,blood stem/progenitor cell,pattern
+HEPATOCYTE-LIKE,epithelial cell,pattern
+HEPATOCYTE_I,epithelial cell,pattern
+HEPATOCYTE_II,epithelial cell,pattern
+HIGH_MITO,none,hand
+HSC_MPP,blood stem/progenitor cell,pattern
+ILC2,own label,ontology
+ILC3,own label,ontology
+IMMATURE_B,B cell,ontology
+INTERSTITIAL_CELLS_OF_CAJAL,epithelial cell,ontology
+KERATINOCYTE,epithelial cell,ontology
+LANGERHANS_CELLS,dendritic cell,ontology
+LARGE_PRE_B,B cell,hand
+LATE_ERY,erythroid cell,hand
+LATE_MK,megakaryocyte/platelet,pattern
+LATE_PRO_B,B cell,hand
+LMPP_MLP,blood stem/progenitor cell,pattern
+LOW_QUALITY,none,pattern
+LOW_QUALITY_MACROPHAGE,none,pattern
+LOW_QUALITY_MID_ERY_(HIGH_RIBO),none,pattern
+LOW_Q_INCONSISTENT,none,hand
+MACROPHAGE_ERY,macrophage,pattern
+MACROPHAGE_IRON_RECYCLING,macrophage,pattern
+MACROPHAGE_KUPFFER_LIKE,macrophage,pattern
+MACROPHAGE_LYVE1_HIGH,macrophage,pattern
+MACROPHAGE_MHCII_HIGH,macrophage,pattern
+MACROPHAGE_PERI,macrophage,pattern
+MACROPHAGE_PROLIFERATING,macrophage,pattern
+MACROPHAGE_TREM2,macrophage,pattern
+MAST_CELL,mast cell,ontology
+MATURE_B,B cell,ontology
+MELANOCYTE,own label,ontology
+MEMP,blood stem/progenitor cell,hand
+MEP,blood stem/progenitor cell,ontology
+MESENCHYMAL_LYMPHOID_TISSUE_ORGANISER,own label,hand
+MESOTHELIUM,epithelial cell,hand
+MID_ERY,erythroid cell,hand
+MIGRATORY_DC,dendritic cell,pattern
+MONOCYTE_III_IL1B,monocyte,pattern
+MONOCYTE_II_CCR2,monocyte,pattern
+MONOCYTE_I_CXCR4,monocyte,pattern
+MOP,blood stem/progenitor cell,hand
+MUSCLE_SATELLITE,own label,hand
+MYELOCYTE,blood stem/progenitor cell,hand
+MYOFIBROBLAST,own label,ontology
+MYOFIBROBLAST_I,own label,hand
+NEURON,neuron,ontology
+NEUTROPHIL,granulocyte,ontology
+NK,NK cell,ontology
+OSTEOBLAST,own label,ontology
+OSTEOCLAST,own label,ontology
+PDC,dendritic cell,ontology
+PLACENTAL_CONTAMINANTS,none,hand
+PLASMA_B,plasma cell,ontology
+PRE_DC2,dendritic cell,pattern
+PRE_PRO_B,blood stem/progenitor cell,hand
+PROMONOCYTE,blood stem/progenitor cell,ontology
+PROMYELOCYTE,blood stem/progenitor cell,hand
+PRO_B,blood stem/progenitor cell,hand
+SKELETAL_MUSCLE,own label,ontology
+SMALL_PRE_B,B cell,hand
+SMOOTH_MUSCLE,smooth muscle cell,ontology
+TREG,T cell,ontology
+TYPE_1_INNATE_T,T cell,hand
+TYPE_3_INNATE_T,T cell,hand
+VSMC_PERICYTE,pericyte,pattern
+VSMC_PERICYTE_I,pericyte,pattern
+VSMC_PERICYTE_II,pericyte,pattern
+VSMC_PERICYTE_III,pericyte,pattern
+YS_ERY,erythroid cell,hand
+YS_STROMA,own label,hand

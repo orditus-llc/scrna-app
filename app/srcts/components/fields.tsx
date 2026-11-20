@@ -135,13 +135,25 @@ export function RuledSelect(props: {
   label: string;
   help: string;
   value: string;
-  options: { value: string; label: string }[];
+  options: { value: string; label: string; group?: string }[]; // options with a group are shown under its heading
   onChange: (value: string) => void;
   reference?: string; // leave out for a display-only choice
   note?: string; // shown under the label, e.g. "Suggested: Mouse"
 }) {
   const differs = props.reference !== undefined && props.value !== props.reference;
   const referenceLabel = props.options.find((o) => o.value === props.reference)?.label;
+  // Consecutive options with the same group form one <optgroup>; options without a group stand alone.
+  const runs: { group?: string; options: typeof props.options }[] = [];
+  for (const o of props.options) {
+    const last = runs[runs.length - 1];
+    if (last && o.group !== undefined && last.group === o.group) last.options.push(o);
+    else runs.push({ group: o.group, options: [o] });
+  }
+  const option = (o: { value: string; label: string }) => (
+    <option key={o.value} value={o.value}>
+      {o.label}
+    </option>
+  );
   return (
     <div className="flex flex-col gap-2 border-b border-line py-[14px]">
       <div className="flex min-w-0 flex-col gap-[3px]">
@@ -163,11 +175,15 @@ export function RuledSelect(props: {
           differs ? "border-2 border-accent" : "border-field",
         )}
       >
-        {props.options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
+        {runs.map((r, i) =>
+          r.group === undefined ? (
+            r.options.map(option)
+          ) : (
+            <optgroup key={`${r.group}-${i}`} label={r.group}>
+              {r.options.map(option)}
+            </optgroup>
+          ),
+        )}
       </select>
     </div>
   );

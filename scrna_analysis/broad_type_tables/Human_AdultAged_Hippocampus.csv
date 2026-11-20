@@ -1,0 +1,16 @@
+label,broad_type,how
+Astrocytes,astrocyte,ontology
+CA1_neurons,neuron,pattern
+CA2-4_neurons,neuron,pattern
+CA_neurons,neuron,pattern
+Cajal-Retzius,neuron,ontology
+ChoroidPlexus,epithelial cell,hand
+Endothelial,endothelial cell,ontology
+Ependymal,ependymal cell,ontology
+GABA_neurons,neuron,pattern
+Microglia,microglia,pattern
+OPCs,oligodendrocyte precursor cell,pattern
+Subcul_EntorCtx_neurons,neuron,pattern
+imGC,neuron,hand
+mGC,neuron,hand
+mOli,oligodendrocyte,hand

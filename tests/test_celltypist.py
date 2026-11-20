@@ -38,9 +38,33 @@ def test_suggested_models():
     assert ct.suggest_model("human", "blood") == MODEL and ct.suggest_model("Human", "Spleen") == MODEL
     assert ct.suggest_model("mouse", "brain") == "Mouse_Whole_Brain.pkl"  # adult suggested (analyst's choice)
     assert ct.suggest_model("human", "kidney") is None and ct.suggest_model(None, None) is None
-    mouse = [c["model"] for c in ct.model_choices("mouse")]
-    assert mouse == ["Mouse_Whole_Brain.pkl", "Developing_Mouse_Brain.pkl"]
+    assert ct.suggest_model("human", "lung") == "Human_Lung_Atlas.pkl"
+    assert ct.suggest_model("human", "lung", "developing") == "Cells_Fetal_Lung.pkl"
     assert ct.model_choices("other") == []
+
+
+def test_model_choices_suggested_first_then_others_then_disease_studies():
+    mouse = ct.model_choices("mouse", tissue="brain")
+    assert mouse[0]["model"] == "Mouse_Whole_Brain.pkl" and mouse[0]["group"] == ct.GROUP_SUGGESTED
+    assert "Developing_Mouse_Brain.pkl" in [c["model"] for c in mouse]
+    assert all(ct.model_species(c["model"]) == "mouse" for c in mouse)
+    human = ct.model_choices("human", tissue="lung")
+    groups = [c["group"] for c in human]
+    assert human[0]["model"] == "Human_Lung_Atlas.pkl"
+    assert groups == sorted(groups, key=[ct.GROUP_SUGGESTED, ct.GROUP_OTHER, ct.GROUP_DISEASE].index)
+    assert {c["model"] for c in human if c["group"] == ct.GROUP_DISEASE} <= ct.DISEASE_MODELS
+    names = {c["model"] for c in human}
+    assert not names & ct.OTHER_SPECIES_MODELS and not any("Mouse" in n for n in names)
+    # Without a tissue, nothing is marked suggested.
+    assert all(c["group"] != ct.GROUP_SUGGESTED for c in ct.model_choices("human"))
+
+
+def test_suggestions_are_healthy_atlases_of_the_right_species():
+    for table in (ct.SUGGESTED_MODELS, ct.SUGGESTED_MODELS_DEVELOPING):
+        for (species, _tissue), model in table.items():
+            assert model not in ct.DISEASE_MODELS
+            assert ct.model_species(model) == species
+            assert (ct.MODEL_DIR / model).is_file(), f"{model} isn't downloaded"
 
 
 def test_its_own_normalization_is_10000_counts_then_log1p(demo_run):
@@ -124,7 +148,9 @@ def test_page_data_and_report(raw_data_path, models_ready):
     run = AnalysisRun(raw_data_path, DEFAULT_PARAMS, metadata={"species": "human", "tissue": "blood"})
     info = payloads.annotation_payload(run)["celltypist"]
     assert info["suggested"] == MODEL and info["current"] == MODEL
-    assert [c["model"] for c in info["choices"]] == [MODEL] and info["choices"][0]["downloaded"]
+    first = info["choices"][0]  # the suggested model first, then every other human model
+    assert first["model"] == MODEL and first["group"] == "Suggested for this sample" and first["downloaded"]
+    assert len(info["choices"]) > 40
     for stage in ("load", "compute_qc_metrics", "apply_filter", "preprocess", "reduce_dimensions", "cluster",
                   "find_markers", "annotate"):
         getattr(run, stage)()

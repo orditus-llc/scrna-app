@@ -1,0 +1,20 @@
+label,broad_type,how
+Acinar cell,epithelial cell,ontology
+Duct,epithelial cell,hand
+EP1,epithelial cell,hand
+EP2,epithelial cell,hand
+EP3,epithelial cell,hand
+EP4,epithelial cell,hand
+Endothelium,endothelial cell,pattern
+Erythrocyte,erythroid cell,ontology
+Immune cell,none,hand
+Mesenchyme,own label,ontology
+Neuron,neuron,ontology
+PP,epithelial cell,ontology
+Tip,epithelial cell,hand
+Trunk,epithelial cell,hand
+α,epithelial cell,hand
+α/PP-Pro,epithelial cell,hand
+β,epithelial cell,hand
+δ,epithelial cell,hand
+ε,epithelial cell,hand

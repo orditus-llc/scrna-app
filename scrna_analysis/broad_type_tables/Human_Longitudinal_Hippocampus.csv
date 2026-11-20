@@ -1,0 +1,25 @@
+label,broad_type,how
+Astro1,astrocyte,pattern
+Astro2,astrocyte,pattern
+Astro3,astrocyte,pattern
+Den.Gyr1,neuron,hand
+Den.Gyr2,neuron,hand
+Den.Gyr3,neuron,hand
+Endo,endothelial cell,pattern
+In1,neuron,pattern
+In2,neuron,pattern
+In3,neuron,pattern
+Micro1,microglia,hand
+Micro2,microglia,hand
+Micro3,microglia,hand
+OPC1,oligodendrocyte precursor cell,hand
+OPC2,oligodendrocyte precursor cell,hand
+OPC3,oligodendrocyte precursor cell,hand
+OPC4,oligodendrocyte precursor cell,hand
+Olig1,oligodendrocyte,hand
+Olig2,oligodendrocyte,hand
+Olig3,oligodendrocyte,hand
+Olig4,oligodendrocyte,hand
+Olig5,oligodendrocyte,hand
+Pyr1,neuron,hand
+Pyr2,neuron,hand

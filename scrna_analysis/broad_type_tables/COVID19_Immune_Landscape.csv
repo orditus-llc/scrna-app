@@ -1,0 +1,65 @@
+label,broad_type,how
+B_c01-TCL1A,B cell,pattern
+B_c02-MS4A1-CD27,B cell,pattern
+B_c03-CD27-AIM2,B cell,pattern
+B_c04-SOX5-TNFRSF1B,B cell,pattern
+B_c05-MZB1-XBP1,B cell,pattern
+B_c06-MKI67,B cell,pattern
+DC_c1-CLEC9A,dendritic cell,pattern
+DC_c2-CD1C,dendritic cell,pattern
+DC_c3-LAMP3,dendritic cell,pattern
+DC_c4-LILRA4,dendritic cell,pattern
+Epi-AT2,epithelial cell,pattern
+Epi-Ciliated,epithelial cell,pattern
+Epi-Secretory,epithelial cell,pattern
+Epi-Squamous,epithelial cell,pattern
+Macro_c1-C1QC,macrophage,pattern
+Macro_c2-CCL3L1,macrophage,pattern
+Macro_c3-EREG,macrophage,pattern
+Macro_c4-DNAJB1,macrophage,pattern
+Macro_c5-WDR74,macrophage,pattern
+Macro_c6-VCAN,macrophage,pattern
+Mast,mast cell,ontology
+Mega,megakaryocyte/platelet,pattern
+Mono_c1-CD14-CCL3,monocyte,pattern
+Mono_c2-CD14-HLA-DPB1,monocyte,pattern
+Mono_c3-CD14-VCAN,monocyte,pattern
+Mono_c4-CD14-CD16,monocyte,pattern
+Mono_c5-CD16,monocyte,pattern
+NK_c01-FCGR3A,NK cell,pattern
+NK_c02-NCAM1,NK cell,pattern
+NK_c03-MKI67,NK cell,pattern
+Neu_c1-IL1B,granulocyte,hand
+Neu_c2-CXCR4(low),granulocyte,hand
+Neu_c3-CST7,granulocyte,hand
+Neu_c4-RSAD2,granulocyte,hand
+Neu_c5-GSTP1(high)OASL(low),granulocyte,hand
+Neu_c6-FGF23,granulocyte,hand
+T_CD4_c01-LEF1,T cell,pattern
+T_CD4_c02-AQP3,T cell,pattern
+T_CD4_c03-ITGA4,T cell,pattern
+T_CD4_c04-ANXA2,T cell,pattern
+T_CD4_c05-FOS,T cell,pattern
+T_CD4_c06-NR4A2,T cell,pattern
+T_CD4_c07-AHNAK,T cell,pattern
+T_CD4_c08-GZMK-FOS_h,T cell,pattern
+T_CD4_c09-GZMK-FOS_l,T cell,pattern
+T_CD4_c10-IFNG,T cell,pattern
+T_CD4_c11-GNLY,T cell,pattern
+T_CD4_c12-FOXP3,T cell,pattern
+T_CD4_c13-MKI67-CCL5_l,T cell,pattern
+T_CD4_c14-MKI67-CCL5_h,T cell,pattern
+T_CD8_c01-LEF1,T cell,pattern
+T_CD8_c02-GPR183,T cell,pattern
+T_CD8_c03-GZMK,T cell,pattern
+T_CD8_c04-COTL1,T cell,pattern
+T_CD8_c05-ZNF683,T cell,pattern
+T_CD8_c06-TNF,T cell,pattern
+T_CD8_c07-TYROBP,T cell,pattern
+T_CD8_c08-IL2RB,T cell,pattern
+T_CD8_c09-SLC4A10,T cell,pattern
+T_CD8_c10-MKI67-GZMK,T cell,pattern
+T_CD8_c11-MKI67-FOS,T cell,pattern
+T_CD8_c12-MKI67-TYROBP,T cell,pattern
+T_CD8_c13-HAVCR2,T cell,pattern
+T_gdT_c14-TRDV2,T cell,pattern

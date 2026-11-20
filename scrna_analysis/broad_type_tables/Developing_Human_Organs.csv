@@ -1,0 +1,28 @@
+label,broad_type,how
+B cell,B cell,ontology
+Basal like,epithelial cell,hand
+Chondrocyte,own label,ontology
+Ciliated,epithelial cell,hand
+Distal lung epithelium,epithelial cell,pattern
+Endothelial,endothelial cell,ontology
+Enteroendocrine,epithelial cell,ontology
+Erythroblast,erythroid cell,ontology
+Gastrointestinal epithelium,epithelial cell,pattern
+Hepatocyte,epithelial cell,ontology
+Intestinal epithelium,epithelial cell,pattern
+MUC2+ goblet,epithelial cell,pattern
+Macrophage/monocyte 1,none,hand
+Macrophage/monocyte 2,none,hand
+Mesenchyme subtype 1,own label,hand
+Mesenchyme subtype 2,own label,hand
+Mesenchyme subtype 3,own label,hand
+Mesenchyme subtype 4,own label,hand
+Mesenchyme subtype 5,own label,hand
+Mesothelial cell,epithelial cell,ontology
+PNS glia,own label,hand
+PNS neuron,neuron,ontology
+Pericyte,pericyte,ontology
+Proliferative mesenchyme,own label,hand
+T cell/NK cell 1,none,hand
+T cell/NK cell 2,none,hand
+Undefined,none,pattern

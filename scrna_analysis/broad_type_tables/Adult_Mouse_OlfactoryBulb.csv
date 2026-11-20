@@ -1,0 +1,41 @@
+label,broad_type,how
+Astro1,astrocyte,pattern
+Astro2,astrocyte,pattern
+Astro3,astrocyte,pattern
+EC1,endothelial cell,pattern
+EC2,endothelial cell,pattern
+Mes1,fibroblast,hand
+Mes2,fibroblast,hand
+MicroG1,microglia,hand
+MicroG2,microglia,hand
+MicroG3,microglia,hand
+Mono,monocyte,pattern
+Mural1,pericyte,hand
+Mural2,pericyte,hand
+MyOligo,oligodendrocyte,hand
+Mφ,macrophage,pattern
+OEC1,own label,hand
+OEC2,own label,hand
+OEC3,own label,hand
+OEC4,own label,hand
+OEC5,own label,hand
+OPC,oligodendrocyte precursor cell,pattern
+RBCs,erythroid cell,ontology
+n01-OSNs,neuron,hand
+n02-PGC-1,neuron,hand
+n03-GC-1,neuron,hand
+n04-Immature,neuron,hand
+n05-PGC-2,neuron,hand
+n06-Transition,neuron,hand
+n07-GC-2,neuron,hand
+n08-PGC-3,neuron,hand
+n09-GC-3,neuron,hand
+n10-GC-4,neuron,hand
+n11-GC-5,neuron,hand
+n12-GC-6,neuron,hand
+n13-AstrocyteLike,astrocyte,hand
+n14-GC-7,neuron,hand
+n15-M/TC-1,neuron,hand
+n16-M/TC-2,neuron,hand
+n17-M/TC-3,neuron,hand
+n18-EPL-IN,neuron,hand

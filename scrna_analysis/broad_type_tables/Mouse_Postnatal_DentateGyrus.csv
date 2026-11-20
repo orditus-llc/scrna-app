@@ -1,0 +1,23 @@
+label,broad_type,how
+Astrocytes,astrocyte,ontology
+Cajal-Retzius,neuron,ontology
+Cck-Tox,neuron,hand
+Endothelial,endothelial cell,ontology
+GABA-Cnr1,neuron,pattern
+GABA-Lhx6,neuron,pattern
+Granule-immature,neuron,hand
+Granule-mature,neuron,hand
+Microglia,microglia,pattern
+Mossy-Adcyap1,neuron,hand
+Mossy-Cyp26b1,neuron,hand
+Mossy-Klk8,neuron,hand
+NFOL,oligodendrocyte,pattern
+Neuroblast_1,neural progenitor,pattern
+Neuroblast_2,neural progenitor,pattern
+OL,oligodendrocyte,hand
+OPC,oligodendrocyte precursor cell,pattern
+PVM,macrophage,hand
+Pericytes,pericyte,ontology
+Radial_Glia-like,neural progenitor,pattern
+VLMC,fibroblast,ontology
+nIPC,neural progenitor,hand

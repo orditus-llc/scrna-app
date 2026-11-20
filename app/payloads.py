@@ -1408,8 +1408,9 @@ def celltypist_info(run: AnalysisRun) -> dict[str, Any]:
     """CellTypist on the Cell Type Annotation page: the models offered for this species (whether each is
     downloaded), the one suggested from the species and tissue, and the one in use."""
     m = run.params.annotation.markers
-    return {"choices": celltypist_tools.model_choices(m.species, run.celltypist_dir),
-            "suggested": celltypist_tools.suggest_model(m.species, run.params.annotation.census.tissue),
+    tissue, stage = run.params.annotation.census.tissue, run.metadata.get("stage")
+    return {"choices": celltypist_tools.model_choices(m.species, run.celltypist_dir, tissue, stage),
+            "suggested": celltypist_tools.suggest_model(m.species, tissue, stage),
             "current": run.params.annotation.celltypist.model,
             "low_gene_match": celltypist_tools.LOW_GENE_MATCH,
             "citation": celltypist_tools.CITATION}

@@ -1,0 +1,60 @@
+label,broad_type,how
+B cycling,B cell,pattern
+B mem,B cell,pattern
+B mem activated,B cell,pattern
+B mem exhausted,B cell,pattern
+B naive,B cell,pattern
+Basal 1,epithelial cell,hand
+Basal 1 KHDRBS2+,epithelial cell,hand
+Basal 2,epithelial cell,hand
+Brush,epithelial cell,ontology
+Ciliated 1,epithelial cell,hand
+Ciliated 2,epithelial cell,hand
+Club,epithelial cell,ontology
+Cycling basal,epithelial cell,hand
+Cycling hillock,epithelial cell,hand
+Deuterosomal,epithelial cell,ontology
+Duct,epithelial cell,hand
+Goblet 1,epithelial cell,pattern
+Goblet 2 BPIFA2+,epithelial cell,pattern
+Goblet 2 PLAU+,epithelial cell,pattern
+Goblet 2 inflammatory,epithelial cell,pattern
+Hillock,epithelial cell,ontology
+Hillock precursor,epithelial cell,hand
+ILC,own label,hand
+Ionocyte,epithelial cell,ontology
+LC,dendritic cell,ontology
+MAIT,T cell,pattern
+Mac,macrophage,pattern
+Mac activated,macrophage,pattern
+Mast,mast cell,ontology
+Melanocyte,own label,ontology
+Mono CXCL10+,monocyte,pattern
+Mono GPBAR1+,monocyte,pattern
+Mono IL6+,monocyte,pattern
+NK cd56hi,NK cell,pattern
+NK cd56lo,NK cell,pattern
+NKT,T cell,pattern
+Neuroendocrine,neuron,ontology
+Neut,granulocyte,hand
+Plasma IgK,plasma cell,pattern
+Plasma IgL,plasma cell,pattern
+Secretory,epithelial cell,hand
+Secretory GALNT4+,epithelial cell,hand
+Squamous,epithelial cell,hand
+T CD4 CCR4+,T cell,pattern
+T CD4 mem,T cell,pattern
+T CD8 exhausted,T cell,pattern
+T CD8 mem 1,T cell,pattern
+T CD8 mem 2,T cell,pattern
+T CD8 mem 3,T cell,pattern
+T cycling,T cell,pattern
+T fh,T cell,pattern
+T gd,T cell,pattern
+T naive,T cell,pattern
+T reg,T cell,pattern
+Transit epi 1,epithelial cell,pattern
+Transit epi 2,epithelial cell,pattern
+cDC activated,dendritic cell,pattern
+fDC,dendritic cell,hand
+pDC,dendritic cell,ontology

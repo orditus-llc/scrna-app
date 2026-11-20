@@ -1,0 +1,50 @@
+label,broad_type,how
+CMP,blood stem/progenitor cell,pattern
+DC2_CYCLING,dendritic cell,pattern
+DEF_HSPC_1,blood stem/progenitor cell,pattern
+DEF_HSPC_2,blood stem/progenitor cell,pattern
+EARLY_ERYTHROID,erythroid cell,pattern
+ELP,blood stem/progenitor cell,hand
+ENDODERM,own label,ontology
+ENDOTHELIUM_AEC,endothelial cell,pattern
+ENDOTHELIUM_PROLIF_AEC,endothelial cell,pattern
+ENDOTHELIUM_PROLIF_SINUSOIDAL_EC,endothelial cell,pattern
+ENDOTHELIUM_SINUSOIDAL,endothelial cell,pattern
+ENDOTHELIUM_VWF,endothelial cell,pattern
+EOSINOPHIL_BASOPHIL,granulocyte,pattern
+EO_BASO_MAST_PRECURSOR,blood stem/progenitor cell,hand
+ERYTHROID,erythroid cell,pattern
+FIBROBLAST,fibroblast,ontology
+HE,endothelial cell,hand
+HSPC_1,blood stem/progenitor cell,pattern
+HSPC_2,blood stem/progenitor cell,pattern
+ILC_PRECURSOR,own label,hand
+IMMATURE_ENDOTHELIUM,endothelial cell,pattern
+LMPP,blood stem/progenitor cell,pattern
+LYMPHOID B LIN,B cell,hand
+MAC DC2,none,hand
+MACROPHAGE_IRON_RECYCLING,macrophage,pattern
+MACROPHAGE_KUPFFER_LIKE,macrophage,pattern
+MACROPHAGE_LYVE1_HIGH,macrophage,pattern
+MACROPHAGE_MICROGLIA,macrophage,hand
+MACROPHAGE_PRE_MAC,macrophage,pattern
+MACROPHAGE_PROLIFERATING,macrophage,pattern
+MAST_CELL,mast cell,ontology
+MEMP,blood stem/progenitor cell,hand
+MESOTHELIUM,epithelial cell,hand
+MID_ERYTHROID,erythroid cell,pattern
+MK,megakaryocyte/platelet,pattern
+MONO MAC DC2,none,hand
+MONO MAC PRE DC2,none,hand
+MONOCYTE_0,monocyte,pattern
+MONOCYTE_1,monocyte,pattern
+MONOCYTE_MACROPHAGE,none,hand
+MOP,blood stem/progenitor cell,hand
+NEUTROPHIL_PRECURSOR,granulocyte,pattern
+NK,NK cell,ontology
+PDC PRECURSOR,dendritic cell,pattern
+PRE DC2,dendritic cell,pattern
+PRIM_HSPC_1,blood stem/progenitor cell,pattern
+PRIM_HSPC_2,blood stem/progenitor cell,pattern
+PROMONOCYTE,blood stem/progenitor cell,ontology
+SMOOTH_MUSCLE,smooth muscle cell,ontology

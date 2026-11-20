@@ -1,0 +1,33 @@
+label,broad_type,how
+B cells,B cell,ontology
+B-cell lineage,B cell,pattern
+Cycling cells,none,hand
+DC,dendritic cell,pattern
+DC precursor,dendritic cell,pattern
+Double-negative thymocytes,T cell,pattern
+Double-positive thymocytes,T cell,pattern
+ETP,blood stem/progenitor cell,ontology
+Early MK,megakaryocyte/platelet,pattern
+Endothelial cells,endothelial cell,ontology
+Epithelial cells,epithelial cell,ontology
+Erythrocytes,erythroid cell,ontology
+Erythroid,erythroid cell,pattern
+Fibroblasts,fibroblast,ontology
+Granulocytes,granulocyte,ontology
+HSC/MPP,blood stem/progenitor cell,pattern
+ILC,NK cell,hand
+ILC precursor,own label,hand
+MNP,none,hand
+Macrophages,macrophage,ontology
+Mast cells,mast cell,ontology
+Megakaryocyte precursor,megakaryocyte/platelet,pattern
+Megakaryocytes/platelets,megakaryocyte/platelet,pattern
+Mono-mac,none,hand
+Monocyte precursor,monocyte,pattern
+Monocytes,monocyte,ontology
+Myelocytes,blood stem/progenitor cell,hand
+Plasma cells,plasma cell,ontology
+Promyelocytes,blood stem/progenitor cell,hand
+T cells,T cell,ontology
+pDC,dendritic cell,ontology
+pDC precursor,dendritic cell,pattern

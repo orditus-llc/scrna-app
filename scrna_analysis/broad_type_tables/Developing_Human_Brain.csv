@@ -1,0 +1,130 @@
+label,broad_type,how
+Brain erythrocytes,erythroid cell,pattern
+Brain fibroblasts,fibroblast,pattern
+Brain immune cells,none,hand
+Brain neuroblast,neural progenitor,pattern
+Brain neuron,neuron,pattern
+Brain neuronal IPC,neural progenitor,pattern
+Brain placode cells,own label,hand
+Brain radial glia,neural progenitor,pattern
+Brain vascular cells,none,hand
+Cerebellum glioblast,neural progenitor,pattern
+Cerebellum immune cells,none,hand
+Cerebellum neural crest cells,own label,hand
+Cerebellum neuroblast,neural progenitor,pattern
+Cerebellum neuron,neuron,pattern
+Cerebellum neuronal IPC,neural progenitor,pattern
+Cerebellum OPC,oligodendrocyte precursor cell,pattern
+Cerebellum radial glia,neural progenitor,pattern
+Cortex glioblast,neural progenitor,pattern
+Cortex immune cells,none,hand
+Cortex neuroblast,neural progenitor,pattern
+Cortex neuron,neuron,pattern
+Cortex neuronal IPC,neural progenitor,pattern
+Cortex OPC,oligodendrocyte precursor cell,pattern
+Cortex radial glia,neural progenitor,pattern
+Diencephalon glioblast,neural progenitor,pattern
+Diencephalon immune cells,none,hand
+Diencephalon neuroblast,neural progenitor,pattern
+Diencephalon neuron,neuron,pattern
+Diencephalon neuronal IPC,neural progenitor,pattern
+Diencephalon radial glia,neural progenitor,pattern
+Dorsal midbrain glioblast,neural progenitor,pattern
+Dorsal midbrain immune cells,none,hand
+Dorsal midbrain neuroblast,neural progenitor,pattern
+Dorsal midbrain neuron,neuron,pattern
+Dorsal midbrain neuronal IPC,neural progenitor,pattern
+Dorsal midbrain OPC,oligodendrocyte precursor cell,pattern
+Dorsal midbrain radial glia,neural progenitor,pattern
+Forebrain glioblast,neural progenitor,pattern
+Forebrain immune cells,none,hand
+Forebrain neural crest cells,own label,hand
+Forebrain neuroblast,neural progenitor,ontology
+Forebrain neuron,neuron,ontology
+Forebrain neuronal IPC,neural progenitor,pattern
+Forebrain OPC,oligodendrocyte precursor cell,pattern
+Forebrain radial glia,neural progenitor,pattern
+Head immune cells,none,hand
+Head neural crest cells,own label,hand
+Head neuroblast,neural progenitor,pattern
+Head neuron,neuron,pattern
+Head radial glia,neural progenitor,pattern
+Hindbrain glioblast,neural progenitor,pattern
+Hindbrain immune cells,none,hand
+Hindbrain neural crest cells,own label,hand
+Hindbrain neuroblast,neural progenitor,pattern
+Hindbrain neuron,neuron,pattern
+Hindbrain neuronal IPC,neural progenitor,pattern
+Hindbrain OPC,oligodendrocyte precursor cell,pattern
+Hindbrain radial glia,neural progenitor,pattern
+Hippocampus glioblast,neural progenitor,pattern
+Hippocampus immune cells,none,hand
+Hippocampus neuroblast,neural progenitor,pattern
+Hippocampus neuron,neuron,pattern
+Hippocampus neuronal IPC,neural progenitor,pattern
+Hippocampus OPC,oligodendrocyte precursor cell,pattern
+Hippocampus radial glia,neural progenitor,pattern
+Hypothalamus glioblast,neural progenitor,pattern
+Hypothalamus immune cells,none,hand
+Hypothalamus neuroblast,neural progenitor,pattern
+Hypothalamus neuron,neuron,pattern
+Hypothalamus neuronal IPC,neural progenitor,pattern
+Hypothalamus OPC,oligodendrocyte precursor cell,pattern
+Hypothalamus radial glia,neural progenitor,pattern
+Medulla glioblast,neural progenitor,pattern
+Medulla immune cells,none,hand
+Medulla neural crest cells,own label,hand
+Medulla neuroblast,neural progenitor,pattern
+Medulla neuron,neuron,pattern
+Medulla neuronal IPC,neural progenitor,pattern
+Medulla OPC,oligodendrocyte precursor cell,pattern
+Medulla radial glia,neural progenitor,pattern
+Midbrain glioblast,neural progenitor,pattern
+Midbrain immune cells,none,hand
+Midbrain neural crest cells,own label,hand
+Midbrain neuroblast,neural progenitor,pattern
+Midbrain neuron,neuron,pattern
+Midbrain neuronal IPC,neural progenitor,pattern
+Midbrain OPC,oligodendrocyte precursor cell,pattern
+Midbrain radial glia,neural progenitor,pattern
+Pons glioblast,neural progenitor,pattern
+Pons immune cells,none,hand
+Pons neural crest cells,own label,hand
+Pons neuroblast,neural progenitor,pattern
+Pons neuron,neuron,pattern
+Pons neuronal IPC,neural progenitor,pattern
+Pons OPC,oligodendrocyte precursor cell,pattern
+Pons radial glia,neural progenitor,pattern
+Striatum glioblast,neural progenitor,pattern
+Striatum immune cells,none,hand
+Striatum neuroblast,neural progenitor,pattern
+Striatum neuron,neuron,ontology
+Striatum neuronal IPC,neural progenitor,pattern
+Striatum radial glia,neural progenitor,pattern
+Subcortex glioblast,neural progenitor,pattern
+Subcortex immune cells,none,hand
+Subcortex neural crest cells,own label,hand
+Subcortex neuroblast,neural progenitor,pattern
+Subcortex neuron,neuron,pattern
+Subcortex neuronal IPC,neural progenitor,pattern
+Subcortex OPC,oligodendrocyte precursor cell,pattern
+Subcortex radial glia,neural progenitor,pattern
+Telencephalon glioblast,neural progenitor,pattern
+Telencephalon neuroblast,neural progenitor,pattern
+Telencephalon neuron,neuron,pattern
+Telencephalon neuronal IPC,neural progenitor,pattern
+Telencephalon radial glia,neural progenitor,pattern
+Thalamus glioblast,neural progenitor,pattern
+Thalamus immune cells,none,hand
+Thalamus neuroblast,neural progenitor,pattern
+Thalamus neuron,neuron,pattern
+Thalamus neuronal IPC,neural progenitor,pattern
+Thalamus OPC,oligodendrocyte precursor cell,pattern
+Thalamus radial glia,neural progenitor,pattern
+Ventral midbrain glioblast,neural progenitor,pattern
+Ventral midbrain immune cells,none,hand
+Ventral midbrain neuroblast,neural progenitor,pattern
+Ventral midbrain neuron,neuron,pattern
+Ventral midbrain neuronal IPC,neural progenitor,pattern
+Ventral midbrain OPC,oligodendrocyte precursor cell,pattern
+Ventral midbrain radial glia,neural progenitor,pattern

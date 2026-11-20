@@ -1,0 +1,135 @@
+label,broad_type,how
+Activated CD4 T,T cell,pattern
+Activated CD8 T,T cell,pattern
+Activated T,T cell,hand
+Adult Glia,own label,hand
+BEST2+ Goblet cell,epithelial cell,pattern
+BEST4+ epithelial,epithelial cell,pattern
+Branch A1 (iMN),neuron,hand
+Branch A2 (IPAN/IN),neuron,hand
+Branch A3 (IPAN/IN),neuron,hand
+Branch A4 (IN),neuron,hand
+Branch B1 (eMN),neuron,hand
+Branch B2 (eMN),neuron,hand
+Branch B3 (IPAN),neuron,hand
+CD8 Tmem,T cell,pattern
+CLC+ Mast cell,mast cell,pattern
+CLDN10+ cells,own label,hand
+CLP,blood stem/progenitor cell,pattern
+CX3CR1+ CD8 Tmem,T cell,pattern
+Colonocyte,epithelial cell,ontology
+Contractile pericyte (PLN+),pericyte,pattern
+Cycling B cell,B cell,ontology
+Cycling plasma cell,plasma cell,ontology
+D cells (SST+),epithelial cell,hand
+DZ GC cell,B cell,hand
+Differentiating glia,own label,hand
+Distal progenitor,epithelial cell,hand
+EC cells (NPW+),epithelial cell,hand
+EC cells (TAC1+),epithelial cell,hand
+EECs,epithelial cell,hand
+ENCC/glia Progenitor,own label,hand
+Enterocyte,epithelial cell,ontology
+FCRL4+ Memory B,B cell,pattern
+FDC,own label,hand
+Fetal arterial EC,endothelial cell,ontology
+Fetal venous EC,endothelial cell,pattern
+GC B cell,B cell,ontology
+Germ,own label,ontology
+Glia 1 (DHH+),own label,hand
+Glia 2 (ELN+),own label,hand
+Glia 3 (BCAN+),own label,hand
+Goblet cell,epithelial cell,ontology
+I cells (CCK+),epithelial cell,hand
+ICC,epithelial cell,hand
+ILC2,own label,ontology
+ILC3,own label,ontology
+ILCP,own label,hand
+IgA plasma cell,plasma cell,ontology
+IgG plasma cell,plasma cell,ontology
+IgM plasma cell,plasma cell,ontology
+Immature B,B cell,ontology
+Immature pericyte,pericyte,ontology
+K cells (GIP+),epithelial cell,hand
+L cells (PYY+),epithelial cell,hand
+LEC1 (ACKR4+),endothelial cell,hand
+LEC2 (MADCAM1+),endothelial cell,hand
+LEC3 (ADGRG3+),endothelial cell,hand
+LEC4 (STAB2+),endothelial cell,hand
+LEC5 (CLDN11+),endothelial cell,hand
+LEC6 (ADAMTS4+),endothelial cell,hand
+LTi-like NCR+ ILC3,own label,hand
+LTi-like NCR- ILC3,own label,hand
+LYVE1+ Macrophage,macrophage,pattern
+LZ GC cell,B cell,hand
+Lymphoid DC,dendritic cell,pattern
+M/X cells (MLN/GHRL+),epithelial cell,hand
+MAIT cell,T cell,pattern
+MMP9+ Inflammatory macrophage,macrophage,pattern
+MPO+ mono-neutrophil,none,hand
+Macrophages,macrophage,ontology
+Mast cell,mast cell,ontology
+Mature arterial EC,endothelial cell,pattern
+Mature venous EC,endothelial cell,pattern
+Megakaryocyte,megakaryocyte/platelet,ontology
+Memory B,B cell,ontology
+Mesoderm 1 (HAND1+),own label,hand
+Mesoderm 2 (ZEB2+),own label,hand
+Mesothelium,epithelial cell,hand
+Mesothelium (PRG4+),epithelial cell,hand
+Mesothelium (RGS5+),epithelial cell,hand
+Microfold cell,epithelial cell,ontology
+Monocytes,monocyte,ontology
+N cells (NTS+),epithelial cell,hand
+NK T cell,T cell,pattern
+NK cell,NK cell,ontology
+Naive B,B cell,ontology
+Neuroblast,neural progenitor,ontology
+Paneth,epithelial cell,ontology
+Pericyte,pericyte,ontology
+Pre-B,B cell,hand
+Pro-B,blood stem/progenitor cell,ontology
+Progenitor (NEUROG3+),epithelial cell,hand
+Proximal progenitor,epithelial cell,hand
+RBC,erythroid cell,ontology
+SELL+ CD4 T,T cell,pattern
+SELL+ CD8 T,T cell,pattern
+SMC (PART1/CAPN3+),smooth muscle cell,pattern
+SMC (PLPP2+),smooth muscle cell,pattern
+STAT1+ Naive B,B cell,pattern
+Stem cells,epithelial cell,hand
+Stromal 1 (ADAMDEC1+),own label,hand
+Stromal 1 (CCL11+),own label,hand
+Stromal 2 (CH25H+),own label,hand
+Stromal 2 (NPY+),own label,hand
+Stromal 3 (C7+),own label,hand
+Stromal 3 (KCNN3+),own label,hand
+Stromal 4 (MMP1+),own label,hand
+T reticular,fibroblast,hand
+TA,epithelial cell,hand
+TRDV2/TRGV9 gdT,T cell,pattern
+TRGV2 gdT,T cell,pattern
+TRGV4 gdT,T cell,pattern
+TRGV5/7 gdT,T cell,pattern
+Tfh,T cell,ontology
+Th1,T cell,ontology
+Th17,T cell,ontology
+Transitional Stromal 3 (C3+),own label,hand
+Treg,T cell,ontology
+Tuft,epithelial cell,ontology
+angiogenic pericyte,pericyte,ontology
+arterial capillary,endothelial cell,pattern
+cDC1,dendritic cell,pattern
+cDC2,dendritic cell,pattern
+cycling EC,endothelial cell,pattern
+cycling ENCC/glia,own label,hand
+cycling neuroblast,neural progenitor,pattern
+cycling stromal,own label,ontology
+gdT,T cell,pattern
+mLN Stroma (FMO2+),own label,hand
+mLTo,own label,hand
+myofibroblast,own label,ontology
+myofibroblast (RSPO2+),own label,hand
+pDC,dendritic cell,ontology
+venous capillary,endothelial cell,pattern
+β cells (INS+),epithelial cell,hand

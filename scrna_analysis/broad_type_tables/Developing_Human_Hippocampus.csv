@@ -1,0 +1,16 @@
+label,broad_type,how
+Astrocyte,astrocyte,ontology
+CGE_derived_InN,neuron,hand
+Cajal_Retzius,neuron,pattern
+DG ExN,neuron,hand
+Endothelial,endothelial cell,ontology
+Ependymal,ependymal cell,ontology
+MGE_derived_InN,neuron,hand
+Microglia,microglia,pattern
+Non-DG ExN,neuron,hand
+OL,oligodendrocyte,hand
+OPC,oligodendrocyte precursor cell,pattern
+Progenitor_1,neural progenitor,hand
+Progenitor_2,neural progenitor,hand
+Progenitor_3,neural progenitor,hand
+Progenitor_4,neural progenitor,hand

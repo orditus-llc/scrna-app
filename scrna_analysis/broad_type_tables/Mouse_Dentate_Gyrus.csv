@@ -1,0 +1,25 @@
+label,broad_type,how
+Astro-adult,astrocyte,pattern
+Astro-juv,astrocyte,pattern
+CA3-Pyr,neuron,hand
+Cajal-Retzius,neuron,ontology
+Endothelial,endothelial cell,ontology
+Ependymal,ependymal cell,ontology
+GABA,neuron,pattern
+GC-adult,neuron,hand
+GC-juv,neuron,hand
+Immature-Astro,astrocyte,pattern
+Immature-GABA,neuron,pattern
+Immature-GC,neuron,hand
+Immature-Pyr,neuron,hand
+MOL,oligodendrocyte,pattern
+MiCajal-Retziusoglia,microglia,hand
+NFOL,oligodendrocyte,pattern
+Neuroblast,neural progenitor,ontology
+OPC,oligodendrocyte precursor cell,pattern
+PVM,macrophage,hand
+RGL,neural progenitor,hand
+RGL_young,neural progenitor,hand
+VLMC,fibroblast,ontology
+nIPC,neural progenitor,hand
+nIPC-perin,neural progenitor,hand

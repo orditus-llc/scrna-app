@@ -1,0 +1,13 @@
+label,broad_type,how
+PP,epithelial cell,ontology
+alpha_MHC II,epithelial cell,hand
+alpha_immature,epithelial cell,hand
+alpha_mature,epithelial cell,hand
+alpha_stress II,epithelial cell,hand
+beta_MHC/autoantigen,epithelial cell,hand
+beta_immature,epithelial cell,hand
+beta_mature,epithelial cell,hand
+beta_mtDNA deficient,epithelial cell,hand
+beta_stress I,epithelial cell,hand
+beta_stress II,epithelial cell,hand
+delta,epithelial cell,hand

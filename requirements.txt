@@ -1,0 +1,41 @@
+# Main Python packages of the scRNA-seq analysis app, pinned to the versions it was built and tested with.
+# Python 3.11.
+#
+# The full, exact environment (every package, including the ones these pull in) is environment.yml:
+#     conda env create -f environment.yml
+# This file is a shorter list for pip users:
+#     pip install -r requirements.txt
+# The interface (React) is built separately with Node.js: see environment-ui.yml and app/package.json.
+
+# Single-cell analysis
+scanpy==1.11.5            # QC, normalization, highly variable genes, PCA, neighbors, UMAP, Leiden, marker genes
+anndata==0.12.19          # the data format (.h5ad)
+leidenalg==0.12.0         # Leiden clustering
+igraph==1.0.0             # graph library used by Leiden
+umap-learn==0.5.12        # UMAP
+
+# General numerics and tables
+numpy==2.4.6
+pandas==2.3.3
+scipy==1.17.1             # also the Fisher test in the marker check
+scikit-learn==1.9.1
+statsmodels==0.15.0
+h5py==3.16.0              # reads and writes .h5ad / 10x .h5 files
+matplotlib==3.10.9
+
+# Cell types, multiple samples, condition comparisons
+celltypist==1.7.1         # second check of cell types (ready-made models)
+cellxgene-census==1.18.0  # reference cells from CELLxGENE Census (marker tables)
+tiledbsoma==2.3.0         # used by cellxgene-census
+harmonypy==2.1.0          # Harmony batch correction
+pydeseq2==0.5.4           # pseudobulk gene changes (Compare Conditions)
+
+# App server
+shiny==1.8.0
+shinyreact==0.1.0         # connects the Shiny server to the React interface
+
+# Tests and notebooks
+pytest==9.1.1
+ipykernel==7.4.0
+nbconvert==7.17.1
+nbclient==0.11.0

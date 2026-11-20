@@ -1,0 +1,43 @@
+label,broad_type,how
+adip_cap_ec,endothelial cell,pattern
+aerocyte_ec,endothelial cell,pattern
+aorta_coronary_ec,endothelial cell,pattern
+aorta_coronary_smc,smooth muscle cell,pattern
+art_ec_1,endothelial cell,pattern
+art_ec_2,endothelial cell,pattern
+art_smc,smooth muscle cell,pattern
+blood_brain_barrier_ec,endothelial cell,pattern
+brain_art_ec,endothelial cell,pattern
+brain_art_smc,smooth muscle cell,pattern
+brain_ven_ec,endothelial cell,pattern
+bridging_lec,endothelial cell,pattern
+cap_ec,endothelial cell,pattern
+cap_lec,endothelial cell,pattern
+cap_pc,pericyte,hand
+ceiling_lec,endothelial cell,pattern
+endocardial_ec,endothelial cell,pattern
+endometrium_cap_ec,endothelial cell,pattern
+floor_lec,endothelial cell,pattern
+glomeruli_ec,endothelial cell,pattern
+kidney_art_ec,endothelial cell,pattern
+kidney_cap_ec,endothelial cell,pattern
+littoral_EC,endothelial cell,pattern
+myo_cap_ec,endothelial cell,pattern
+pericentral_cap_ec,endothelial cell,pattern
+perifollicular_sinus_lec,endothelial cell,pattern
+periportal_cap_ec,endothelial cell,pattern
+pul_art_ec,endothelial cell,pattern
+pul_cap_ec,endothelial cell,pattern
+pul_pc,pericyte,hand
+pul_smc,smooth muscle cell,pattern
+pul_tip_cap_ec,endothelial cell,pattern
+pul_ven_ec,endothelial cell,pattern
+smc_pc_intermediate,smooth muscle cell,hand
+spleen_art_ec,endothelial cell,pattern
+uterine_pc,pericyte,hand
+uterine_smc,smooth muscle cell,pattern
+valve_down_lec,endothelial cell,pattern
+valve_up_lec,endothelial cell,pattern
+ven_ec_1,endothelial cell,pattern
+ven_ec_2,endothelial cell,pattern
+ven_smc,smooth muscle cell,pattern

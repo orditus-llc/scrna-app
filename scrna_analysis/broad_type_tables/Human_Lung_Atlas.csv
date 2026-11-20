@@ -1,0 +1,62 @@
+label,broad_type,how
+AT0,epithelial cell,hand
+AT1,epithelial cell,pattern
+AT2,epithelial cell,pattern
+AT2 proliferating,epithelial cell,pattern
+Adventitial fibroblasts,fibroblast,ontology
+Alveolar Mph CCL3+,macrophage,hand
+Alveolar Mph MT-positive,macrophage,hand
+Alveolar Mph proliferating,macrophage,hand
+Alveolar fibroblasts,fibroblast,pattern
+Alveolar macrophages,macrophage,ontology
+B cells,B cell,ontology
+Basal resting,epithelial cell,hand
+CD4 T cells,T cell,pattern
+CD8 T cells,T cell,pattern
+Classical monocytes,monocyte,ontology
+Club (nasal),epithelial cell,pattern
+Club (non-nasal),epithelial cell,pattern
+DC1,dendritic cell,ontology
+DC2,dendritic cell,ontology
+Deuterosomal,epithelial cell,ontology
+EC aerocyte capillary,endothelial cell,pattern
+EC arterial,endothelial cell,pattern
+EC general capillary,endothelial cell,pattern
+EC venous pulmonary,endothelial cell,pattern
+EC venous systemic,endothelial cell,pattern
+Goblet (bronchial),epithelial cell,pattern
+Goblet (nasal),epithelial cell,pattern
+Goblet (subsegmental),epithelial cell,pattern
+Hematopoietic stem cells,blood stem/progenitor cell,ontology
+Hillock-like,epithelial cell,hand
+Interstitial Mph perivascular,macrophage,hand
+Ionocyte,epithelial cell,ontology
+Lymphatic EC differentiating,endothelial cell,pattern
+Lymphatic EC mature,endothelial cell,pattern
+Lymphatic EC proliferating,endothelial cell,pattern
+Mast cells,mast cell,ontology
+Mesothelium,epithelial cell,hand
+Migratory DCs,dendritic cell,pattern
+Monocyte-derived Mph,macrophage,pattern
+Multiciliated (nasal),epithelial cell,hand
+Multiciliated (non-nasal),epithelial cell,hand
+Myofibroblasts,own label,ontology
+NK cells,NK cell,ontology
+Neuroendocrine,neuron,hand
+Non-classical monocytes,monocyte,ontology
+Peribronchial fibroblasts,fibroblast,pattern
+Pericytes,pericyte,ontology
+Plasma cells,plasma cell,ontology
+Plasmacytoid DCs,dendritic cell,pattern
+SM activated stress response,smooth muscle cell,hand
+SMG duct,epithelial cell,hand
+SMG mucous,epithelial cell,hand
+SMG serous (bronchial),epithelial cell,hand
+SMG serous (nasal),epithelial cell,hand
+Smooth muscle,smooth muscle cell,ontology
+Smooth muscle FAM83D+,smooth muscle cell,pattern
+Subpleural fibroblasts,fibroblast,ontology
+Suprabasal,epithelial cell,ontology
+T cells proliferating,T cell,pattern
+Tuft,epithelial cell,ontology
+pre-TB secretory,epithelial cell,hand

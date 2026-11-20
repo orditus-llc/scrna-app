@@ -1,0 +1,26 @@
+label,broad_type,how
+Amacrine_1,neuron,hand
+Amacrine_2,neuron,hand
+Amacrine_3,neuron,hand
+Bipolar_1,neuron,hand
+Bipolar_2,neuron,hand
+Blood,none,hand
+Fibroblast,fibroblast,ontology
+Horizontal_1,neuron,hand
+Horizontal_2,neuron,hand
+Microglia,microglia,pattern
+Mu_ller,neural progenitor,hand
+Photoreceptor_1,neuron,hand
+Photoreceptor_2,neuron,hand
+Photoreceptor_3,neuron,hand
+RGC_1,neuron,hand
+RGC_2,neuron,hand
+RPC_1,neural progenitor,hand
+RPC_2,neural progenitor,hand
+RPC_3,neural progenitor,hand
+RPC_4,neural progenitor,hand
+RPC_5,neural progenitor,hand
+RPC_6,neural progenitor,hand
+RPE_1,epithelial cell,hand
+RPE_2,epithelial cell,hand
+RPE_3,epithelial cell,hand

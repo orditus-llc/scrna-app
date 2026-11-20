@@ -1,0 +1,118 @@
+label,broad_type,how
+Basal cells,epithelial cell,hand
+C1Q Slan-like,monocyte,hand
+CD14+CD55+ FDC,own label,hand
+CD16+CD56- NK,NK cell,pattern
+CD16-CD56+ NK,NK cell,pattern
+CD16-CD56dim NK,NK cell,pattern
+CD8 Tf,T cell,pattern
+CM CD8 T,T cell,pattern
+CM Pre-non-Tfh,T cell,pattern
+CM PreTfh,T cell,hand
+COL27A1+ FDC,own label,hand
+Crypt,epithelial cell,hand
+Cycling,none,hand
+DC recruiters CD8 T,T cell,pattern
+DC1 mature,dendritic cell,pattern
+DC1 precursor,dendritic cell,pattern
+DC2,dendritic cell,ontology
+DC3,dendritic cell,pattern
+DC4,dendritic cell,pattern
+DC5,dendritic cell,pattern
+DN,T cell,hand
+DZ cell cycle exit,B cell,hand
+DZ early G2Mphase,B cell,hand
+DZ early Sphase,B cell,hand
+DZ late G2Mphase,B cell,hand
+DZ late Sphase,B cell,hand
+DZ migratory PC precursor,plasma cell,pattern
+DZ non proliferative,B cell,hand
+DZ_LZ transition,B cell,hand
+EM CD8 T,T cell,pattern
+Early GC-commited NBC,B cell,hand
+Early MBC,B cell,hand
+Early PC precursor,plasma cell,pattern
+Eff-Tregs,T cell,pattern
+Eff-Tregs-IL32,T cell,pattern
+FDC,own label,hand
+FDCSP epithelium,epithelial cell,pattern
+FRC,fibroblast,hand
+GC DZ Noproli,B cell,hand
+GC-Tfh-OX40,T cell,pattern
+GC-Tfh-SAP,T cell,pattern
+GC-commited NBC,B cell,hand
+IFN+ CD8 T,T cell,pattern
+IFN1+ PDC,dendritic cell,pattern
+IL7R DC,dendritic cell,pattern
+ILC1,own label,ontology
+ITGAX Slan-like,monocyte,hand
+IgD PC precursor,plasma cell,pattern
+IgG+ PC precursor,plasma cell,pattern
+IgM+ PC precursor,plasma cell,pattern
+IgM+ early PC precursor,plasma cell,pattern
+LZ,B cell,hand
+LZ proliferative,B cell,hand
+LZ_DZ reentry commitment,B cell,hand
+LZ_DZ transition,B cell,hand
+M1 Macrophages,macrophage,ontology
+MAIT/CD161+TRDV2+ gd T-cells,T cell,pattern
+MBC FCRL5+,B cell,hand
+MBC derived IgA+ PC,plasma cell,pattern
+MBC derived IgG+ PC,plasma cell,pattern
+MBC derived PC precursor,plasma cell,pattern
+MBC derived early PC precursor,plasma cell,pattern
+MMP Slan-like,monocyte,hand
+MRC,fibroblast,hand
+Mast,mast cell,ontology
+Mature IgA+ PC,plasma cell,pattern
+Mature IgG+ PC,plasma cell,pattern
+Mature IgM+ PC,plasma cell,pattern
+Monocytes,monocyte,ontology
+NBC,B cell,hand
+NBC CD229+,B cell,hand
+NBC IFN-activated,B cell,hand
+NBC early activation,B cell,hand
+NKp44+ ILC3,own label,hand
+NKp44- ILC3,own label,hand
+Naive,T cell,hand
+Naive CD8 T,T cell,pattern
+Neutrophils,granulocyte,ontology
+Outer surface,epithelial cell,hand
+PB,plasma cell,pattern
+PB committed early PC precursor,plasma cell,pattern
+PC committed Light Zone GCBC,B cell,hand
+PDC,dendritic cell,ontology
+Precursor MBCs,B cell,hand
+Proliferative NBC,B cell,hand
+RM CD8 T,T cell,pattern
+RM CD8 activated T,T cell,pattern
+Reactivated proliferative MBCs,B cell,hand
+SCM CD8 T,T cell,pattern
+SELENOP Slan-like,monocyte,hand
+Short lived IgM+ PC,plasma cell,pattern
+Surface epithelium,epithelial cell,pattern
+T-Eff-Mem,T cell,pattern
+T-Trans-Mem,T cell,pattern
+T-helper,T cell,ontology
+TCRVδ+ gd T,T cell,pattern
+Tfh T:B border,T cell,pattern
+Tfh-LZ-GC,T cell,pattern
+Tfh-Mem,T cell,pattern
+Tfr,T cell,hand
+Transitional PB,plasma cell,pattern
+VEGFA+,own label,hand
+ZNF683+ CD8 T,T cell,pattern
+aDC1,dendritic cell,hand
+aDC2,dendritic cell,hand
+aDC3,dendritic cell,hand
+csMBC,B cell,hand
+csMBC FCRL4/5+,B cell,hand
+cycling FDC,own label,hand
+cycling T,T cell,ontology
+ncsMBC,B cell,hand
+ncsMBC FCRL4/5+,B cell,hand
+preB,B cell,pattern
+preGC,B cell,hand
+preMature IgG+ PC,plasma cell,pattern
+preMature IgM+ PC,plasma cell,pattern
+preT,T cell,hand

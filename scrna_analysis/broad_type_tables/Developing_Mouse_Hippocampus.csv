@@ -1,0 +1,12 @@
+label,broad_type,how
+Astro,astrocyte,pattern
+ChorPlex,epithelial cell,hand
+Ependymal,ependymal cell,ontology
+ExciteNeuron,neuron,pattern
+GranuleNB,neural progenitor,hand
+InhibNeuron,neuron,pattern
+Myeloid,none,hand
+NIPCs,neural progenitor,hand
+Oligo,oligodendrocyte,pattern
+RGL,neural progenitor,hand
+Vasc,none,hand

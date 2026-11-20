@@ -1,0 +1,33 @@
+label,broad_type,how
+DC1,dendritic cell,ontology
+DC2,dendritic cell,ontology
+EVT,own label,ontology
+Endo (f),endothelial cell,pattern
+Endo (m),endothelial cell,pattern
+Endo L,endothelial cell,pattern
+Epi1,epithelial cell,hand
+Epi2,epithelial cell,hand
+Granulocytes,granulocyte,ontology
+HB,macrophage,hand
+ILC3,own label,ontology
+MO,monocyte,pattern
+NK CD16+,NK cell,pattern
+NK CD16-,NK cell,pattern
+Plasma,plasma cell,ontology
+SCT,own label,hand
+Tcells,T cell,pattern
+VCT,own label,hand
+dM1,macrophage,hand
+dM2,macrophage,hand
+dM3,macrophage,hand
+dNK p,NK cell,hand
+dNK1,NK cell,hand
+dNK2,NK cell,hand
+dNK3,NK cell,hand
+dP1,pericyte,hand
+dP2,pericyte,hand
+dS1,own label,hand
+dS2,own label,hand
+dS3,own label,hand
+fFB1,fibroblast,hand
+fFB2,fibroblast,hand

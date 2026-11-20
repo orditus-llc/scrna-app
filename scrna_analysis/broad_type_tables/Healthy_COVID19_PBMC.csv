@@ -1,0 +1,52 @@
+label,broad_type,how
+ASDC,dendritic cell,pattern
+B_exhausted,B cell,pattern
+B_immature,B cell,pattern
+B_malignant,B cell,pattern
+B_naive,B cell,pattern
+B_non-switched_memory,B cell,pattern
+B_switched_memory,B cell,pattern
+C1_CD16_mono,monocyte,pattern
+CD14_mono,monocyte,pattern
+CD16_mono,monocyte,pattern
+CD4.CM,T cell,pattern
+CD4.EM,T cell,pattern
+CD4.IL22,T cell,pattern
+CD4.Naive,T cell,pattern
+CD4.Prolif,T cell,pattern
+CD4.Tfh,T cell,pattern
+CD4.Th1,T cell,pattern
+CD4.Th17,T cell,pattern
+CD4.Th2,T cell,pattern
+CD8.EM,T cell,pattern
+CD8.Naive,T cell,pattern
+CD8.Prolif,T cell,pattern
+CD8.TE,T cell,pattern
+CD83_CD14_mono,monocyte,pattern
+DC1,dendritic cell,ontology
+DC2,dendritic cell,ontology
+DC3,dendritic cell,pattern
+DC_prolif,dendritic cell,pattern
+HSC_CD38neg,blood stem/progenitor cell,pattern
+HSC_CD38pos,blood stem/progenitor cell,pattern
+HSC_MK,megakaryocyte/platelet,pattern
+HSC_erythroid,erythroid cell,pattern
+HSC_myeloid,blood stem/progenitor cell,pattern
+HSC_prolif,blood stem/progenitor cell,pattern
+ILC1_3,own label,hand
+ILC2,own label,ontology
+MAIT,T cell,pattern
+Mono_prolif,monocyte,pattern
+NKT,T cell,pattern
+NK_16hi,NK cell,pattern
+NK_56hi,NK cell,pattern
+NK_prolif,NK cell,pattern
+Plasma_cell_IgA,plasma cell,pattern
+Plasma_cell_IgG,plasma cell,pattern
+Plasma_cell_IgM,plasma cell,pattern
+Plasmablast,plasma cell,ontology
+Platelets,megakaryocyte/platelet,ontology
+RBC,erythroid cell,ontology
+Treg,T cell,ontology
+gdT,T cell,pattern
+pDC,dendritic cell,ontology

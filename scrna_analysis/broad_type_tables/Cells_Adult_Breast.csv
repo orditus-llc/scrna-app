@@ -1,0 +1,59 @@
+label,broad_type,how
+CD4-Tem,T cell,pattern
+CD4-Th,T cell,pattern
+CD4-Th-like,T cell,pattern
+CD4-Treg,T cell,pattern
+CD4-activated,T cell,pattern
+CD4-naive,T cell,pattern
+CD8-Tem,T cell,pattern
+CD8-Trm,T cell,pattern
+CD8-activated,T cell,pattern
+Fibro-SFRP4,fibroblast,pattern
+Fibro-major,fibroblast,pattern
+Fibro-matrix,fibroblast,pattern
+Fibro-prematrix,fibroblast,pattern
+GD,T cell,hand
+LummHR-SCGB,epithelial cell,hand
+LummHR-active,epithelial cell,hand
+LummHR-major,epithelial cell,hand
+Lumsec-HLA,epithelial cell,hand
+Lumsec-KIT,epithelial cell,hand
+Lumsec-basal,epithelial cell,hand
+Lumsec-lac,epithelial cell,hand
+Lumsec-major,epithelial cell,hand
+Lumsec-myo,epithelial cell,hand
+Lumsec-prol,epithelial cell,hand
+Lymph-immune,endothelial cell,hand
+Lymph-major,endothelial cell,hand
+Lymph-valve1,endothelial cell,hand
+Lymph-valve2,endothelial cell,hand
+Macro-IFN,macrophage,pattern
+Macro-lipo,macrophage,pattern
+Macro-m1,macrophage,pattern
+Macro-m1-CCL,macrophage,pattern
+Macro-m2,macrophage,pattern
+Macro-m2-CXCL,macrophage,pattern
+Mast,mast cell,ontology
+Mono-classical,monocyte,pattern
+Mono-non-classical,monocyte,pattern
+NK,NK cell,ontology
+NK-ILCs,none,hand
+NKT,T cell,pattern
+Neutrophil,granulocyte,ontology
+T_prol,T cell,pattern
+Vas-arterial,endothelial cell,pattern
+Vas-capillary,endothelial cell,pattern
+Vas-venous,endothelial cell,pattern
+b_naive,B cell,pattern
+basal,epithelial cell,hand
+bmem_switched,B cell,hand
+bmem_unswitched,B cell,hand
+cDC1,dendritic cell,pattern
+cDC2,dendritic cell,pattern
+mDC,dendritic cell,ontology
+mye-prol,none,hand
+pDC,dendritic cell,ontology
+pericytes,pericyte,ontology
+plasma_IgA,plasma cell,pattern
+plasma_IgG,plasma cell,pattern
+vsmc,smooth muscle cell,ontology

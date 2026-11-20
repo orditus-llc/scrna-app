@@ -1,0 +1,15 @@
+label,broad_type,how
+CC,own label,hand
+Corticotrope,neuron,hand
+EC,endothelial cell,pattern
+Gonadotrope,neuron,ontology
+Imm,none,hand
+Lactotrope,neuron,ontology
+MC,neuron,hand
+PP,epithelial cell,ontology
+Pre.Gonado,neuron,hand
+Pro.PIT1,own label,hand
+RBC,erythroid cell,ontology
+Somatotrope,neuron,ontology
+Stem,own label,ontology
+Thyrotrope,neuron,ontology

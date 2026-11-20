@@ -598,7 +598,8 @@ export interface AnnotationPayload {
   };
   census: { tissue: string | null; release: string; has_table: boolean; available: boolean };
   celltypist: {
-    choices: { model: string; details: string | null; version: string | null; downloaded: boolean }[];
+    // Suggested first, then other healthy-tissue models, then disease studies (`group` names each part).
+    choices: { model: string; group: string; details: string | null; version: string | null; downloaded: boolean }[];
     suggested: string | null;
     current: string | null;
     low_gene_match: number;

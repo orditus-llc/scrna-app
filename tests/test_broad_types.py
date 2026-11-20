@@ -3,6 +3,8 @@ Cell Ontology, and the CellTypist label tables."""
 
 from __future__ import annotations
 
+import csv
+
 import pytest
 
 from scrna_analysis import broad_types as bt
@@ -10,7 +12,9 @@ from scrna_analysis import celltypist_models as ct
 from scrna_analysis import census_markers as cm
 from scrna_analysis.params import CensusMarkerParams
 
-MODELS = ("Immune_All_Low.pkl", "Mouse_Whole_Brain.pkl", "Developing_Mouse_Brain.pkl")
+# Every model with a broad-type table (55 drafted 2026-11-16 + the 3 written earlier).
+MODELS = tuple(sorted(f"{p.stem}.pkl" for p in bt.TABLE_DIR.glob("*.csv")))
+HOW = {"ontology", "pattern", "hand", "ask"}  # how a row was found; "review" must not be left
 
 
 @pytest.fixture(scope="module")
@@ -82,6 +86,42 @@ def test_every_celltypist_label_is_in_its_table_once(model):
     assert table is not None, f"No broad-type table for {model}"
     assert set(table) == set(loaded.cell_types)
     assert set(table.values()) <= set(bt.VALUES)
+    with open(bt.table_path(model), newline="") as f:
+        rows = list(csv.DictReader(f))
+    assert {r.get("how") or "hand" for r in rows} <= HOW, f"{model} has rows still to review"
+
+
+def test_every_offered_model_has_a_table_and_the_drafts_are_complete():
+    assert len(MODELS) >= 58
+    for species in ("human", "mouse"):
+        for choice in ct.model_choices(species):
+            assert f"{choice['model'].removesuffix('.pkl')}.csv" in {p.name for p in bt.TABLE_DIR.glob("*.csv")}
+
+
+def test_draft_spot_checks_from_the_review():
+    tonsil = bt.celltypist_broad_types("Cells_Human_Tonsil.pkl")
+    assert tonsil["Mature IgG+ PC"] == "plasma cell"  # "PC" = plasma cell here, not pericyte
+    assert tonsil["Crypt"] == "epithelial cell"  # crypt epithelium, not the olfactory crypt neuron
+    assert bt.celltypist_broad_types("Adult_Human_Vascular.pkl")["cap_pc"] == "pericyte"  # here it is
+    assert bt.celltypist_broad_types("Healthy_COVID19_PBMC.pkl")["CD83_CD14_mono"] == "monocyte"  # CD83 isn't CD8
+    lung = bt.celltypist_broad_types("Human_Lung_Atlas.pkl")
+    assert lung["Plasmacytoid DCs"] == "dendritic cell" and lung["Monocyte-derived Mph"] == "macrophage"
+    gut = bt.celltypist_broad_types("Cells_Intestinal_Tract.pkl")
+    assert gut["EC cells (TAC1+)"] == "epithelial cell"  # enterochromaffin, not endothelial
+    assert bt.celltypist_broad_types("Healthy_Adult_Heart.pkl")["Purkinje_cell"] == bt.OWN_LABEL  # heart muscle
+    assert bt.celltypist_broad_types("Mouse_Dentate_Gyrus.pkl")["MiCajal-Retziusoglia"] == "microglia"  # garbled label
+
+
+def test_analyst_decisions_on_the_unclear_labels(ontology):
+    """The analyst's choices (2026-11-17) for the labels the draft couldn't settle."""
+    # Myelocytes follow the ontology, so they agree with a Census "myelocyte" answer.
+    census = bt.broad_type_of_term(ontology, term(ontology, "myelocyte"))
+    for model, label in (("Immune_All_Low.pkl", "Myelocytes"), ("Immune_All_High.pkl", "Promyelocytes"),
+                         ("Pan_Fetal_Human.pkl", "MYELOCYTE"), ("Cells_Fetal_Lung.pkl", "Myelocyte-like")):
+        assert bt.celltypist_broad_types(model)[label] == census
+    assert bt.celltypist_broad_types("Cells_Human_Tonsil.pkl")["FDC"] == bt.OWN_LABEL  # stromal, not immune DCs
+    assert bt.celltypist_broad_types("Immune_All_High.pkl")["ILC"] == "NK cell"  # the model has no NK label
+    assert bt.celltypist_broad_types("Mouse_Isocortex_Hippocampus.pkl")["SMC-Peri"] == "smooth muscle cell"
 
 
 def test_celltypist_tables_spot_checks():

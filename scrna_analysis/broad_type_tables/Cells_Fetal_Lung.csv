@@ -1,0 +1,145 @@
+label,broad_type,how
+ACTC+ SMC,smooth muscle cell,pattern
+APOE+ MΦ1,macrophage,hand
+APOE+ MΦ2,macrophage,hand
+ASPN+ chondrocyte,own label,hand
+AT1,epithelial cell,pattern
+AT2,epithelial cell,pattern
+Activated NK,NK cell,pattern
+Adventitial fibro,fibroblast,pattern
+Aerocyte,endothelial cell,hand
+Airway fibro,fibroblast,pattern
+Alveolar fibro,fibroblast,pattern
+Arterial endo,endothelial cell,pattern
+Basophil,granulocyte,ontology
+CD16+ NK,NK cell,pattern
+CD4 T,T cell,pattern
+CD5+ CCL22+ mature B,B cell,hand
+CD5+ CCL22- mature B,B cell,hand
+CD5- Mature B,B cell,hand
+CD56bright NK,NK cell,pattern
+CD8 T,T cell,pattern
+CMP,blood stem/progenitor cell,pattern
+COL20A1+ Schwann,own label,hand
+CX3CR1+ MΦ,macrophage,pattern
+CXCL9+ MΦ,macrophage,pattern
+Ciliated,epithelial cell,hand
+Club,epithelial cell,ontology
+Cycling DC,dendritic cell,pattern
+Cycling NK,NK cell,pattern
+Cycling T,T cell,ontology
+Cycling definitive erythroblast,erythroid cell,pattern
+DC1,dendritic cell,ontology
+DC2,dendritic cell,ontology
+DC3,dendritic cell,pattern
+Definitive erythroblast,erythroid cell,pattern
+Definitive erythrocyte,erythroid cell,pattern
+Definitive reticulocyte,erythroid cell,pattern
+Deuterosomal,epithelial cell,ontology
+Early Schwann,own label,hand
+Early airway progenitor,epithelial cell,hand
+Early cap,endothelial cell,pattern
+Early fibro,fibroblast,pattern
+Early mesothelial,epithelial cell,hand
+Early stalk,endothelial cell,hand
+Early tip,endothelial cell,hand
+Eosinophil,granulocyte,ontology
+FGFBP2+ Neural progenitor,neural progenitor,pattern
+GHRL+ NE precursor,neuron,hand
+GHRL+ neuroendocrine,neuron,hand
+GMP,blood stem/progenitor cell,pattern
+GRIA2+ arterial endo,endothelial cell,pattern
+HMOX1+ primitive erythroblast,erythroid cell,pattern
+HSC,blood stem/progenitor cell,pattern
+HSC/ELP,blood stem/progenitor cell,pattern
+ILC2,own label,ontology
+ILC3,own label,ontology
+ILCP,own label,hand
+Immature B,B cell,ontology
+Interm chondrocyte,own label,hand
+Interm fibro,fibroblast,pattern
+Interm neuroendocrine,neuron,hand
+Intermediate NK,NK cell,pattern
+Intermediate lymphatic endo,endothelial cell,pattern
+KCNIP4+ neuron,neuron,pattern
+Large pre-B,B cell,hand
+Late Schwann,own label,hand
+Late airway SMC,smooth muscle cell,pattern
+Late airway progenitor,epithelial cell,hand
+Late basal,epithelial cell,hand
+Late cap,endothelial cell,pattern
+Late mesothelial,epithelial cell,hand
+Late pre-B,B cell,hand
+Late pro-B,B cell,ontology
+Late stalk,endothelial cell,hand
+Late tip,endothelial cell,hand
+Lymphatic endo,endothelial cell,pattern
+MEP,blood stem/progenitor cell,ontology
+MFNG+ DBH+ neuron,neuron,pattern
+MUC16+ ciliated,epithelial cell,hand
+MUC5AC+ ASCL1+ progenitor,epithelial cell,hand
+MYL4+ SMC,smooth muscle cell,pattern
+Mast,mast cell,ontology
+Megakaryocyte,megakaryocyte/platelet,ontology
+Mesenchymal 1,own label,hand
+Mesenchymal 2,own label,hand
+Mesenchymal 3,own label,hand
+Mid Schwann,own label,hand
+Mid airway SMC 1,smooth muscle cell,pattern
+Mid airway SMC 2,smooth muscle cell,pattern
+Mid airway progenitor,epithelial cell,hand
+Mid basal,epithelial cell,hand
+Mid cap,endothelial cell,pattern
+Mid fibro,fibroblast,pattern
+Mid mesothelial,epithelial cell,hand
+Mid stalk,endothelial cell,hand
+Mid tip,endothelial cell,hand
+Myelocyte-like,blood stem/progenitor cell,hand
+Myofibro 1,own label,hand
+Myofibro 2,own label,hand
+Myofibro 3,own label,hand
+NKT1,T cell,hand
+NKT2,T cell,hand
+Neutrophil,granulocyte,ontology
+Non-cla. mono.,monocyte,pattern
+OMD+ endo,endothelial cell,pattern
+PCP4+ neuron,neuron,pattern
+Pericyte,pericyte,ontology
+Platelet,megakaryocyte/platelet,ontology
+Primitive erythrocyte,erythroid cell,ontology
+Pro-B,blood stem/progenitor cell,ontology
+Pro-B/Pre-B transition,B cell,hand
+Proliferating Schwann,own label,hand
+Promonocyte-like,blood stem/progenitor cell,hand
+Promyelocyte-like,blood stem/progenitor cell,hand
+Proximal basal,epithelial cell,hand
+Proximal secretory 1,epithelial cell,hand
+Proximal secretory 2,epithelial cell,hand
+Proximal secretory 3,epithelial cell,hand
+Proximal secretory progenitors,epithelial cell,hand
+Pulmonary NE precursor,neuron,hand
+Pulmonary neuroendocrine,neuron,ontology
+Resting chondrocyte,own label,hand
+S100A12-hi cla. mono.,monocyte,pattern
+S100A12-lo cla. mono.,monocyte,pattern
+SCG3+ lymphatic endothelial,endothelial cell,pattern
+SMG,epithelial cell,hand
+SMG basal,epithelial cell,hand
+SPP1+ MΦ,macrophage,pattern
+SST+ neuron,neuron,pattern
+Schwann precursor,own label,hand
+Squamous,epithelial cell,hand
+TM4SF4+ CHODL+ neuron,neuron,pattern
+TM4SF4+ PENK+ neuron,neuron,pattern
+Th17,T cell,ontology
+Treg,T cell,ontology
+Tαβ_Entry,T cell,hand
+Vascular SMC 1,smooth muscle cell,pattern
+Vascular SMC 2,smooth muscle cell,pattern
+Venous endo,endothelial cell,pattern
+aDC 1,dendritic cell,hand
+aDC 2,dendritic cell,hand
+pDC,dendritic cell,ontology
+pre-pDC/DC5,dendritic cell,pattern
+κ small pre-B,B cell,hand
+λ small pre-B,B cell,hand

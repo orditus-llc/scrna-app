@@ -1,0 +1,39 @@
+label,broad_type,how
+ATI,epithelial cell,hand
+ATII,epithelial cell,hand
+Aberrant_Basaloid,epithelial cell,hand
+B,B cell,ontology
+B_Plasma,plasma cell,pattern
+Basal,epithelial cell,hand
+Ciliated,epithelial cell,hand
+Club,epithelial cell,ontology
+DC_Langerhans,dendritic cell,pattern
+DC_Mature,dendritic cell,pattern
+Fibroblast,fibroblast,ontology
+Goblet,epithelial cell,ontology
+ILC_A,own label,hand
+ILC_B,own label,hand
+Ionocyte,epithelial cell,ontology
+Lymphatic,endothelial cell,pattern
+Macrophage,macrophage,ontology
+Macrophage_Alveolar,macrophage,pattern
+Mast,mast cell,ontology
+Mesothelial,epithelial cell,ontology
+Myofibroblast,own label,ontology
+NK,NK cell,ontology
+PNEC,neuron,hand
+Pericyte,pericyte,ontology
+SMC,smooth muscle cell,ontology
+T_CD4,T cell,pattern
+T_Cytotoxic,T cell,pattern
+T_Regulatory,T cell,pattern
+VE_Arterial,endothelial cell,pattern
+VE_Capillary_A,endothelial cell,pattern
+VE_Capillary_B,endothelial cell,pattern
+VE_Peribronchial,endothelial cell,hand
+VE_Venous,endothelial cell,pattern
+cDC1,dendritic cell,pattern
+cDC2,dendritic cell,pattern
+cMonocyte,monocyte,pattern
+ncMonocyte,monocyte,pattern
+pDC,dendritic cell,ontology

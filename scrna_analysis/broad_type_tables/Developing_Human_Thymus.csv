@@ -1,0 +1,56 @@
+label,broad_type,how
+B_memory,B cell,pattern
+B_naive,B cell,pattern
+B_plasma,plasma cell,pattern
+B_pro/pre,B cell,pattern
+CD4+CTL,T cell,pattern
+CD4+PD1,T cell,pattern
+CD4+T,T cell,pattern
+CD4+Tmem,T cell,pattern
+CD8+T,T cell,pattern
+CD8+Tmem,T cell,pattern
+CD8αα(I),T cell,pattern
+CD8αα(II),T cell,pattern
+DC1,dendritic cell,ontology
+DC2,dendritic cell,ontology
+DN(P),T cell,pattern
+DN(Q),T cell,pattern
+DN(early),T cell,pattern
+DP(P),T cell,pattern
+DP(Q),T cell,pattern
+ETP,blood stem/progenitor cell,ontology
+Endo,endothelial cell,pattern
+Epi_GCM2,epithelial cell,pattern
+Ery,erythroid cell,hand
+Fb_1,fibroblast,pattern
+Fb_2,fibroblast,pattern
+Fb_cycling,fibroblast,pattern
+ILC3,own label,ontology
+Lymph,none,hand
+Mac,macrophage,pattern
+Mast,mast cell,ontology
+Mgk,megakaryocyte/platelet,hand
+Mono,monocyte,pattern
+NK,NK cell,ontology
+NKT,T cell,pattern
+NMP,blood stem/progenitor cell,hand
+T(agonist),T cell,pattern
+TEC(myo),epithelial cell,hand
+TEC(neuro),epithelial cell,hand
+Tfh,T cell,ontology
+Th17,T cell,ontology
+Treg,T cell,ontology
+Treg(diff),T cell,pattern
+VSMC,smooth muscle cell,ontology
+aDC1,dendritic cell,hand
+aDC2,dendritic cell,hand
+aDC3,dendritic cell,hand
+cTEC,epithelial cell,ontology
+mTEC(I),epithelial cell,hand
+mTEC(II),epithelial cell,hand
+mTEC(III),epithelial cell,hand
+mTEC(IV),epithelial cell,hand
+mcTEC,epithelial cell,hand
+pDC,dendritic cell,ontology
+αβT(entry),T cell,hand
+γδT,T cell,pattern

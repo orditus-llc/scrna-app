@@ -1,0 +1,35 @@
+label,broad_type,how
+AT1,epithelial cell,pattern
+AT2,epithelial cell,pattern
+Artery EC,endothelial cell,pattern
+B cells,B cell,ontology
+CD4+ T cells metabolically active,T cell,pattern
+CD4+ Treg,T cell,pattern
+CD8+ T cells,T cell,pattern
+Capillary 1,endothelial cell,pattern
+Capillary 2,endothelial cell,pattern
+Capillary Aerocytes,endothelial cell,pattern
+Ciliated,epithelial cell,hand
+Epithelial,epithelial cell,ontology
+Fibroblast,fibroblast,ontology
+Inflammatory monocytes CD14hiCD16hi,monocyte,pattern
+KRT8+ PATS/ADI/DATPs,epithelial cell,hand
+Lymphatic EC,endothelial cell,pattern
+MAST,mast cell,ontology
+Macrophage CD163hi MERTKhi,macrophage,pattern
+Macrophage LDB2hi OSMRhi YAP1hi,macrophage,pattern
+Macrophage PPARGhi CD5Lhi,macrophage,pattern
+Macrophage VCANhi FCN1hi,macrophage,pattern
+Macrophage metabolically active,macrophage,pattern
+Mesothelial,epithelial cell,ontology
+Myofibroblast,own label,ontology
+NK cells,NK cell,ontology
+NK/NKT,none,hand
+Pericytes/ Smooth Muscle,pericyte,hand
+Plasma cells PRDM1/BLIMP hi,plasma cell,pattern
+Plasma cells PRDM1/BLIMP int,plasma cell,pattern
+Plasmablasts,plasma cell,ontology
+Proliferative fibroblast,fibroblast,pattern
+RBC,erythroid cell,ontology
+Secretory,epithelial cell,hand
+Vein EC,endothelial cell,pattern

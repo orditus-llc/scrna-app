@@ -1,0 +1,54 @@
+label,broad_type,how
+B cell,B cell,ontology
+CoelEpi_GATA2,epithelial cell,hand
+CoelEpi_LHX9,epithelial cell,hand
+CoelEpi_LHX9_cycling,epithelial cell,hand
+Endothelial,endothelial cell,ontology
+Epithelial,epithelial cell,ontology
+Erythroid,erythroid cell,pattern
+FetalLeydig,own label,hand
+GC,own label,hand
+GC_mitotic,own label,hand
+Gi,own label,hand
+ILC prec,own label,hand
+MEMP,blood stem/progenitor cell,hand
+Mesenchymal_GATA2,own label,hand
+NK,NK cell,ontology
+NMP,blood stem/progenitor cell,hand
+Neural,own label,ontology
+OSE,epithelial cell,hand
+Oi,own label,hand
+PGC,own label,hand
+PV,pericyte,hand
+SIGLEC15_ftM,macrophage,hand
+SMCs,smooth muscle cell,ontology
+Sertoli,epithelial cell,ontology
+TREM2_ftM,macrophage,hand
+Ti,own label,hand
+cDC1,dendritic cell,pattern
+cDC2,dendritic cell,pattern
+early T,T cell,hand
+early_sPAX8,own label,hand
+early_somatic,own label,hand
+early_supporting,own label,hand
+granulosa,epithelial cell,ontology
+late_sPAX8,own label,hand
+mast,mast cell,ontology
+mega,megakaryocyte/platelet,pattern
+mono,monocyte,pattern
+mono_DC prec,blood stem/progenitor cell,hand
+myeloid prog,blood stem/progenitor cell,hand
+neutro,granulocyte,hand
+oocyte,own label,ontology
+oogonia_STRA8,own label,hand
+oogonia_meiotic,own label,hand
+pDC prec,dendritic cell,pattern
+preGC_I,epithelial cell,hand
+preGC_IIa,epithelial cell,hand
+preGC_IIb,epithelial cell,hand
+pre_B,B cell,hand
+pre_oocyte,own label,hand
+pre_pro_B,blood stem/progenitor cell,hand
+pre_spermatogonia,own label,hand
+pro_B,blood stem/progenitor cell,hand
+tissue_repair mac,macrophage,pattern

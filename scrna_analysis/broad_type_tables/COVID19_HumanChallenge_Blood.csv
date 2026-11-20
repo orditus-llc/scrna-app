@@ -1,0 +1,84 @@
+label,broad_type,how
+AS-DC,dendritic cell,pattern
+B Naive,B cell,pattern
+B Naive IFN stim,B cell,pattern
+B Non-Switched FCRL3+,B cell,pattern
+B Non-Switched Memory,B cell,pattern
+B Non-Switched Memory IFN stim,B cell,pattern
+B Switched FCRL3+,B cell,pattern
+B Switched Memory,B cell,pattern
+B Switched Memory IFN stim,B cell,pattern
+Eosinophil/Basophil/Mast Progenitor,blood stem/progenitor cell,hand
+Haematopoietic Progenitor CD34+/CD38+,blood stem/progenitor cell,pattern
+Haematopoietic Progenitor CD34+/CD38+ IFN stim,blood stem/progenitor cell,pattern
+Haematopoietic Progenitor CD34+/CD38-,blood stem/progenitor cell,pattern
+ILC,own label,hand
+ILC IFN stim,own label,hand
+Lymphoid Progenitor,blood stem/progenitor cell,pattern
+Monocyte CD14+,monocyte,pattern
+Monocyte CD14+ IFN stim,monocyte,pattern
+Monocyte CD14+ Pro-inflammatory,monocyte,pattern
+Monocyte CD16+,monocyte,pattern
+Monocyte CD16+ C1+,monocyte,pattern
+Monocyte CD16+ IFN stim,monocyte,pattern
+Myeloid Progenitor,blood stem/progenitor cell,pattern
+NK,NK cell,ontology
+NK CD56+,NK cell,pattern
+NK CD56+ Cycling,NK cell,pattern
+NK Cycling,NK cell,pattern
+NK IFN stim,NK cell,pattern
+NKT,T cell,pattern
+Plasma Cell,plasma cell,ontology
+Plasmablast,plasma cell,ontology
+T CD4 Activated CTL,T cell,pattern
+T CD4 Activated CTL Cycling,T cell,pattern
+T CD4 Activated Helper 1,T cell,pattern
+T CD4 Activated Helper 1 Cycling,T cell,pattern
+T CD4 CTL,T cell,pattern
+T CD4 Follicular Helper,T cell,pattern
+T CD4 Helper 0,T cell,pattern
+T CD4 Helper 0 IFN stim,T cell,pattern
+T CD4 Helper 1,T cell,pattern
+T CD4 Helper 1 IFN stim,T cell,pattern
+T CD4 Helper 17,T cell,pattern
+T CD4 Helper 2,T cell,pattern
+T CD4 Helper 2 IFN stim,T cell,pattern
+T CD4 Naive,T cell,pattern
+T CD4 Naive IFN stim,T cell,pattern
+T CD4 Naive RTE,T cell,pattern
+T CD8 Activated CTL,T cell,pattern
+T CD8 Activated CTL Cycling,T cell,pattern
+T CD8 CM,T cell,pattern
+T CD8 CM IFN stim,T cell,pattern
+T CD8 CTL,T cell,pattern
+T CD8 CTL Cycling,T cell,pattern
+T CD8 CTL IFN stim,T cell,pattern
+T CD8 EM,T cell,pattern
+T CD8 EMRA,T cell,pattern
+T CD8 Naive,T cell,pattern
+T CD8 Naive IFN stim,T cell,pattern
+T CD8 Naive RTE,T cell,pattern
+T Double Negative,T cell,pattern
+T Double Negative Cycling,T cell,pattern
+T G/D CM,T cell,pattern
+T G/D CM IFN stim,T cell,pattern
+T G/D EM,T cell,pattern
+T G/D Immature,T cell,pattern
+T G/D Immature RTE,T cell,pattern
+T G/D non-Dv2/Gv9,T cell,pattern
+T MAI,T cell,pattern
+T MAI Activated,T cell,pattern
+T Reg Activated,T cell,pattern
+T Reg Activated Cycling,T cell,pattern
+T Reg CM,T cell,pattern
+T Reg CM GZMK+ IFNG+,T cell,pattern
+T Reg EM,T cell,pattern
+T Reg EM Cycling,T cell,pattern
+cDC1,dendritic cell,pattern
+cDC1 Cycling,dendritic cell,pattern
+cDC1 IFN stim,dendritic cell,pattern
+cDC2,dendritic cell,pattern
+cDC2 CD14+,dendritic cell,pattern
+cDC2 IFN stim,dendritic cell,pattern
+pDC,dendritic cell,ontology
+pDC IFN stim,dendritic cell,pattern

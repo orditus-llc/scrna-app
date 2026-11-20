@@ -1,0 +1,18 @@
+label,broad_type,how
+B cells,B cell,ontology
+Basophils,granulocyte,ontology
+Cholangiocytes,epithelial cell,ontology
+Endothelial cells,endothelial cell,ontology
+Fibroblasts,fibroblast,ontology
+Hepatocytes,epithelial cell,ontology
+HsPCs,blood stem/progenitor cell,pattern
+ILC1s,own label,ontology
+Kupffer cells,macrophage,ontology
+Mig. cDCs,dendritic cell,pattern
+Monocytes & Monocyte-derived cells,none,hand
+NK cells,NK cell,ontology
+Neutrophils,granulocyte,ontology
+T cells,T cell,ontology
+cDC1s,dendritic cell,hand
+cDC2s,dendritic cell,hand
+pDCs,dendritic cell,ontology

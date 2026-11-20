@@ -143,6 +143,7 @@ function AnnotationContent({ workflow, data, step, onNavigate }: PageProps & { d
                   ...data.celltypist.choices.map((c) => ({
                     value: c.model,
                     label: `${c.model.replace(/\.pkl$/, "").replaceAll("_", " ")}${c.downloaded ? "" : " (not downloaded)"}`,
+                    group: c.group,
                   })),
                   { value: "", label: census.has_table ? "None (marker check only)" : "None" },
                 ]}
@@ -503,7 +504,7 @@ function AnnotationResults({ results }: { results: Results }) {
           />
         )}
         {view === "review" && (
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-9">
             {split.toReview.length === 0 ? (
               <Note dot="bg-ok">
                 Every cluster is labeled.{" "}
@@ -513,10 +514,10 @@ function AnnotationResults({ results }: { results: Results }) {
               </Note>
             ) : (
               split.toReview.map((g) => (
-                <section key={g.key} aria-label={g.label} className="flex flex-col gap-2">
-                  <h3 className="m-0 flex items-center gap-2 text-[14px] font-bold text-ink">
+                <section key={g.key} aria-label={g.label} className="flex flex-col gap-3">
+                  <h3 className="m-0 flex items-center gap-2 border-b-2 border-ink pb-1.5 text-[16px] font-extrabold text-ink">
                     <span>
-                      {g.label} <span className="font-normal text-muted">· {g.clusters.length} {g.clusters.length === 1 ? "cluster" : "clusters"}</span>
+                      {g.label} <span className="text-[14px] font-semibold text-muted">· {g.clusters.length} {g.clusters.length === 1 ? "cluster" : "clusters"}</span>
                     </span>
                     {g.description && <InfoTip label={`About ${g.label}`}>{g.description}</InfoTip>}
                   </h3>
@@ -1175,7 +1176,7 @@ function Evidence({
 
       {candidates.length > 0 && (
         <PanelSection
-          title="Likely cell types"
+          title="Marker check: best matches"
           info={
             <>
               The marker check's best {candidates.length} of {fmt(nTested)} cell types in {referenceName(results)}: how strongly
@@ -1190,16 +1191,21 @@ function Evidence({
             label={`Best candidate cell types for cluster ${cluster}`}
             download={{
               name: `Cell Type Annotation cluster ${cluster} candidates`,
-              title: `Cluster ${cluster}: best candidate cell types in ${referenceName(results)} (−log₁₀ adjusted p-value; dashed line = significance level)`,
+              title: `Cluster ${cluster}: marker check's best matches in ${referenceName(results)} (−log₁₀ adjusted p-value; dashed line = significance level)`,
             }}
           />
         </PanelSection>
       )}
 
-      <TopGenes results={results} cluster={cluster} final={final} candidates={candidates} />
-
-      <MoreSection title="More details">
-        <div className="flex flex-col gap-3">
+      <PanelSection
+        title="Best candidates"
+        info={
+          <>
+            Both answers are compared as broad cell types (for example T cell, monocyte, neuron). The suggestion is a cell
+            type when they agree, or when one is confident and the other gives no confident answer.
+          </>
+        }
+      >
           <dl className="m-0 grid grid-cols-[max-content_minmax(0,1fr)] gap-x-6 gap-y-[6px] text-[14px]">
             <dt className="text-muted">Marker check, best candidate</dt>
             <dd className="m-0 font-bold">
@@ -1257,14 +1263,17 @@ function Evidence({
               </>
             )}
           </dl>
-          <p className="m-0 text-[13px] text-muted">
-            Both answers are compared as broad cell types (for example T cell, monocyte, neuron). The suggestion is a cell
-            type when they agree, or when one is confident and the other gives no confident answer.
-          </p>
-          {candidates.length > 0 && (
+      </PanelSection>
+
+      <TopGenes results={results} cluster={cluster} final={final} candidates={candidates} />
+
+      {candidates.length > 0 && (
+        // Open at first where the checks disagree or neither is confident (Low confidence), so the full table is in view.
+        <MoreSection title="More details" defaultOpen={final?.review_group === "disagree" || final?.review_group === "no_suggestion"}>
+          <div className="flex flex-col gap-3">
             <>
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <span className="text-[13px] font-bold">Likely cell types as a table</span>
+                <span className="text-[13px] font-bold">Marker check: best matches as a table</span>
                 <CsvDownload
                   name={`Cell Type Annotation cluster ${cluster} candidates`}
                   columns={[
@@ -1304,9 +1313,9 @@ function Evidence({
                 </table>
               </div>
             </>
-          )}
-        </div>
-      </MoreSection>
+          </div>
+        </MoreSection>
+      )}
     </section>
   );
 }

@@ -1,0 +1,43 @@
+label,broad_type,how
+AS-DC,dendritic cell,pattern
+B invar,B cell,pattern
+B n-sw mem,B cell,pattern
+B n-sw mem IFN stim,B cell,pattern
+B naive,B cell,pattern
+B naive IFN stim,B cell,pattern
+B sw mem,B cell,pattern
+Baso/Eos,granulocyte,hand
+Cycling,none,hand
+HPC,blood stem/progenitor cell,hand
+HPC IFN stim,blood stem/progenitor cell,hand
+ILC,own label,hand
+MAIT,T cell,pattern
+Monocyte CD14,monocyte,pattern
+Monocyte CD14 IFN stim,monocyte,pattern
+Monocyte CD14 IL6,monocyte,pattern
+Monocyte CD16,monocyte,pattern
+Monocyte CD16 IFN stim,monocyte,pattern
+Monocyte CD16+C1,monocyte,pattern
+NK,NK cell,ontology
+NK CD56,NK cell,pattern
+NK IFN stim,NK cell,pattern
+NKT,T cell,pattern
+Plasma cells,plasma cell,ontology
+Plasmablasts,plasma cell,ontology
+Platelets,megakaryocyte/platelet,ontology
+RBC,erythroid cell,ontology
+T CD4 CTL,T cell,pattern
+T CD4 helper,T cell,pattern
+T CD4 naive,T cell,pattern
+T CD4 naive IFN stim,T cell,pattern
+T CD8 CM,T cell,pattern
+T CD8 CTL,T cell,pattern
+T CD8 CTL IFN stim,T cell,pattern
+T CD8 EM,T cell,pattern
+T CD8 EMRA,T cell,pattern
+T CD8 naive,T cell,pattern
+T g/d,T cell,pattern
+T reg,T cell,pattern
+cDC1,dendritic cell,pattern
+cDC2,dendritic cell,pattern
+pDC,dendritic cell,ontology

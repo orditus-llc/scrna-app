@@ -1,0 +1,114 @@
+label,broad_type,how
+Astro AQP4 OSMR,astrocyte,pattern
+Astro AQP4 SLC1A2,astrocyte,pattern
+Astro GFAP AQP1,astrocyte,pattern
+Astro GFAP FABP7,astrocyte,pattern
+B EBF1 IGKC,B cell,pattern
+COP GPR17 SOX4,oligodendrocyte precursor cell,pattern
+Endo CLDN5 DKK2,endothelial cell,pattern
+Endo CLDN5 IL1R1,endothelial cell,pattern
+Endo CLDN5 SLC7A5,endothelial cell,pattern
+InN ADARB2 CADPS2,neuron,hand
+InN ADARB2 CALCR,neuron,hand
+InN ADARB2 COL5A2,neuron,hand
+InN ADARB2 FAM19A1,neuron,hand
+InN ADARB2 PALMD,neuron,hand
+InN ADARB2 RGS10,neuron,hand
+InN ADARB2 SFRP2,neuron,hand
+InN LAMP5 ADAMTS20,neuron,pattern
+InN LAMP5 BMP7,neuron,pattern
+InN LAMP5 LHX6 PROX1,neuron,pattern
+InN LAMP5 LHX6 TAC1,neuron,pattern
+InN LAMP5 MEIS2,neuron,pattern
+InN LAMP5 RELN,neuron,pattern
+InN LHX6 HGF STON2,neuron,hand
+InN PVALB ANOS1,neuron,pattern
+InN PVALB GRIN2C,neuron,pattern
+InN PVALB HPSE,neuron,pattern
+InN PVALB PDE3A,neuron,pattern
+InN PVALB PIEZO2,neuron,pattern
+InN PVALB PRKCH,neuron,pattern
+InN PVALB SNTB1,neuron,pattern
+InN PVALB SYT2,neuron,pattern
+InN SST ADAMTSL1,neuron,pattern
+InN SST ADRA1D,neuron,pattern
+InN SST ANKRD33B,neuron,pattern
+InN SST FREM1,neuron,pattern
+InN SST HGF GABRQ,neuron,pattern
+InN SST HS3ST5,neuron,pattern
+InN SST HTR2C,neuron,pattern
+InN SST KLHL14,neuron,pattern
+InN SST NPY,neuron,pattern
+InN SST PLPP4,neuron,pattern
+InN SST STK32A,neuron,pattern
+InN SST THSD7B,neuron,pattern
+InN SST TRPC7,neuron,pattern
+InN VIP ADAM12,neuron,pattern
+InN VIP CLSTN2,neuron,pattern
+InN VIP EGF,neuron,pattern
+InN VIP EXPH5,neuron,pattern
+InN VIP FREM2,neuron,pattern
+InN VIP HS3ST3B1,neuron,pattern
+InN VIP MDGA1,neuron,pattern
+InN VIP MEGF11 LHFP,neuron,pattern
+InN VIP PENK,neuron,pattern
+InN VIP SCML4,neuron,pattern
+L2-3 CUX2 ACVR1C INHBA,neuron,pattern
+L2-3 CUX2 ACVR1C THSD7A,neuron,pattern
+L2-3 CUX2 ARHGAP18,neuron,pattern
+L2-3 CUX2 NTNG1 COL5A2,neuron,pattern
+L2-3 CUX2 NTNG1 PALMD,neuron,pattern
+L2-3 CUX2 NTNG1 PLCH1,neuron,pattern
+L2-3 CUX2 PLCXD3,neuron,pattern
+L2-4 CUX2 RORB CLMN,neuron,pattern
+L3-5 RORB GABRG1 KCNH7,neuron,pattern
+L3-5 RORB GABRG1 PLCH1,neuron,pattern
+L3-5 RORB GABRG1 PTPRO,neuron,pattern
+L3-5 RORB MKX DCC,neuron,pattern
+L3-5 RORB MKX GALR1,neuron,pattern
+L3-5 RORB MKX GRIN3A,neuron,pattern
+L3-5 RORB MKX SCN5A,neuron,pattern
+L3-5 RORB PCBP3 ARHGAP15,neuron,pattern
+L3-5 RORB PCBP3 IL1RAPL2,neuron,pattern
+L3-5 RORB PCBP3 LINGO2,neuron,pattern
+L3-5 RORB TNNT2 PRRX1,neuron,pattern
+L3-5 RORB TNNT2 TSHZ2,neuron,pattern
+L5 FEZF2 BCL11B POU3F1,neuron,pattern
+L5-6 FEZF2 NXPH2 CDH8,neuron,pattern
+L5-6 FEZF2 NXPH2 GPC5,neuron,pattern
+L5-6 FEZF2 NXPH2 GRIK1,neuron,pattern
+L5-6 FEZF2 NXPH2 SORCS3,neuron,pattern
+L6 FEZF2 AMOTL1 CDH6,neuron,pattern
+L6 FEZF2 DCBLD1 MITF,neuron,pattern
+L6 FEZF2 EYA1,neuron,pattern
+L6 FEZF2 HCRTR2 THSD7B,neuron,pattern
+L6 FEZF2 NPFFR2 KCNK2,neuron,pattern
+L6 FEZF2 NPFFR2 TPD52L1,neuron,pattern
+L6 FEZF2 SYT6 CDH9,neuron,pattern
+L6 FEZF2 SYT6 ERBB4,neuron,pattern
+L6 FEZF2 SYT6 PTPRT,neuron,pattern
+L6 FEZF2 SYT6 SULF1,neuron,pattern
+L6 OPRK1 SMYD1 ADAMTS17,neuron,pattern
+L6 OPRK1 SMYD1 KCND2,neuron,pattern
+L6 OPRK1 SMYD1 SNTB1,neuron,pattern
+L6 OPRK1 SMYD1 TSHZ2,neuron,pattern
+L6 OPRK1 THEMIS RGS6,neuron,pattern
+Macro F13A1 COLEC12,macrophage,pattern
+Micro P2RY12 APBB1IP,microglia,pattern
+Micro P2RY12 CCL3,microglia,pattern
+Micro P2RY12 GLDN,microglia,pattern
+Myeloid LSP1 LYZ,none,hand
+OPC PDGFRA PCDH15,oligodendrocyte precursor cell,pattern
+Oligo MOG CDH7,oligodendrocyte,pattern
+Oligo MOG FRY,oligodendrocyte,pattern
+Oligo MOG GSN,oligodendrocyte,pattern
+Oligo MOG OPALIN,oligodendrocyte,pattern
+PC P2RY14 GRM8,plasma cell,pattern
+RB HBA1 HBB,erythroid cell,hand
+SMC ACTA2 CNN1,smooth muscle cell,pattern
+SMC ACTA2 CRISPLD2,smooth muscle cell,pattern
+SMC ACTA2 CYP1B1,smooth muscle cell,pattern
+T SKAP1 CD247,T cell,pattern
+VLMC COL1A2 SLC13A3,fibroblast,hand
+VLMC COL1A2 VLMCA8,fibroblast,hand
+VLMC SLC47A1 SLC4A4,fibroblast,hand

@@ -65,7 +65,7 @@ Migratory DCs,dendritic cell
 Mono-mac,none
 Monocyte precursor,monocyte
 Monocytes,monocyte
-Myelocytes,granulocyte
+Myelocytes,blood stem/progenitor cell
 NK cells,NK cell
 NKT cells,T cell
 Naive B cells,B cell
@@ -77,7 +77,7 @@ Plasmablasts,plasma cell
 Pre-pro-B cells,B cell
 Pro-B cells,B cell
 Proliferative germinal center B cells,B cell
-Promyelocytes,granulocyte
+Promyelocytes,blood stem/progenitor cell
 Regulatory T cells,T cell
 Small pre-B cells,B cell
 T(agonist),T cell

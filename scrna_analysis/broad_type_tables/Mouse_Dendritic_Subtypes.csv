@@ -1,0 +1,11 @@
+label,broad_type,how
+DC3,dendritic cell,pattern
+cDC1,dendritic cell,pattern
+cDC2A,dendritic cell,hand
+cDC2B,dendritic cell,hand
+pDC,dendritic cell,ontology
+pre-cDC1,dendritic cell,pattern
+pre-cDC2A,dendritic cell,hand
+pre-cDC2B,dendritic cell,hand
+pro-DC3,dendritic cell,pattern
+tDC,dendritic cell,hand

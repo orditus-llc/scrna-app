@@ -1,0 +1,19 @@
+label,broad_type,how
+Chondrocytes,own label,ontology
+Cochlear duct floor lateral,epithelial cell,hand
+Cochlear duct floor medial,epithelial cell,hand
+Cochlear duct floor prosensory,epithelial cell,hand
+Cochlear roof cells,epithelial cell,hand
+Cycling cells,none,hand
+Dark cells,epithelial cell,hand
+Endothelial cells,endothelial cell,ontology
+Glial cells,own label,ontology
+Hair cells,own label,hand
+Macrophages,macrophage,ontology
+Melanocytes,own label,ontology
+Neurons,neuron,ontology
+POM,own label,hand
+Transitional or endolymphatic cells,epithelial cell,hand
+Vestibular epithelial cells,epithelial cell,pattern
+Vestibular roof cells,epithelial cell,hand
+Vestibular supporting cells,epithelial cell,hand

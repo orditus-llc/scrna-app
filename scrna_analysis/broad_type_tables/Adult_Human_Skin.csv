@@ -1,0 +1,35 @@
+label,broad_type,how
+DC1,dendritic cell,ontology
+DC2,dendritic cell,ontology
+Differentiated_KC,epithelial cell,hand
+F1,fibroblast,hand
+F2,fibroblast,hand
+F3,fibroblast,hand
+ILC1_3,own label,hand
+ILC1_NK,NK cell,pattern
+ILC2,own label,ontology
+Inf_mac,macrophage,pattern
+LC,dendritic cell,ontology
+LE1,endothelial cell,hand
+LE2,endothelial cell,hand
+Macro_1,macrophage,pattern
+Macro_2,macrophage,pattern
+Mast_cell,mast cell,ontology
+Melanocyte,own label,ontology
+MigDC,dendritic cell,pattern
+Mono_mac,none,hand
+NK,NK cell,ontology
+Pericyte_1,pericyte,pattern
+Pericyte_2,pericyte,pattern
+Plasma,plasma cell,ontology
+Schwann_1,own label,hand
+Schwann_2,own label,hand
+Tc,T cell,hand
+Th,T cell,hand
+Treg,T cell,ontology
+Undifferentiated_KC,epithelial cell,hand
+VE1,endothelial cell,hand
+VE2,endothelial cell,hand
+VE3,endothelial cell,hand
+migLC,dendritic cell,hand
+moDC,dendritic cell,hand

@@ -1,0 +1,18 @@
+label,broad_type,how
+B cells,B cell,ontology
+Basophils,granulocyte,ontology
+Cholangiocytes,epithelial cell,ontology
+Circulating NK/NKT,none,hand
+Endothelial cells,endothelial cell,ontology
+Fibroblasts,fibroblast,ontology
+Hepatocytes,epithelial cell,ontology
+Macrophages,macrophage,ontology
+Mig.cDCs,dendritic cell,pattern
+Mono+mono derived cells,none,hand
+Neutrophils,granulocyte,ontology
+Plasma cells,plasma cell,ontology
+Resident NK,NK cell,pattern
+T cells,T cell,ontology
+cDC1s,dendritic cell,hand
+cDC2s,dendritic cell,hand
+pDCs,dendritic cell,ontology

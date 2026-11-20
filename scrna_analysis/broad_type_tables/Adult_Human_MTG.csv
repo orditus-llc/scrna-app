@@ -1,0 +1,128 @@
+label,broad_type,how
+Astro_1,astrocyte,pattern
+Astro_2,astrocyte,pattern
+Astro_3,astrocyte,pattern
+Astro_4,astrocyte,pattern
+Astro_5,astrocyte,pattern
+Chandelier_1,neuron,pattern
+Chandelier_2,neuron,pattern
+Endo_1,endothelial cell,pattern
+Endo_2,endothelial cell,pattern
+Endo_3,endothelial cell,pattern
+L2/3 IT_1,neuron,pattern
+L2/3 IT_10,neuron,pattern
+L2/3 IT_12,neuron,pattern
+L2/3 IT_13,neuron,pattern
+L2/3 IT_2,neuron,pattern
+L2/3 IT_3,neuron,pattern
+L2/3 IT_5,neuron,pattern
+L2/3 IT_6,neuron,pattern
+L2/3 IT_7,neuron,pattern
+L2/3 IT_8,neuron,pattern
+L4 IT_1,neuron,pattern
+L4 IT_2,neuron,pattern
+L4 IT_3,neuron,pattern
+L4 IT_4,neuron,pattern
+L5 ET_1,neuron,pattern
+L5 ET_2,neuron,pattern
+L5 IT_1,neuron,pattern
+L5 IT_2,neuron,pattern
+L5 IT_3,neuron,pattern
+L5 IT_5,neuron,pattern
+L5 IT_6,neuron,pattern
+L5 IT_7,neuron,pattern
+L5/6 NP_1,neuron,pattern
+L5/6 NP_2,neuron,pattern
+L5/6 NP_3,neuron,pattern
+L5/6 NP_4,neuron,pattern
+L5/6 NP_6,neuron,pattern
+L6 CT_1,neuron,pattern
+L6 CT_2,neuron,pattern
+L6 CT_3,neuron,pattern
+L6 CT_4,neuron,pattern
+L6 IT Car3_1,neuron,pattern
+L6 IT Car3_2,neuron,pattern
+L6 IT Car3_3,neuron,pattern
+L6 IT_1,neuron,pattern
+L6 IT_2,neuron,pattern
+L6b_1,neuron,pattern
+L6b_2,neuron,pattern
+L6b_3,neuron,pattern
+L6b_4,neuron,pattern
+L6b_5,neuron,pattern
+L6b_6,neuron,pattern
+Lamp5_1,neuron,pattern
+Lamp5_2,neuron,pattern
+Lamp5_3,neuron,pattern
+Lamp5_4,neuron,pattern
+Lamp5_5,neuron,pattern
+Lamp5_6,neuron,pattern
+Lamp5_Lhx6_1,neuron,pattern
+Micro-PVM_1,microglia,pattern
+Micro-PVM_2,microglia,pattern
+OPC_1,oligodendrocyte precursor cell,pattern
+OPC_2,oligodendrocyte precursor cell,pattern
+Oligo_1,oligodendrocyte,pattern
+Oligo_2,oligodendrocyte,pattern
+Oligo_3,oligodendrocyte,pattern
+Oligo_4,oligodendrocyte,pattern
+Pax6_1,neuron,hand
+Pax6_2,neuron,hand
+Pax6_3,neuron,hand
+Pax6_4,neuron,hand
+Pvalb_1,neuron,pattern
+Pvalb_10,neuron,pattern
+Pvalb_12,neuron,pattern
+Pvalb_13,neuron,pattern
+Pvalb_14,neuron,pattern
+Pvalb_15,neuron,pattern
+Pvalb_2,neuron,pattern
+Pvalb_3,neuron,pattern
+Pvalb_5,neuron,pattern
+Pvalb_6,neuron,pattern
+Pvalb_7,neuron,pattern
+Pvalb_8,neuron,pattern
+Pvalb_9,neuron,pattern
+Sncg_1,neuron,pattern
+Sncg_2,neuron,pattern
+Sncg_3,neuron,pattern
+Sncg_4,neuron,pattern
+Sncg_5,neuron,pattern
+Sncg_6,neuron,pattern
+Sncg_8,neuron,pattern
+Sst Chodl_1,neuron,pattern
+Sst Chodl_2,neuron,pattern
+Sst_1,neuron,pattern
+Sst_10,neuron,pattern
+Sst_11,neuron,pattern
+Sst_12,neuron,pattern
+Sst_13,neuron,pattern
+Sst_19,neuron,pattern
+Sst_2,neuron,pattern
+Sst_20,neuron,pattern
+Sst_22,neuron,pattern
+Sst_23,neuron,pattern
+Sst_25,neuron,pattern
+Sst_3,neuron,pattern
+Sst_4,neuron,pattern
+Sst_5,neuron,pattern
+Sst_7,neuron,pattern
+Sst_9,neuron,pattern
+VLMC_1,fibroblast,hand
+VLMC_2,fibroblast,hand
+Vip_1,neuron,pattern
+Vip_11,neuron,pattern
+Vip_12,neuron,pattern
+Vip_13,neuron,pattern
+Vip_14,neuron,pattern
+Vip_15,neuron,pattern
+Vip_16,neuron,pattern
+Vip_18,neuron,pattern
+Vip_19,neuron,pattern
+Vip_2,neuron,pattern
+Vip_21,neuron,pattern
+Vip_23,neuron,pattern
+Vip_4,neuron,pattern
+Vip_5,neuron,pattern
+Vip_6,neuron,pattern
+Vip_9,neuron,pattern

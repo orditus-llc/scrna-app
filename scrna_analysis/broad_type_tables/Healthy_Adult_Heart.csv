@@ -1,0 +1,76 @@
+label,broad_type,how
+AVN_P_cell,own label,hand
+AVN_bundle_cell,own label,hand
+Adip1,own label,hand
+Adip2,own label,hand
+Adip3,own label,hand
+Adip4,own label,hand
+B,B cell,ontology
+B_plasma,plasma cell,pattern
+CD14+Mo,monocyte,pattern
+CD16+Mo,monocyte,pattern
+CD4+T_Tfh,T cell,pattern
+CD4+T_Th1,T cell,pattern
+CD4+T_Th17,T cell,pattern
+CD4+T_Th2,T cell,pattern
+CD4+T_act,T cell,pattern
+CD4+T_naive,T cell,pattern
+CD4+T_reg,T cell,pattern
+CD8+T_cytox,T cell,pattern
+CD8+T_em,T cell,pattern
+CD8+T_te,T cell,pattern
+CD8+T_trans,T cell,pattern
+DC,dendritic cell,pattern
+EC10_CMC-like,endothelial cell,pattern
+EC1_cap,endothelial cell,pattern
+EC2_cap,endothelial cell,pattern
+EC3_cap,endothelial cell,pattern
+EC4_immune,endothelial cell,pattern
+EC5_art,endothelial cell,pattern
+EC6_ven,endothelial cell,pattern
+EC7_endocardial,endothelial cell,pattern
+EC8_ln,endothelial cell,pattern
+EC9_FB-like,endothelial cell,pattern
+FB1,fibroblast,pattern
+FB2,fibroblast,pattern
+FB3,fibroblast,pattern
+FB4_activated,fibroblast,pattern
+FB5,fibroblast,pattern
+FB6,fibroblast,pattern
+ILC,own label,hand
+LYVE1+IGF1+MP,macrophage,hand
+LYVE1+MP_cycling,macrophage,hand
+LYVE1+TIMD4+MP,macrophage,hand
+MAIT-like,T cell,pattern
+Mast,mast cell,ontology
+Meso,epithelial cell,hand
+MoMP,macrophage,hand
+NC1_glial,own label,hand
+NC2_glial_NGF+,own label,hand
+NC3_glial,own label,hand
+NC4_glial,own label,hand
+NC5_glial,own label,hand
+NC6_schwann,own label,hand
+NK_CD16hi,NK cell,pattern
+NK_CD56hi,NK cell,pattern
+Neut,granulocyte,hand
+PC1_vent,pericyte,hand
+PC2_atria,pericyte,hand
+PC3_str,pericyte,hand
+PC4_CMC-like,pericyte,hand
+Purkinje_cell,own label,hand
+SAN_P_cell,own label,hand
+SMC1_basic,smooth muscle cell,pattern
+SMC2_art,smooth muscle cell,pattern
+T/NK_cycling,none,hand
+aCM1,own label,hand
+aCM2,own label,hand
+aCM3,own label,hand
+aCM4,own label,hand
+aCM5,own label,hand
+gdT,T cell,pattern
+vCM1,own label,hand
+vCM2,own label,hand
+vCM3_stressed,own label,hand
+vCM4,own label,hand
+vCM5,own label,hand

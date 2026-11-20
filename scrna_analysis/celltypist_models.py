@@ -11,8 +11,10 @@ with the app's clusters as the over-clustering, so no clustering is added).
 - **Its own normalization:** CellTypist's models expect each cell normalized to 10,000 counts and
   log1p-transformed, so it gets its own copy made from the raw counts (the app normalizes to the
   median by default).
-- **Suggested model:** from the species and Census tissue (`SUGGESTED_MODELS`, the app's own
-  mapping, started small on purpose; analyst 2026-11-12). The user can choose another or none.
+- **Suggested model:** from the species, Census tissue and stage (`SUGGESTED_MODELS`, the app's own
+  mapping of healthy reference atlases; analyst 2026-11-12, extended 2026-11-16). The user can choose
+  any other model for the species (all of CellTypist's published human and mouse models that have a
+  broad-type table; disease-study models listed separately) or none.
 - **Step A:** the answer is shown next to the marker check. Nothing is combined or overruled yet:
   rolling both answers up to broad types and the agree / "Unknown" rule wait for the supervisor.
 """
@@ -39,24 +41,64 @@ CELL_KEY = "celltypist_cell"  # obs: CellTypist's answer for the cell itself
 CITATION = ("CellTypist: Domínguez Conde et al. 2022, Science 376, eabl5197; "
             "Xu et al. 2023, Cell 186, 5876–5891")
 
-# (species, Census tissue) -> the suggested model. The app's own mapping: only tissues a ready-made
-# model clearly covers; everything else gets no suggestion (the marker check alone).
+# (species, Census tissue) -> the suggested model. The app's own mapping: only healthy reference atlases
+# that clearly cover the tissue (analyst, 2026-11-16: disease models are offered but never suggested);
+# everything else gets no suggestion.
 SUGGESTED_MODELS: dict[tuple[str, str], str] = {
     ("human", "blood"): "Immune_All_Low.pkl",
     ("human", "bone marrow"): "Immune_All_Low.pkl",
     ("human", "spleen"): "Immune_All_Low.pkl",
     ("human", "lymph node"): "Immune_All_Low.pkl",
     ("human", "immune system"): "Immune_All_Low.pkl",
+    ("human", "lung"): "Human_Lung_Atlas.pkl",
+    ("human", "respiratory system"): "Human_Lung_Atlas.pkl",
+    ("human", "liver"): "Healthy_Human_Liver.pkl",
+    ("human", "heart"): "Healthy_Adult_Heart.pkl",
+    ("human", "breast"): "Cells_Adult_Breast.pkl",
+    ("human", "skin of body"): "Adult_Human_Skin.pkl",
+    ("human", "brain"): "Adult_Human_MTG.pkl",  # cortex (middle temporal gyrus), the broadest adult brain model
+    ("human", "cortex"): "Adult_Human_MTG.pkl",
+    ("human", "small intestine"): "Cells_Intestinal_Tract.pkl",
+    ("human", "large intestine"): "Cells_Intestinal_Tract.pkl",
+    ("human", "colon"): "Cells_Intestinal_Tract.pkl",
+    ("human", "intestine"): "Cells_Intestinal_Tract.pkl",
+    ("human", "uterus"): "Human_Endometrium_Atlas.pkl",
+    ("human", "vasculature"): "Adult_Human_Vascular.pkl",
+    ("human", "placenta"): "Human_Placenta_Decidua.pkl",
     ("mouse", "brain"): "Mouse_Whole_Brain.pkl",  # most mouse brain data is adult (analyst's choice)
+    ("mouse", "liver"): "Healthy_Mouse_Liver.pkl",
+    ("mouse", "small intestine"): "Adult_Mouse_Gut.pkl",
+    ("mouse", "large intestine"): "Adult_Mouse_Gut.pkl",
+    ("mouse", "colon"): "Adult_Mouse_Gut.pkl",
 }
 # The same for samples from embryos or fetuses (the metadata's optional stage "developing"; analyst,
 # 2026-11-13). Tissues not listed here fall back to SUGGESTED_MODELS.
 SUGGESTED_MODELS_DEVELOPING: dict[tuple[str, str], str] = {
+    ("human", "brain"): "Developing_Human_Brain.pkl",
+    ("human", "lung"): "Cells_Fetal_Lung.pkl",
+    ("human", "skin of body"): "Fetal_Human_Skin.pkl",
+    ("human", "pancreas"): "Fetal_Human_Pancreas.pkl",
+    ("human", "adrenal gland"): "Fetal_Human_AdrenalGlands.pkl",
+    ("human", "eye"): "Fetal_Human_Retina.pkl",
+    ("human", "yolk sac"): "Human_Embryonic_YolkSac.pkl",
+    ("human", "embryo"): "Pan_Fetal_Human.pkl",
+    ("human", "ovary"): "Developing_Human_Gonads.pkl",
     ("mouse", "brain"): "Developing_Mouse_Brain.pkl",
 }
 STAGES = ("adult", "developing")  # the metadata's optional developmental stage
-# Other models offered for a species (e.g. embryonic brain), besides its suggestions.
-ALTERNATIVES: dict[str, tuple[str, ...]] = {"human": (), "mouse": ("Developing_Mouse_Brain.pkl",)}
+# Models from disease studies: offered in the list, never suggested (analyst, 2026-11-16).
+DISEASE_MODELS = frozenset({
+    "Adult_COVID19_PBMC.pkl", "Autopsy_COVID19_Lung.pkl", "COVID19_HumanChallenge_Blood.pkl",
+    "COVID19_Immune_Landscape.pkl", "Healthy_COVID19_PBMC.pkl", "Human_Colorectal_Cancer.pkl",
+    "Human_IPF_Lung.pkl", "Human_PF_Lung.pkl", "Lethal_COVID19_Lung.pkl", "PaediatricAdult_COVID19_Airway.pkl",
+    "PaediatricAdult_COVID19_PBMC.pkl", "Thymus_Allograft_PBMC.pkl",
+})
+# Models for species the app can't type cells for yet: kept downloaded, never offered (analyst, 2026-11-16).
+OTHER_SPECIES_MODELS = frozenset({
+    "Adult_CynomolgusMacaque_Hippocampus.pkl", "Adult_Pig_Hippocampus.pkl", "Adult_RhesusMacaque_Hippocampus.pkl",
+})
+# Groups of the model list, in the order shown.
+GROUP_SUGGESTED, GROUP_OTHER, GROUP_DISEASE = "Suggested for this sample", "Other models", "From disease studies"
 
 
 class CellTypistError(ValueError):
@@ -71,16 +113,38 @@ def suggest_model(species: str | None, tissue: str | None, stage: str | None = N
     return SUGGESTED_MODELS.get(key)
 
 
-def model_choices(species: str | None, folder: str | Path = MODEL_DIR) -> list[dict]:
-    """The models offered for a species (suggestions first), each with its description from the
-    download and whether it is downloaded."""
+def model_species(name: str) -> str:
+    """The species a model was trained on, from its name ("Mouse" in the name = mouse; the monkey and
+    pig models = "other"; the rest are human)."""
+    if name in OTHER_SPECIES_MODELS:
+        return "other"
+    return "mouse" if "mouse" in name.lower() else "human"
+
+
+def model_choices(species: str | None, folder: str | Path = MODEL_DIR, tissue: str | None = None,
+                  stage: str | None = None) -> list[dict]:
+    """The models offered for a species: the one suggested for this tissue and stage first, then the
+    other healthy-tissue models, then the models from disease studies (each alphabetically). A model is
+    offered when it is one the app suggests or is downloaded, and it has a broad-type table (without
+    one its answer can't be compared with the marker check). Each with its group, its description
+    from the download and whether it is downloaded."""
+    from scrna_analysis import broad_types  # here, to keep this module light to import
+
     species = (species or "").lower()
-    names = list(dict.fromkeys([m for (sp, _), m in SUGGESTED_MODELS.items() if sp == species]
-                               + [m for (sp, _), m in SUGGESTED_MODELS_DEVELOPING.items() if sp == species]
-                               + list(ALTERNATIVES.get(species, ()))))
+    suggested = suggest_model(species, tissue, stage)
+    known = {m for (sp, _), m in (*SUGGESTED_MODELS.items(), *SUGGESTED_MODELS_DEVELOPING.items()) if sp == species}
+    downloaded = {p.name for p in Path(folder).glob("*.pkl")}
+    names = sorted(n for n in known | downloaded
+                   if model_species(n) == species and broad_types.table_path(n).is_file())
     listing = read_listing(folder)
-    return [{"model": n, "details": (listing.get(n) or {}).get("details"), "version": (listing.get(n) or {}).get("version"),
-             "downloaded": (Path(folder) / n).is_file()} for n in names]
+
+    def group(n: str) -> str:
+        return GROUP_SUGGESTED if n == suggested else GROUP_DISEASE if n in DISEASE_MODELS else GROUP_OTHER
+
+    order = {GROUP_SUGGESTED: 0, GROUP_OTHER: 1, GROUP_DISEASE: 2}
+    names.sort(key=lambda n: (order[group(n)], n.lower()))
+    return [{"model": n, "group": group(n), "details": (listing.get(n) or {}).get("details"),
+             "version": (listing.get(n) or {}).get("version"), "downloaded": n in downloaded} for n in names]
 
 
 def read_listing(folder: str | Path = MODEL_DIR) -> dict:

@@ -1,0 +1,79 @@
+label,broad_type,how
+AT1 ,epithelial cell,pattern
+AT2,epithelial cell,pattern
+B_memory,B cell,pattern
+B_naive,B cell,pattern
+B_plasma_IgA,plasma cell,pattern
+B_plasma_IgG,plasma cell,pattern
+B_plasmablast,plasma cell,pattern
+Basal,epithelial cell,hand
+CD4_EM/Effector,T cell,pattern
+CD4_TRM,T cell,pattern
+CD4_naive/CM,T cell,pattern
+CD8_EM,T cell,pattern
+CD8_EM/EMRA,T cell,pattern
+CD8_TRM,T cell,pattern
+CD8_TRM/EM,T cell,pattern
+Chondrocyte,own label,ontology
+Ciliated,epithelial cell,hand
+DC_1,dendritic cell,pattern
+DC_2,dendritic cell,pattern
+DC_activated,dendritic cell,pattern
+DC_plasmacytoid,dendritic cell,pattern
+Deuterosomal,epithelial cell,ontology
+Dividing_AT2,epithelial cell,pattern
+Dividing_Basal,epithelial cell,hand
+Endothelia_Lymphatic,endothelial cell,pattern
+Endothelia_vascular_Cap_a,endothelial cell,pattern
+Endothelia_vascular_Cap_g,endothelial cell,pattern
+Endothelia_vascular_arterial_pulmonary,endothelial cell,pattern
+Endothelia_vascular_arterial_systemic,endothelial cell,pattern
+Endothelia_vascular_venous_pulmonary,endothelial cell,pattern
+Endothelia_vascular_venous_systemic,endothelial cell,pattern
+Fibro_adventitial,fibroblast,pattern
+Fibro_alveolar,fibroblast,pattern
+Fibro_myofibroblast,fibroblast,pattern
+Fibro_peribronchial,fibroblast,pattern
+Fibro_perichondrial,fibroblast,pattern
+ILC,own label,hand
+Ionocyte_n_Brush,epithelial cell,pattern
+MAIT,T cell,pattern
+Macro_AW_CX3CR1,macrophage,pattern
+Macro_CCL,macrophage,pattern
+Macro_CHIT1,macrophage,pattern
+Macro_alveolar,macrophage,pattern
+Macro_alveolar_metallothioneins,macrophage,pattern
+Macro_dividing,macrophage,pattern
+Macro_intermediate,macrophage,pattern
+Macro_interstitial,macrophage,pattern
+Macro_intravascular,macrophage,pattern
+Mast_cell ,mast cell,ontology
+Megakaryocyte,megakaryocyte/platelet,ontology
+Mesothelia,epithelial cell,hand
+Monocyte_CD14,monocyte,pattern
+Monocyte_CD16,monocyte,pattern
+Muscle_pericyte_pulmonary,pericyte,pattern
+Muscle_pericyte_systemic,pericyte,pattern
+Muscle_perivascular_immune_recruiting,pericyte,hand
+Muscle_smooth_airway,smooth muscle cell,pattern
+Muscle_smooth_arterial_systemic,smooth muscle cell,pattern
+Muscle_smooth_pulmonary,smooth muscle cell,pattern
+Myoepithelial,epithelial cell,ontology
+NAF_endoneurial,fibroblast,hand
+NAF_perineurial,fibroblast,hand
+NKT,T cell,pattern
+NK_CD11d,NK cell,pattern
+NK_CD16hi,NK cell,pattern
+NK_CD56bright,NK cell,pattern
+Neuroendocrine,neuron,ontology
+SMG_Basal,epithelial cell,hand
+SMG_Duct,epithelial cell,hand
+SMG_Mucous,epithelial cell,hand
+SMG_Serous,epithelial cell,hand
+Schwann_Myelinating,own label,hand
+Schwann_nonmyelinating,own label,hand
+Secretory_Club,epithelial cell,pattern
+Secretory_Goblet,epithelial cell,pattern
+Suprabasal,epithelial cell,ontology
+T_reg,T cell,pattern
+gdT,T cell,pattern

@@ -1,0 +1,37 @@
+label,broad_type,how
+CD19+CD20+ B,B cell,hand
+CD4+ T cells,T cell,pattern
+CD8+ T cells,T cell,pattern
+CMS1,epithelial cell,hand
+CMS2,epithelial cell,hand
+CMS3,epithelial cell,hand
+CMS4,epithelial cell,hand
+Enteric glial cells,own label,ontology
+Goblet cells,epithelial cell,ontology
+IgA+ Plasma,plasma cell,pattern
+IgG+ Plasma,plasma cell,pattern
+Intermediate,none,hand
+Lymphatic ECs,endothelial cell,pattern
+Mast cells,mast cell,ontology
+Mature Enterocytes type 1,epithelial cell,pattern
+Mature Enterocytes type 2,epithelial cell,pattern
+Myofibroblasts,own label,ontology
+NK cells,NK cell,ontology
+Pericytes,pericyte,ontology
+Pro-inflammatory,macrophage,hand
+Proliferating,none,hand
+Proliferative ECs,endothelial cell,pattern
+Regulatory T cells,T cell,ontology
+SPP1+,macrophage,hand
+Smooth muscle cells,smooth muscle cell,ontology
+Stalk-like ECs,endothelial cell,pattern
+Stem-like/TA,epithelial cell,hand
+Stromal 1,own label,hand
+Stromal 2,own label,hand
+Stromal 3,own label,hand
+T follicular helper cells,T cell,ontology
+T helper 17 cells,T cell,pattern
+Tip-like ECs,endothelial cell,pattern
+Unknown,none,pattern
+cDC,dendritic cell,ontology
+gamma delta T cells,T cell,pattern

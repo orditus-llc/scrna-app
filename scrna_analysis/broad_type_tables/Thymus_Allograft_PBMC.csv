@@ -1,0 +1,83 @@
+label,broad_type,how
+ABT(ENTRY),T cell,hand
+B_MEM,B cell,pattern
+B_MEM_ATYPICAL,B cell,pattern
+B_NAIVE,B cell,pattern
+B_PROGENITOR,B cell,pattern
+B_THYMIC,B cell,pattern
+B_T_PROGENITOR,blood stem/progenitor cell,hand
+CD4+T_CTL,T cell,pattern
+CD4+T_HELPER,T cell,pattern
+CD4+T_NAIVE,T cell,pattern
+CD8+T_CTL,T cell,pattern
+CD8+T_CYCLING,T cell,pattern
+CD8+T_MEM,T cell,pattern
+CD8+T_NAIVE,T cell,pattern
+CD8AA(ENTRY),T cell,pattern
+CD8AA(I),T cell,pattern
+CD8AA(II),T cell,pattern
+DC1,dendritic cell,ontology
+DC2,dendritic cell,ontology
+DN(EARLY)_T,T cell,pattern
+DN(P)_T,T cell,pattern
+DN(Q)_T,T cell,pattern
+DP(P)_T,T cell,pattern
+DP(Q)_T,T cell,pattern
+EARLY_ERY,erythroid cell,hand
+ENDOTHELIUM_ARTERIAL,endothelial cell,pattern
+ENDOTHELIUM_CAPILLARY,endothelial cell,pattern
+ENDOTHELIUM_CAPILLARY_CYCLING,endothelial cell,pattern
+ENDOTHELIUM_LYMPHATIC,endothelial cell,pattern
+ENDOTHELIUM_VENOUS,endothelial cell,pattern
+ERYTHROCYTE,erythroid cell,ontology
+FIBROBLAST_CYCLING,fibroblast,pattern
+FIBROBLAST_FETAL_CCL21,fibroblast,pattern
+FIBROBLAST_FETAL_RSPO2,fibroblast,pattern
+FIBROBLAST_INTERLOBULAR,fibroblast,pattern
+FIBROBLAST_MEDULLARY,fibroblast,pattern
+FIBROBLAST_PERILOBULAR,fibroblast,pattern
+GDT,T cell,pattern
+GDT_CTL,T cell,pattern
+GLIAL,own label,ontology
+HPC_CIRCULATING,blood stem/progenitor cell,hand
+ILC3,own label,ontology
+MACROPHAGE,macrophage,ontology
+MAIT,T cell,pattern
+MAST_CELL,mast cell,ontology
+MESOTHELIUM,epithelial cell,hand
+MIGRATORY_DC,dendritic cell,pattern
+MONOCYTE_CD14,monocyte,pattern
+MONOCYTE_CD16,monocyte,pattern
+MONOCYTE_THYMIC,monocyte,pattern
+MUSCLE_SATELLITE,own label,hand
+MYELOID_PROGENITOR,blood stem/progenitor cell,pattern
+MYOFIBRE_FAST,own label,hand
+MYOFIBRE_SLOW,own label,hand
+MYOFIBROBLAST,own label,ontology
+NEUTROPHIL,granulocyte,ontology
+NK_CIRCULATING_CD56bright,NK cell,pattern
+NK_CIRCULATING_CD56dim,NK cell,pattern
+NK_THYMIC,NK cell,pattern
+PERICYTE,pericyte,ontology
+PLASMA_B,plasma cell,ontology
+PLATELET,megakaryocyte/platelet,ontology
+T(AGONIST),T cell,pattern
+TEC_CILLIATED,epithelial cell,hand
+TEC_IONOCYTE,epithelial cell,pattern
+TEC_MYO,epithelial cell,hand
+TEC_NEURO,epithelial cell,hand
+TEC_TUFT,epithelial cell,pattern
+TREG,T cell,ontology
+TREG_CIRCULATING,T cell,pattern
+TREG_RESIDENT_THYMIC,T cell,pattern
+VSMC,smooth muscle cell,ontology
+cTECI,epithelial cell,hand
+cTECII,epithelial cell,hand
+cTECIII,epithelial cell,hand
+mTECI,epithelial cell,hand
+mTECII,epithelial cell,hand
+mTECIII,epithelial cell,hand
+mTECI_TRANS,epithelial cell,hand
+mTEC_CULTURE,epithelial cell,hand
+mcTEC,epithelial cell,hand
+pDC,dendritic cell,ontology

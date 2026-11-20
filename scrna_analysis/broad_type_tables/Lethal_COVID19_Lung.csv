@@ -1,0 +1,42 @@
+label,broad_type,how
+AT1,epithelial cell,pattern
+AT2,epithelial cell,pattern
+Activated B cells,B cell,pattern
+Adventitial FB,fibroblast,pattern
+Airway basal,epithelial cell,hand
+Airway ciliated,epithelial cell,hand
+Airway club,epithelial cell,pattern
+Airway goblet,epithelial cell,pattern
+Airway mucous,epithelial cell,hand
+Airway smooth muscle,smooth muscle cell,pattern
+Alveolar FB,fibroblast,pattern
+Alveolar macrophages,macrophage,ontology
+Arterial endothelial cells,endothelial cell,ontology
+B cells,B cell,ontology
+CD4+ T cells,T cell,pattern
+CD8+ T cells,T cell,pattern
+Capillary endothelial cells,endothelial cell,ontology
+Cycling NK/T cells,none,hand
+Cycling epithelial,epithelial cell,pattern
+Dendritic cells,dendritic cell,ontology
+ECM-high epithelial,epithelial cell,pattern
+Endothelial cells (general),endothelial cell,pattern
+Endothelial cells (other),endothelial cell,pattern
+Inflamed endothelial cells,endothelial cell,pattern
+Intermediate pathological FB,fibroblast,pattern
+Mast cells,mast cell,ontology
+Mesothelial FB,fibroblast,pattern
+Monocyte-derived macrophages,macrophage,pattern
+Monocytes,monocyte,ontology
+NK cells,NK cell,ontology
+Neuronal cells,neuron,pattern
+Other FB,fibroblast,pattern
+Pathological FB,fibroblast,pattern
+Pericytes,pericyte,ontology
+Plasma cells,plasma cell,ontology
+Pulmonary venous endothelial cells,endothelial cell,pattern
+Systemic venous endothelial cells,endothelial cell,pattern
+Transitioning MDM,macrophage,hand
+Tregs,T cell,ontology
+Tuft-like,epithelial cell,pattern
+Vascular smooth muscle,smooth muscle cell,ontology

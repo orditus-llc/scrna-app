@@ -1,0 +1,17 @@
+label,broad_type,how
+AC,neuron,hand
+Bipolars,neuron,hand
+Early Glia,neural progenitor,hand
+Glia,neural progenitor,hand
+HC,neuron,hand
+Photo/Progen,none,hand
+Photoreceptors,neuron,ontology
+Progenitors,neural progenitor,hand
+RGC,neuron,hand
+T1,neural progenitor,hand
+T1/RGC,neural progenitor,hand
+T2,neural progenitor,hand
+T2/T3,neural progenitor,hand
+T3,neural progenitor,hand
+imGlia,neural progenitor,hand
+microglia,microglia,pattern

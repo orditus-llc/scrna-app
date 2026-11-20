@@ -1,0 +1,127 @@
+label,broad_type,how
+Activated CD4+ T cell,T cell,pattern
+B cell,B cell,ontology
+Basophil,granulocyte,ontology
+CD4,T cell,pattern
+CD8+ T cell,T cell,pattern
+Ccr7 DC,dendritic cell,pattern
+Cd11c Mac,macrophage,pattern
+Cd206 Mac,macrophage,pattern
+Clec4e mono,monocyte,pattern
+D.cells,epithelial cell,hand
+DC,dendritic cell,pattern
+DC (CD103+ CD11+b),dendritic cell,pattern
+DC (CD103+ CD11-b),dendritic cell,pattern
+DC (CD103- C2),dendritic cell,pattern
+EC.Reg4,epithelial cell,hand
+EP,epithelial cell,hand
+EarlyGC_1,B cell,hand
+EarlyGC_2,B cell,hand
+Endocrine,epithelial cell,hand
+Endothelial cell,endothelial cell,ontology
+Enterocyte,epithelial cell,ontology
+Enterocyte.1,epithelial cell,pattern
+Enterocyte.2,epithelial cell,pattern
+Enterocyte.Immature.Distal,epithelial cell,pattern
+Enterocyte.Immature.Proximal,epithelial cell,pattern
+Enterocyte.Mature.Distal,epithelial cell,pattern
+Enterocyte.Mature.Proximal,epithelial cell,pattern
+Enterocyte.Progenitor,epithelial cell,pattern
+Enterocyte.Progenitor.Early,epithelial cell,pattern
+Enterocyte.Progenitor.Late,epithelial cell,pattern
+Enterocyte.dist,epithelial cell,pattern
+Enterocyte.prox,epithelial cell,pattern
+Enteroendocrine,epithelial cell,ontology
+Epithelial,epithelial cell,ontology
+Epithelial cell C1,epithelial cell,pattern
+Epithelial cell C2,epithelial cell,pattern
+Fibroblast,fibroblast,ontology
+GC B cell (DZ),B cell,pattern
+GC B cell (LZ),B cell,pattern
+Glia_1,own label,hand
+Glia_2,own label,hand
+Glia_3,own label,hand
+Goblet,epithelial cell,ontology
+ILC1,own label,ontology
+ILC2,own label,ontology
+ILC3,own label,ontology
+ISC-I,epithelial cell,hand
+ISC-II,epithelial cell,hand
+ISC-III,epithelial cell,hand
+Inflammatory Monocytes,monocyte,ontology
+K.cells,epithelial cell,hand
+LTi cell,own label,hand
+Ly6c2 Mono,monocyte,pattern
+Lymphatic endothelial-like cell,endothelial cell,pattern
+M.cell,epithelial cell,hand
+M.cell.Progenitor.1,epithelial cell,hand
+MHCII Mono,monocyte,pattern
+Macrophage,macrophage,ontology
+Macrophage (M2),macrophage,pattern
+Mast cell,mast cell,ontology
+Mcell.Immature,epithelial cell,hand
+Monocytes,monocyte,ontology
+NK cell,NK cell,ontology
+NKT cell,T cell,pattern
+Naive B cells,B cell,ontology
+Neutrophil,granulocyte,ontology
+PEMN_1,neuron,hand
+PEMN_2,neuron,hand
+PEMN_3,neuron,hand
+PEMN_4,neuron,hand
+PEMN_5,neuron,hand
+PIMN_1,neuron,hand
+PIMN_2,neuron,hand
+PIMN_3,neuron,hand
+PIMN_4,neuron,hand
+PIMN_5,neuron,hand
+PIMN_6,neuron,hand
+PIMN_7,neuron,hand
+PIN_1,neuron,hand
+PIN_2,neuron,hand
+PIN_3,neuron,hand
+PSN_1,neuron,hand
+PSN_2,neuron,hand
+PSN_3,neuron,hand
+PSN_4,neuron,hand
+PSN_5,neuron,hand
+PSVN_1,neuron,hand
+PSVN_2,neuron,hand
+PSVN_3,neuron,hand
+Paneth,epithelial cell,ontology
+Paneth.1,epithelial cell,hand
+Paneth.2,epithelial cell,hand
+Paneth.progenitor,epithelial cell,hand
+Plasma cell,plasma cell,ontology
+PreGC,B cell,hand
+Resting B cell,B cell,pattern
+Resting CD4+ T cells,T cell,pattern
+Sirpa DC,dendritic cell,pattern
+Stem,epithelial cell,hand
+Stem.TA,epithelial cell,hand
+Stromal cell (DN),own label,hand
+T precursor-like cell,T cell,pattern
+TA,epithelial cell,hand
+TA.Early,epithelial cell,hand
+TA.G1,epithelial cell,hand
+TA.G2,epithelial cell,hand
+Tuft,epithelial cell,ontology
+Tuft-1,epithelial cell,pattern
+Tuft-2,epithelial cell,pattern
+artery,endothelial cell,pattern
+capillary,endothelial cell,pattern
+capillary 1,endothelial cell,pattern
+capillary 2,endothelial cell,pattern
+capillary Aqp7+,endothelial cell,pattern
+capillary arterial,endothelial cell,pattern
+eMBC,B cell,hand
+enterocyte of epithelium of large intestine,epithelial cell,ontology
+epithelial cell of large intestine,epithelial cell,ontology
+gdT cell (Gzma+),T cell,pattern
+gdT cell (Xcl1+),T cell,pattern
+hematopoietic stem cell,blood stem/progenitor cell,ontology
+intestinal crypt stem cell,epithelial cell,ontology
+lymphatic,endothelial cell,pattern
+pDC,dendritic cell,ontology
+secretory cell,epithelial cell,hand
+vein Madcam1+,endothelial cell,pattern

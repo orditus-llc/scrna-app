@@ -1,0 +1,15 @@
+label,broad_type,how
+A_fs_KC,epithelial cell,hand
+B_fs_Melanocyte,own label,hand
+C_fs_Schwann,own label,hand
+D_fs_FB,fibroblast,pattern
+E_fs_LE,endothelial cell,hand
+F_fs_VE,endothelial cell,hand
+G_fs_Mast,mast cell,pattern
+H_fs_NK,NK cell,pattern
+I_fs_ILC,own label,hand
+J_fs_LC,dendritic cell,hand
+K_fs_DC1,dendritic cell,pattern
+L_fs_DC2,dendritic cell,pattern
+M_fs_Macro,macrophage,pattern
+N_fs_pericyte,pericyte,pattern

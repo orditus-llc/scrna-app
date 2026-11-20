@@ -1,0 +1,21 @@
+label,broad_type,how
+Activated Granulocyte,granulocyte,pattern
+B,B cell,ontology
+CD14 Monocyte,monocyte,pattern
+CD16 Monocyte,monocyte,pattern
+CD4 T,T cell,pattern
+CD4m T,T cell,pattern
+CD4n T,T cell,pattern
+CD8eff T,T cell,pattern
+CD8m T,T cell,pattern
+Class-switched B,B cell,hand
+DC,dendritic cell,pattern
+IgA PB,plasma cell,hand
+IgG PB,plasma cell,hand
+NK,NK cell,ontology
+Neutrophil,granulocyte,ontology
+Platelet,megakaryocyte/platelet,ontology
+RBC,erythroid cell,ontology
+SC & Eosinophil,none,hand
+gd T,T cell,pattern
+pDC,dendritic cell,ontology

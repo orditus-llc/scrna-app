@@ -1,0 +1,37 @@
+label,broad_type,how
+Arterial,endothelial cell,pattern
+Ciliated,epithelial cell,hand
+Cycling,none,hand
+Fibroblast_basalis,fibroblast,pattern
+Glandular,epithelial cell,hand
+Glandular_secretory,epithelial cell,hand
+Glandular_secretory_FGF7,epithelial cell,hand
+HOXA13,epithelial cell,hand
+Immune_Lymphoid,none,hand
+Immune_Myeloid,none,hand
+KRT5,epithelial cell,hand
+Luminal,epithelial cell,hand
+Lymphatic,endothelial cell,pattern
+MUC5B,epithelial cell,hand
+SOX9_basalis,epithelial cell,hand
+SOX9_functionalis_I,epithelial cell,hand
+SOX9_functionalis_II,epithelial cell,hand
+SOX9_luminal,epithelial cell,hand
+Venous,endothelial cell,pattern
+dHormones,own label,hand
+dStromal_early,own label,hand
+dStromal_late,own label,hand
+dStromal_mid,own label,hand
+eHormones,own label,hand
+ePV_1a,pericyte,hand
+ePV_1b,pericyte,hand
+ePV_2,pericyte,hand
+eStromal,own label,hand
+eStromal_MMPs,own label,hand
+eStromal_cycling,own label,hand
+mPV,pericyte,hand
+preCiliated,epithelial cell,hand
+preGlandular,epithelial cell,hand
+preLuminal,epithelial cell,hand
+sHormones,own label,hand
+uSMCs,smooth muscle cell,hand

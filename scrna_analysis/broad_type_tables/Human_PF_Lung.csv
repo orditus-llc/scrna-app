@@ -1,0 +1,32 @@
+label,broad_type,how
+AT1,epithelial cell,pattern
+AT2,epithelial cell,pattern
+B Cells,B cell,ontology
+Basal,epithelial cell,hand
+Ciliated,epithelial cell,hand
+Differentiating Ciliated,epithelial cell,hand
+Endothelial Cells,endothelial cell,ontology
+Fibroblasts,fibroblast,ontology
+HAS1 High Fibroblasts,fibroblast,pattern
+KRT5-/KRT17+,epithelial cell,hand
+Lymphatic Endothelial Cells,endothelial cell,ontology
+MUC5AC+ High,epithelial cell,hand
+MUC5B+,epithelial cell,hand
+Macrophages,macrophage,ontology
+Mast Cells,mast cell,ontology
+Mesothelial Cells,epithelial cell,ontology
+Monocytes,monocyte,ontology
+Myofibroblasts,own label,ontology
+NK Cells,NK cell,ontology
+PLIN2+ Fibroblasts,fibroblast,pattern
+Plasma Cells,plasma cell,ontology
+Proliferating Epithelial Cells,epithelial cell,pattern
+Proliferating Macrophages,macrophage,ontology
+Proliferating T Cells,T cell,ontology
+SCGB3A2+,epithelial cell,hand
+SCGB3A2+ SCGB1A1+,epithelial cell,hand
+Smooth Muscle Cells,smooth muscle cell,ontology
+T Cells,T cell,ontology
+Transitional AT2,epithelial cell,pattern
+cDCs,dendritic cell,ontology
+pDCs,dendritic cell,ontology
